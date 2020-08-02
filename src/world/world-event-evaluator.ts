@@ -15,5 +15,7 @@ export const applyEvent = (state: WorldState, event: WorldEvent): WorldState => 
   }
 }
 
-export const isInBounds = (hex: Hex, map: WorldMap): boolean =>
-  hex.x >= 0 && hex.y >= 0 && hex.x < map.width && hex.y < map.height
+export const isInBounds = (hex: Hex, map: WorldMap): boolean => {
+  const q = hex.x + Math.floor(hex.y / 2)
+  return 0 <= q && q < map.width && 0 <= hex.y && hex.y < map.height
+}

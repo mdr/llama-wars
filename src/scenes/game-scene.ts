@@ -70,9 +70,10 @@ export class GameScene extends Phaser.Scene {
   }
 
   private updateScene = () => {
-    for (let j = 0; j < this.worldState.map.height; j++) {
-      for (let i = 0; i < this.worldState.map.width; i++) {
-        const hex = new Hex(i, j)
+    for (let r = 0; r < this.worldState.map.height; r++) {
+      for (let c = 0; c < this.worldState.map.width; c++) {
+        const x = - Math.floor(r / 2) + c
+        const hex = new Hex(x, r)
         const polygon = this.getHexPolygon(hex)
         if (this.selectedHex && this.selectedHex.equals(hex)) {
           polygon.setFillStyle(selectedTileColour)
@@ -136,9 +137,10 @@ export class GameScene extends Phaser.Scene {
 
   public create(): void {
     const { map, unitLocation } = this.worldState
-    for (let j = 0; j < map.height; j++) {
-      for (let i = 0; i < map.width; i++) {
-        const hex = new Hex(i, j)
+    for (let r = 0; r < this.worldState.map.height; r++) {
+      for (let c = 0; c < this.worldState.map.width; c++) {
+        const x = - Math.floor(r / 2) + c
+        const hex = new Hex(x, r)
         const polygonCenter = this.hexCenter(hex)
         const polygon = this.addPolygon(polygonCenter, hexSize, defaultTileColour)
         this.hexPolygons.set(hex.toString(), polygon)
