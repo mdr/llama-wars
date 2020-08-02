@@ -141,17 +141,14 @@ export class GameScene extends Phaser.Scene {
     this.unitImage = this.add.image(unitPoint.x, unitPoint.y, 'llama').setScale(0.9)
 
     this.actionText = this.add.text(50, map.height * hexSize * 3 / 2 + 75, '', { fill: actionTextColour }).setInteractive()
-      .on('pointerdown', () => this.handleStartMove())
+      .on('pointerdown', () => this.handleActionTextClick())
       .on('pointerover', () => this.actionText.setFill(highlighedActonTextColour))
       .on('pointerout', () => this.actionText.setFill(actionTextColour))
 
     this.input.mouse.disableContextMenu()
 
     this.input.keyboard.on('keydown-ESC', () => {
-      if (this.mode.type == 'moveUnit') {
-        this.mode = { type: 'selectHex' }
-        this.updateScene()
-      }
+      this.handleAbortMove()
     })
     this.input.keyboard.on('keydown-M', () => {
       switch (this.mode.type) {
@@ -176,6 +173,24 @@ export class GameScene extends Phaser.Scene {
       }
     })
 
+  }
+
+  private handleAbortMove() {
+    if (this.mode.type == 'moveUnit') {
+      this.mode = { type: 'selectHex' }
+      this.updateScene()
+    }
+  }
+
+  private handleActionTextClick = () => {
+    switch (this.mode.type) {
+      case 'selectHex':
+        this.handleStartMove()
+        break
+      case 'moveUnit':
+        this.handleAbortMove()
+        break
+    }
   }
 
   private handleStartMove = () => {
