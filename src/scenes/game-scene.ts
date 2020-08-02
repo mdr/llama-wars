@@ -48,8 +48,8 @@ const defaultTileColour = 0xa1fd5e
 const movableTileColour = 0xd1ff8e
 const actionTextColour = '#cccc00'
 const highlighedActonTextColour = '#ffff00'
-const hexSize = 32
-const drawingOffset = { x: 40, y: 40 }
+const hexSize = 48
+const drawingOffset = { x: 60, y: 60 }
 
 export class GameScene extends Phaser.Scene {
   private server: Server = new Server()
@@ -88,7 +88,7 @@ export class GameScene extends Phaser.Scene {
     switch (this.mode.type) {
       case 'selectHex':
         if (this.selectedHex && this.selectedHex.equals(this.worldState.unitLocation)) {
-          this.selectionText.setText('Brian - Llama warrior')
+          this.selectionText.setText('Walter - Llama warrior')
           this.actionText.setText('[M]ove')
         } else {
           this.selectionText.setText('')
@@ -96,7 +96,7 @@ export class GameScene extends Phaser.Scene {
         }
         break
       case 'moveUnit':
-        this.selectionText.setText('Brian - Llama warrior')
+        this.selectionText.setText('Walter - Llama warrior')
         this.actionText.setText('Click tile to move to (or ESC to cancel)')
         for (const neighbour of this.selectedHex!.neighbours()) {
           if (isInBounds(neighbour, this.worldState.map)) {
@@ -131,7 +131,7 @@ export class GameScene extends Phaser.Scene {
 
   private addPolygon(center: Point, size: number, colour: number): Phaser.GameObjects.Polygon {
     const vertices = Array.from(hexCorners(point(0, 0), size))
-    return this.add.polygon(center.x, center.y, vertices, colour).setOrigin(0, 0).setStrokeStyle(2, 0x000000)
+    return this.add.polygon(center.x, center.y, vertices, colour).setOrigin(0, 0).setStrokeStyle(3, 0x000000)
   }
 
   public create(): void {
@@ -146,12 +146,14 @@ export class GameScene extends Phaser.Scene {
     }
     this.selectionText = this.add.text(50, map.height * hexSize * 3 / 2 + 50, '')
     const unitPoint = this.hexCenter(unitLocation)
-    this.unitImage = this.add.image(unitPoint.x, unitPoint.y, 'llama').setScale(0.6)
+    this.unitImage = this.add.image(unitPoint.x, unitPoint.y, 'llama').setScale(0.9)
 
     this.actionText = this.add.text(50, map.height * hexSize * 3 / 2 + 75, '', { fill: actionTextColour }).setInteractive()
       .on('pointerdown', () => this.handleStartMove())
       .on('pointerover', () => this.actionText.setFill(highlighedActonTextColour))
       .on('pointerout', () => this.actionText.setFill(actionTextColour))
+
+    this.input.mouse.disableContextMenu()
 
     this.input.keyboard.on('keydown-ESC', () => {
       if (this.mode.type == 'moveUnit') {
@@ -169,7 +171,7 @@ export class GameScene extends Phaser.Scene {
     })
 
     this.input.on('pointerdown', (pointer) => {
-      const pressedPoint = { x: this.input.x, y: this.input.y }
+      const pressedPoint = { x: pointer.x, y: pointer.y }
       const hex = fromPoint(multiplyPoint(subtractPoints(pressedPoint, drawingOffset), 1 / hexSize))
 
       switch (this.mode.type) {
@@ -213,10 +215,9 @@ export class GameScene extends Phaser.Scene {
         this.updateScene()
       }
     } else if (this.selectedHex && this.selectedHex.equals(hex)) {
-      // If click the same hex, toggle selection off
-      this.getHexPolygon(this.selectedHex).setFillStyle(defaultTileColour)
+      // if selected hex is clicked, toggle selection off
       this.selectedHex = undefined
-      this.selectionText.setText('')
+      this.updateScene()
     } else {
       this.selectedHex = hex
       this.updateScene()
