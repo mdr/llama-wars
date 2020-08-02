@@ -1,6 +1,6 @@
-import { INITIAL_WORLD_STATE, WorldState } from '../world/world-state'
+import { INITIAL_WORLD_STATE, isInBounds, WorldState } from '../world/world-state'
 import { WorldAction } from '../world/world-actions'
-import { applyEvent, isInBounds } from '../world/world-event-evaluator'
+import { applyEvent } from '../world/world-event-evaluator'
 import { UnitMovedWorldEvent, WorldEvent } from '../world/world-events'
 
 export type WorldEventListener = (event: WorldEvent) => void

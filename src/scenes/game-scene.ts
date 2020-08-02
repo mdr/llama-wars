@@ -1,10 +1,10 @@
 import { addPoints, multiplyPoint, Point, subtractPoints } from './point'
 import { Hex } from '../world/hex'
 import { centerPoint, fromPoint } from './hex-geometry'
-import { INITIAL_WORLD_STATE, WorldState } from '../world/world-state'
+import { getMapHexes, INITIAL_WORLD_STATE, isInBounds, WorldState } from '../world/world-state'
 import { Server } from '../server/server'
 import { WorldEvent } from '../world/world-events'
-import { applyEvent, isInBounds } from '../world/world-event-evaluator'
+import { applyEvent } from '../world/world-event-evaluator'
 import Polygon = Phaser.GameObjects.Polygon
 import { WorldAction } from '../world/world-actions'
 
@@ -70,16 +70,12 @@ export class GameScene extends Phaser.Scene {
   }
 
   private updateScene = () => {
-    for (let r = 0; r < this.worldState.map.height; r++) {
-      for (let c = 0; c < this.worldState.map.width; c++) {
-        const x = - Math.floor(r / 2) + c
-        const hex = new Hex(x, r)
-        const polygon = this.getHexPolygon(hex)
-        if (this.selectedHex && this.selectedHex.equals(hex)) {
-          polygon.setFillStyle(selectedTileColour)
-        } else {
-          polygon.setFillStyle(defaultTileColour)
-        }
+    for (let hex of getMapHexes(this.worldState.map)) {
+      const polygon = this.getHexPolygon(hex)
+      if (this.selectedHex && this.selectedHex.equals(hex)) {
+        polygon.setFillStyle(selectedTileColour)
+      } else {
+        polygon.setFillStyle(defaultTileColour)
       }
     }
     if (this.worldState.unitLocation) {
@@ -123,8 +119,6 @@ export class GameScene extends Phaser.Scene {
           y: { from: beforeCoords.y, to: afterCoords.y },
           duration: 500,
           ease: 'Cubic',
-          repeat: 0,
-          yoyo: false,
         })
         break
     }
@@ -137,14 +131,10 @@ export class GameScene extends Phaser.Scene {
 
   public create(): void {
     const { map, unitLocation } = this.worldState
-    for (let r = 0; r < this.worldState.map.height; r++) {
-      for (let c = 0; c < this.worldState.map.width; c++) {
-        const x = - Math.floor(r / 2) + c
-        const hex = new Hex(x, r)
-        const polygonCenter = this.hexCenter(hex)
-        const polygon = this.addPolygon(polygonCenter, hexSize, defaultTileColour)
-        this.hexPolygons.set(hex.toString(), polygon)
-      }
+    for (let hex of getMapHexes(this.worldState.map)) {
+      const polygonCenter = this.hexCenter(hex)
+      const polygon = this.addPolygon(polygonCenter, hexSize, defaultTileColour)
+      this.hexPolygons.set(hex.toString(), polygon)
     }
     this.selectionText = this.add.text(50, map.height * hexSize * 3 / 2 + 50, '')
     const unitPoint = this.hexCenter(unitLocation)
