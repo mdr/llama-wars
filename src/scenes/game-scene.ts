@@ -82,6 +82,7 @@ class UnitDisplayObject {
   }
 
   public setHex = (hex: Hex) => this.hex = hex
+  public setHitPoints = (hitPoints: HitPoints) => this.hitPoints = hitPoints
 
   public move = (from: Hex, to: Hex) => {
     const beforeCoords = hexCenter(from)
@@ -141,6 +142,7 @@ export class GameScene extends Phaser.Scene {
     for (const unit of this.worldState.units) {
       const unitDisplayObject = this.unitDisplayObjects.get(unit.id)!
       unitDisplayObject.setHex(unit.location)
+      unitDisplayObject.setHitPoints(unit.hitPoints)
       unitDisplayObject.update()
     }
     switch (this.mode.type) {
@@ -150,16 +152,17 @@ export class GameScene extends Phaser.Scene {
         if (this.selectedHex) {
           const unit = this.findUnitInLocation(this.selectedHex)
           if (unit) {
-            this.selectionText.setText('Walter - Llama warrior')
+            this.selectionText.setText(`${unit.name} - Llama warrior - HP ${unit.hitPoints.current}/${unit.hitPoints.max} `)
             this.actionText.setText('M - Move')
           }
         }
         break
       case 'moveUnit':
-        this.selectionText.setText('Walter - Llama warrior')
+        const unit = this.findUnitById(this.mode.unitId)!
+        this.selectionText.setText(`${unit.name} - Llama warrior - HP ${unit.hitPoints.current}/${unit.hitPoints.max} `)
         this.actionText.setText('Click tile to move to (or ESC to cancel)')
         for (const neighbour of this.selectedHex!.neighbours()) {
-          if (isInBounds(neighbour, this.worldState.map)) {
+          if (isInBounds(neighbour, this.worldState.map) && !this.findUnitInLocation(neighbour)) {
             const polygon = this.getHexPolygon(neighbour)
             polygon.setFillStyle(movableTileColour)
           }
