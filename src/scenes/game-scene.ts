@@ -1,7 +1,7 @@
 import { addPoints, multiplyPoint, Point, subtractPoints } from './point'
 import { Hex } from '../world/hex'
-import { centerPoint, fromPoint, mapHeight } from './hex-geometry'
-import { getMapHexes, INITIAL_WORLD_STATE, isInBounds, WorldMap, WorldState } from '../world/world-state'
+import { centerPoint, fromPoint, hexCorners, mapHeight } from './hex-geometry'
+import { getMapHexes, INITIAL_WORLD_STATE, isInBounds, WorldState } from '../world/world-state'
 import { Server } from '../server/server'
 import { WorldEvent } from '../world/world-events'
 import { applyEvent } from '../world/world-event-evaluator'
@@ -25,40 +25,80 @@ interface SelectHexMode {
 
 type Mode = MoveUnitMode | SelectHexMode
 
-
 const point = (x: number, y: number): Point => ({ x, y })
-
-const hexAngle = Math.PI / 3
-const hexOffset = Math.PI / 6
-
-const hexCorner = (center: Point, size: number, i: number): Point => {
-  const angleRadians = hexAngle * i - hexOffset
-  const x = center.x + size * Math.cos(angleRadians)
-  const y = center.y + size * Math.sin(angleRadians)
-  return { x, y }
-}
-
-function* hexCorners(center: Point, size: number): IterableIterator<Point> {
-  for (let i = 0; i < 6; i++) {
-    yield hexCorner(center, size, i)
-  }
-}
 
 const colourNumber = (colourString: string): number => Color.HexStringToColor(colourString).color
 
-const defaultTileColour = colourNumber("#ccffbe")
-const selectedTileColour = colourNumber("#fffd08")
-const movableTileColour = colourNumber("#dcffd1")
+const defaultTileColour = colourNumber('#ccffbe')
+const selectedTileColour = colourNumber('#fffd08')
+const movableTileColour = colourNumber('#dcffd1')
 const actionTextColour = '#cccc00'
 const highlightedActionTextColour = '#ffff00'
-const healthBorderColour = colourNumber("#000000")
-const healthEmptyColour = colourNumber("#ffffff")
-const healthFullColour = colourNumber("#4df037")
-
-
+const healthBorderColour = colourNumber('#000000')
+const healthEmptyColour = colourNumber('#ffffff')
+const healthFullColour = colourNumber('#4df037')
 
 const hexSize = 48
 const drawingOffset = { x: 60, y: 60 }
+const hexCenter = (hex: Hex) => addPoints(multiplyPoint(centerPoint(hex), hexSize), drawingOffset)
+
+class UnitDisplayObject {
+  private readonly scene: Phaser.Scene
+  private readonly image: Phaser.GameObjects.Image
+  private readonly healthBarGraphics: Phaser.GameObjects.Graphics
+  private hex: Hex
+  private static IMAGE_OFFSET = 4
+  private static HEALTH_BAR_OFFSET = { x: 25, y: 40 }
+
+  constructor(scene: Phaser.Scene, hex: Hex) {
+    this.scene = scene
+    this.hex = hex
+    this.image = scene.add.image(0, 0, 'llama').setScale(0.8)
+    this.healthBarGraphics = scene.add.graphics()
+  }
+
+  public update = () => {
+    const unitPoint = hexCenter(this.hex)
+    this.image.setPosition(unitPoint.x, unitPoint.y + UnitDisplayObject.IMAGE_OFFSET)
+    this.healthBarGraphics.setPosition(unitPoint.x - UnitDisplayObject.HEALTH_BAR_OFFSET.x, unitPoint.y - UnitDisplayObject.HEALTH_BAR_OFFSET.y)
+    this.healthBarGraphics.clear()
+    this.healthBarGraphics.fillStyle(healthBorderColour)
+    this.healthBarGraphics.fillRect(0, 0, 50, 12)
+    this.healthBarGraphics.fillStyle(healthEmptyColour)
+    this.healthBarGraphics.fillRect(2, 2, 46, 8)
+    this.healthBarGraphics.fillStyle(healthFullColour)
+    this.healthBarGraphics.fillRect(2, 2, 36, 8)
+  }
+
+  public setHex = (hex: Hex) => this.hex = hex
+
+  public move = (from: Hex, to: Hex) => {
+    const beforeCoords = hexCenter(from)
+    const afterCoords = hexCenter(to)
+    this.image.setFlipX(afterCoords.x < beforeCoords.x)
+    this.scene.tweens.add({
+      targets: this.image,
+      x: { from: beforeCoords.x, to: afterCoords.x },
+      y: { from: beforeCoords.y + UnitDisplayObject.IMAGE_OFFSET, to: afterCoords.y + UnitDisplayObject.IMAGE_OFFSET },
+      duration: 500,
+      ease: 'Cubic',
+    })
+    this.scene.tweens.add({
+      targets: this.healthBarGraphics,
+      x: {
+        from: beforeCoords.x - UnitDisplayObject.HEALTH_BAR_OFFSET.x,
+        to: afterCoords.x - UnitDisplayObject.HEALTH_BAR_OFFSET.x,
+      },
+      y: {
+        from: beforeCoords.y - UnitDisplayObject.HEALTH_BAR_OFFSET.y,
+        to: afterCoords.y - UnitDisplayObject.HEALTH_BAR_OFFSET.y,
+      },
+      duration: 500,
+      ease: 'Cubic',
+    })
+  }
+
+}
 
 export class GameScene extends Phaser.Scene {
   private server: Server = new Server()
@@ -69,10 +109,9 @@ export class GameScene extends Phaser.Scene {
   private selectedHex?: Hex
 
   private hexPolygons: Map<String, Phaser.GameObjects.Polygon> = new Map<String, Phaser.GameObjects.Polygon>()
-  private unitImage: Phaser.GameObjects.Image
-  private healthBarGraphics: Phaser.GameObjects.Graphics
   private selectionText: Phaser.GameObjects.Text
   private actionText: Phaser.GameObjects.Text
+  private unitDisplayObject: UnitDisplayObject
 
   constructor() {
     super(sceneConfig)
@@ -80,7 +119,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   private updateScene = () => {
-    for (let hex of getMapHexes(this.worldState.map)) {
+    for (const hex of getMapHexes(this.worldState.map)) {
       const polygon = this.getHexPolygon(hex)
       if (this.selectedHex && this.selectedHex.equals(hex)) {
         polygon.setFillStyle(selectedTileColour)
@@ -89,16 +128,8 @@ export class GameScene extends Phaser.Scene {
       }
     }
     if (this.worldState.unitLocation) {
-      const unitPoint = this.hexCenter(this.worldState.unitLocation)
-      this.unitImage.setPosition(unitPoint.x, unitPoint.y + 4)
-      this.healthBarGraphics.setPosition(unitPoint.x - 25, unitPoint.y - 40)
-      this.healthBarGraphics.clear()
-      this.healthBarGraphics.fillStyle(healthBorderColour)
-      this.healthBarGraphics.fillRect(0, 0, 50, 12)
-      this.healthBarGraphics.fillStyle(healthEmptyColour)
-      this.healthBarGraphics.fillRect(2, 2, 46, 8)
-      this.healthBarGraphics.fillStyle(healthFullColour)
-      this.healthBarGraphics.fillRect(2, 2, 36, 8)
+      this.unitDisplayObject.setHex(this.worldState.unitLocation)
+      this.unitDisplayObject.update()
     }
     switch (this.mode.type) {
       case 'selectHex':
@@ -127,38 +158,20 @@ export class GameScene extends Phaser.Scene {
     this.worldState = applyEvent(this.worldState, event)
     switch (event.type) {
       case 'unitMoved':
-        const beforeCoords = this.hexCenter(event.from)
-        const afterCoords = this.hexCenter(event.to)
-        this.unitImage.setFlipX(afterCoords.x < beforeCoords.x)
-        this.tweens.add({
-          targets: this.unitImage,
-          x: { from: beforeCoords.x, to: afterCoords.x },
-          y: { from: beforeCoords.y + 4, to: afterCoords.y + 4 },
-          duration: 500,
-          ease: 'Cubic',
-        })
-        this.tweens.add({
-          targets: this.healthBarGraphics,
-          x: { from: beforeCoords.x - 25, to: afterCoords.x - 25 },
-          y: { from: beforeCoords.y - 40, to: afterCoords.y - 40 },
-          duration: 500,
-          ease: 'Cubic',
-        })
+        this.unitDisplayObject.move(event.from, event.to)
         break
     }
   }
 
   private addPolygon(center: Point, size: number, colour: number): Phaser.GameObjects.Polygon {
-    const vertices = Array.from(hexCorners(point(0, 0), size))
+    const vertices = [...hexCorners(point(0, 0), size)]
     return this.add.polygon(center.x, center.y, vertices, colour).setOrigin(0, 0).setStrokeStyle(3, 0x000000)
   }
 
   public create(): void {
     // this.scale.startFullscreen();
-    const { map, unitLocation } = this.worldState
-    this.createMap(map)
-    this.unitImage = this.add.image(0, 0, 'llama').setScale(0.8)
-    this.healthBarGraphics = this.add.graphics()
+    this.createMap()
+    this.unitDisplayObject = new UnitDisplayObject(this, this.worldState.unitLocation)
 
     this.createTexts()
 
@@ -178,8 +191,8 @@ export class GameScene extends Phaser.Scene {
       .on('pointerout', () => this.actionText.setFill(actionTextColour))
   }
 
-  private createMap = (map: WorldMap) => {
-    for (let hex of getMapHexes(map)) {
+  private createMap = () => {
+    for (const hex of getMapHexes(this.worldState.map)) {
       const polygonCenter = this.hexCenter(hex)
       const polygon = this.addPolygon(polygonCenter, hexSize, defaultTileColour)
       this.hexPolygons.set(hex.toString(), polygon)
@@ -279,3 +292,4 @@ export class GameScene extends Phaser.Scene {
 
   }
 }
+

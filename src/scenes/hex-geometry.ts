@@ -31,4 +31,20 @@ const round = (hex: Hex): Hex => {
     return new Hex(rx, ry)
 }
 
+const hexAngle = Math.PI / 3
+const hexOffset = Math.PI / 6
+
+const hexCorner = (center: Point, size: number, i: number): Point => {
+  const angleRadians = hexAngle * i - hexOffset
+  const x = center.x + size * Math.cos(angleRadians)
+  const y = center.y + size * Math.sin(angleRadians)
+  return { x, y }
+}
+
+export function* hexCorners(center: Point, size: number): IterableIterator<Point> {
+  for (let i = 0; i < 6; i++) {
+    yield hexCorner(center, size, i)
+  }
+}
+
 export const mapHeight = (map: WorldMap): number => map.height * 3 / 2
