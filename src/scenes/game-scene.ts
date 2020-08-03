@@ -1,13 +1,14 @@
 import { addPoints, multiplyPoint, Point, subtractPoints } from './point'
 import { Hex } from '../world/hex'
 import { centerPoint, fromPoint, hexCorners, mapHeight } from './hex-geometry'
-import { getMapHexes, HitPoints, INITIAL_WORLD_STATE, isInBounds, WorldState } from '../world/world-state'
+import { getMapHexes, HitPoints, INITIAL_WORLD_STATE, isInBounds, Unit, UnitId, WorldState } from '../world/world-state'
 import { Server } from '../server/server'
 import { WorldEvent } from '../world/world-events'
 import { applyEvent } from '../world/world-event-evaluator'
 import Polygon = Phaser.GameObjects.Polygon
 import { WorldAction } from '../world/world-actions'
 import Color = Phaser.Display.Color
+import * as R from 'ramda'
 
 const sceneConfig: Phaser.Types.Scenes.SettingsConfig = {
   active: false,
@@ -17,6 +18,7 @@ const sceneConfig: Phaser.Types.Scenes.SettingsConfig = {
 
 interface MoveUnitMode {
   type: 'moveUnit'
+  unitId: UnitId
 }
 
 interface SelectHexMode {
@@ -48,6 +50,7 @@ class UnitDisplayObject {
   private readonly healthBarGraphics: Phaser.GameObjects.Graphics
   private hex: Hex
   private hitPoints: HitPoints
+
   private static IMAGE_OFFSET = 4
   private static HEALTH_BAR_OFFSET = { x: 25, y: 40 }
 
@@ -67,15 +70,15 @@ class UnitDisplayObject {
     this.healthBarGraphics.fillStyle(healthBorderColour)
     const barWidth = 50
     const barHeight = 12
-    const borderWidth = 2
-    const innerWidth = barWidth - 2 * borderWidth
-    let innerHeight = barHeight - 2 * borderWidth
+    const borderThickness = 2
+    const innerWidth = barWidth - 2 * borderThickness
+    let innerHeight = barHeight - 2 * borderThickness
     this.healthBarGraphics.fillRect(0, 0, barWidth, barHeight)
     this.healthBarGraphics.fillStyle(healthEmptyColour)
-    this.healthBarGraphics.fillRect(borderWidth, borderWidth, innerWidth, innerHeight)
+    this.healthBarGraphics.fillRect(borderThickness, borderThickness, innerWidth, innerHeight)
     this.healthBarGraphics.fillStyle(healthFullColour)
     const { current, max } = this.hitPoints
-    this.healthBarGraphics.fillRect(borderWidth, borderWidth, innerWidth * current / max, 8)
+    this.healthBarGraphics.fillRect(borderThickness, borderThickness, innerWidth * current / max, 8)
   }
 
   public setHex = (hex: Hex) => this.hex = hex
@@ -119,7 +122,7 @@ export class GameScene extends Phaser.Scene {
   private hexPolygons: Map<String, Phaser.GameObjects.Polygon> = new Map<String, Phaser.GameObjects.Polygon>()
   private selectionText: Phaser.GameObjects.Text
   private actionText: Phaser.GameObjects.Text
-  private unitDisplayObject: UnitDisplayObject
+  private unitDisplayObjects: Map<UnitId, UnitDisplayObject> = new Map()
 
   constructor() {
     super(sceneConfig)
@@ -135,18 +138,21 @@ export class GameScene extends Phaser.Scene {
         polygon.setFillStyle(defaultTileColour)
       }
     }
-    if (this.worldState.unit.location) {
-      this.unitDisplayObject.setHex(this.worldState.unit.location)
-      this.unitDisplayObject.update()
+    for (const unit of this.worldState.units) {
+      const unitDisplayObject = this.unitDisplayObjects.get(unit.id)!
+      unitDisplayObject.setHex(unit.location)
+      unitDisplayObject.update()
     }
     switch (this.mode.type) {
       case 'selectHex':
-        if (this.selectedHex && this.selectedHex.equals(this.worldState.unit.location)) {
-          this.selectionText.setText('Walter - Llama warrior')
-          this.actionText.setText('M - Move')
-        } else {
-          this.selectionText.setText('')
-          this.actionText.setText('')
+        this.selectionText.setText('')
+        this.actionText.setText('')
+        if (this.selectedHex) {
+          const unit = this.findUnitInLocation(this.selectedHex)
+          if (unit) {
+            this.selectionText.setText('Walter - Llama warrior')
+            this.actionText.setText('M - Move')
+          }
         }
         break
       case 'moveUnit':
@@ -166,10 +172,15 @@ export class GameScene extends Phaser.Scene {
     this.worldState = applyEvent(this.worldState, event)
     switch (event.type) {
       case 'unitMoved':
-        this.unitDisplayObject.move(event.from, event.to)
+        const { unitId, from, to } = event
+        const unitDisplayObject = this.unitDisplayObjects.get(unitId)
+        if (!unitDisplayObject)
+          throw 'Could not find unit with ID ' + unitId
+        unitDisplayObject.move(from, to)
         break
     }
   }
+
 
   private addPolygon(center: Point, size: number, colour: number): Phaser.GameObjects.Polygon {
     const vertices = [...hexCorners(point(0, 0), size)]
@@ -179,8 +190,10 @@ export class GameScene extends Phaser.Scene {
   public create(): void {
     // this.scale.startFullscreen();
     this.createMap()
-    const unit = this.worldState.unit
-    this.unitDisplayObject = new UnitDisplayObject(this, unit.location, unit.hitPoints)
+    for (const unit of this.worldState.units) {
+      const unitDisplayObject = new UnitDisplayObject(this, unit.location, unit.hitPoints)
+      this.unitDisplayObjects.set(unit.id, unitDisplayObject)
+    }
 
     this.createTexts()
 
@@ -220,12 +233,13 @@ export class GameScene extends Phaser.Scene {
   private handlePointerDown = (pointer) => {
     const pressedPoint = { x: pointer.x, y: pointer.y }
     const hex = fromPoint(multiplyPoint(subtractPoints(pressedPoint, drawingOffset), 1 / hexSize))
-    switch (this.mode.type) {
+    const mode = this.mode
+    switch (mode.type) {
       case 'selectHex':
         this.handleSelectHex(hex)
         break
       case 'moveUnit':
-        this.handleMoveUnit(hex)
+        this.handleMoveUnit(hex, mode.unitId)
         break
     }
   }
@@ -249,23 +263,40 @@ export class GameScene extends Phaser.Scene {
   }
 
   private handleStartMove = () => {
-    if (this.selectedHex && this.selectedHex.equals(this.worldState.unit.location)) {
-      this.mode = { type: 'moveUnit' }
-      this.updateScene()
+    if (this.selectedHex) {
+      const unit = this.findUnitInLocation(this.selectedHex)
+      if (unit) {
+        this.mode = { type: 'moveUnit', unitId: unit.id }
+        this.updateScene()
+      }
     }
   }
 
-  private handleMoveUnit = (hex: Hex) => {
-    if (hex.equals(this.worldState.unit.location)) {
-      // abort if you click yourself
-      this.mode = { type: 'selectHex' }
-      this.updateScene()
-    } else if (hex.isAdjacentTo(this.worldState.unit.location) && isInBounds(hex, this.worldState.map)) {
-      const action: WorldAction = { type: 'moveUnit', to: hex }
-      this.server.handleAction(action)
-      this.selectedHex = undefined
-      this.mode = { type: 'selectHex' }
-      this.updateScene()
+  private findUnitById = (unitId: number): Unit | undefined =>
+    R.find((unit) => unit.id == unitId, this.worldState.units)
+
+  private findUnitInLocation = (hex: Hex): Unit | undefined =>
+    R.find((unit) => unit.location.equals(hex), this.worldState.units)
+
+  private handleMoveUnit = (hex: Hex, unitId: UnitId) => {
+    const unitInHex = this.findUnitInLocation(hex)
+    if (unitInHex) {
+      if (unitInHex.id == unitId) {
+        // abort if you click yourself
+        this.mode = { type: 'selectHex' }
+        this.updateScene()
+      } else {
+        // do nothing
+      }
+    } else {
+      const unit = this.findUnitById(unitId)!
+      if (hex.isAdjacentTo(unit.location) && isInBounds(hex, this.worldState.map)) {
+        const action: WorldAction = { type: 'moveUnit', unitId: unit.id, to: hex }
+        this.server.handleAction(action)
+        this.selectedHex = undefined
+        this.mode = { type: 'selectHex' }
+        this.updateScene()
+      }
     }
   }
 

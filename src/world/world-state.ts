@@ -5,7 +5,6 @@ export interface WorldMap {
   height: number
 }
 
-
 export const isInBounds = (hex: Hex, map: WorldMap): boolean => {
   const q = hex.x + Math.floor(hex.y / 2)
   return 0 <= q && q < map.width && 0 <= hex.y && hex.y < map.height
@@ -27,19 +26,30 @@ export interface HitPoints {
 }
 
 export interface Unit {
+  id: UnitId,
   location: Hex
   hitPoints: HitPoints
 }
 
 export interface WorldState {
   map: WorldMap
-  unit: Unit
+  units: Unit[]
 }
 
 export const INITIAL_WORLD_STATE: WorldState = {
   map: { width: 10, height: 6 },
-  unit: {
-    location: new Hex(1, 1),
-    hitPoints: { current: 73, max: 100 },
-  },
+  units: [
+    {
+      id: 1,
+      location: new Hex(1, 1),
+      hitPoints: { current: 73, max: 100 },
+    },
+    {
+      id: 2,
+      location: new Hex(6, 1),
+      hitPoints: { current: 100, max: 100 },
+    },
+  ],
 }
+
+export type UnitId = number
