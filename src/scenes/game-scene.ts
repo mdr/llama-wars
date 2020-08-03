@@ -1,7 +1,7 @@
 import { addPoints, multiplyPoint, Point, subtractPoints } from './point'
 import { Hex } from '../world/hex'
-import { centerPoint, fromPoint } from './hex-geometry'
-import { getMapHexes, INITIAL_WORLD_STATE, isInBounds, WorldState } from '../world/world-state'
+import { centerPoint, fromPoint, mapHeight } from './hex-geometry'
+import { getMapHexes, INITIAL_WORLD_STATE, isInBounds, WorldMap, WorldState } from '../world/world-state'
 import { Server } from '../server/server'
 import { WorldEvent } from '../world/world-events'
 import { applyEvent } from '../world/world-event-evaluator'
@@ -86,7 +86,7 @@ export class GameScene extends Phaser.Scene {
       case 'selectHex':
         if (this.selectedHex && this.selectedHex.equals(this.worldState.unitLocation)) {
           this.selectionText.setText('Walter - Llama warrior')
-          this.actionText.setText('[M]ove')
+          this.actionText.setText('M - Move')
         } else {
           this.selectionText.setText('')
           this.actionText.setText('')
@@ -130,52 +130,59 @@ export class GameScene extends Phaser.Scene {
   }
 
   public create(): void {
+    // this.scale.startFullscreen();
     const { map, unitLocation } = this.worldState
-    for (let hex of getMapHexes(this.worldState.map)) {
+    this.createMap(map)
+    const unitPoint = this.hexCenter(unitLocation)
+    this.unitImage = this.add.image(unitPoint.x, unitPoint.y, 'llama').setScale(0.9)
+    this.createTexts()
+
+    this.input.mouse.disableContextMenu()
+    this.input.keyboard.on('keydown-ESC', this.handleAbortMove)
+    this.input.keyboard.on('keydown-M', this.handleMKey)
+    this.input.on('pointerdown', this.handlePointerDown)
+  }
+
+  private createTexts = () => {
+    const map = this.worldState.map
+    this.selectionText = this.add.text(50, mapHeight(map) * hexSize + 50, '')
+    this.actionText = this.add.text(50, mapHeight(map) * hexSize + 75, '', { fill: actionTextColour }).setInteractive()
+      .on('pointerdown', () => this.handleActionTextClick())
+      .on('pointerover', () => this.actionText.setFill(highlighedActonTextColour))
+      .on('pointerout', () => this.actionText.setFill(actionTextColour))
+  }
+
+  private createMap = (map: WorldMap) => {
+    for (let hex of getMapHexes(map)) {
       const polygonCenter = this.hexCenter(hex)
       const polygon = this.addPolygon(polygonCenter, hexSize, defaultTileColour)
       this.hexPolygons.set(hex.toString(), polygon)
     }
-    this.selectionText = this.add.text(50, map.height * hexSize * 3 / 2 + 50, '')
-    const unitPoint = this.hexCenter(unitLocation)
-    this.unitImage = this.add.image(unitPoint.x, unitPoint.y, 'llama').setScale(0.9)
-
-    this.actionText = this.add.text(50, map.height * hexSize * 3 / 2 + 75, '', { fill: actionTextColour }).setInteractive()
-      .on('pointerdown', () => this.handleActionTextClick())
-      .on('pointerover', () => this.actionText.setFill(highlighedActonTextColour))
-      .on('pointerout', () => this.actionText.setFill(actionTextColour))
-
-    this.input.mouse.disableContextMenu()
-
-    this.input.keyboard.on('keydown-ESC', () => {
-      this.handleAbortMove()
-    })
-    this.input.keyboard.on('keydown-M', () => {
-      switch (this.mode.type) {
-        case 'selectHex':
-          this.handleStartMove()
-          break
-        default:
-      }
-    })
-
-    this.input.on('pointerdown', (pointer) => {
-      const pressedPoint = { x: pointer.x, y: pointer.y }
-      const hex = fromPoint(multiplyPoint(subtractPoints(pressedPoint, drawingOffset), 1 / hexSize))
-
-      switch (this.mode.type) {
-        case 'selectHex':
-          this.handleSelectHex(hex)
-          break
-        case 'moveUnit':
-          this.handleMoveUnit(hex)
-          break
-      }
-    })
-
   }
 
-  private handleAbortMove() {
+  private handleMKey = () => {
+    switch (this.mode.type) {
+      case 'selectHex':
+        this.handleStartMove()
+        break
+      default:
+    }
+  }
+
+  private handlePointerDown = (pointer) => {
+    const pressedPoint = { x: pointer.x, y: pointer.y }
+    const hex = fromPoint(multiplyPoint(subtractPoints(pressedPoint, drawingOffset), 1 / hexSize))
+    switch (this.mode.type) {
+      case 'selectHex':
+        this.handleSelectHex(hex)
+        break
+      case 'moveUnit':
+        this.handleMoveUnit(hex)
+        break
+    }
+  }
+
+  private handleAbortMove = () => {
     if (this.mode.type == 'moveUnit') {
       this.mode = { type: 'selectHex' }
       this.updateScene()

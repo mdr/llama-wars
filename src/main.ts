@@ -1,5 +1,5 @@
-import * as Phaser from 'phaser';
-import Scenes from './scenes';
+import * as Phaser from 'phaser'
+import Scenes from './scenes'
 
 const gameConfig: Phaser.Types.Core.GameConfig = {
   title: 'Sample',
@@ -22,10 +22,11 @@ const gameConfig: Phaser.Types.Core.GameConfig = {
 
   parent: 'game',
   backgroundColor: '#000000',
-};
+}
 
-export const game = new Phaser.Game(gameConfig);
+export const game = new Phaser.Game(gameConfig)
 
 window.addEventListener('resize', () => {
-  game.scale.refresh();
-});
+  game.scale.setGameSize(window.innerWidth, window.innerHeight)
+  game.scale.refresh()
+})

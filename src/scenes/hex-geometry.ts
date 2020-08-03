@@ -1,5 +1,6 @@
 import { Hex } from '../world/hex'
 import { Point } from './point'
+import { WorldMap } from '../world/world-state'
 
 export const centerPoint = (hex: Hex): Point =>
   ({
@@ -29,3 +30,5 @@ const round = (hex: Hex): Hex => {
   else
     return new Hex(rx, ry)
 }
+
+export const mapHeight = (map: WorldMap): number => map.height * 3 / 2
