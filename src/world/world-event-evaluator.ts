@@ -11,6 +11,7 @@ export const applyEvent = (state: WorldState, event: WorldEvent): WorldState => 
       if (!isInBounds(event.to, state.map)) {
         throw `Invalid unit movement to out-of-bounds hex ${event.to}`
       }
-      return { ...state, unitLocation: event.to }
+      const unit = { ...state.unit, location: event.to }
+      return { ...state, unit }
   }
 }

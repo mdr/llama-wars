@@ -22,7 +22,7 @@ export class Server {
   public handleAction = (action: WorldAction): void => {
     switch (action.type) {
       case 'moveUnit':
-        const from = this.worldState.unitLocation
+        const from = this.worldState.unit.location
         const to = action.to
         if (!from.isAdjacentTo(to)) {
           throw `Invalid unit movement between non-adjacent hexes ${from} to ${to}`
