@@ -53,7 +53,7 @@ class UnitDisplayObject {
   constructor(scene: Phaser.Scene, hex: Hex) {
     this.scene = scene
     this.hex = hex
-    this.image = scene.add.image(0, 0, 'llama').setScale(0.8)
+    this.image = scene.add.image(0, 0, 'llama').setScale(0.8).setTint(0xffbbbb)
     this.healthBarGraphics = scene.add.graphics()
   }
 
