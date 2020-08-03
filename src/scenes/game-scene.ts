@@ -7,6 +7,7 @@ import { WorldEvent } from '../world/world-events'
 import { applyEvent } from '../world/world-event-evaluator'
 import Polygon = Phaser.GameObjects.Polygon
 import { WorldAction } from '../world/world-actions'
+import Color = Phaser.Display.Color
 
 const sceneConfig: Phaser.Types.Scenes.SettingsConfig = {
   active: false,
@@ -43,11 +44,19 @@ function* hexCorners(center: Point, size: number): IterableIterator<Point> {
   }
 }
 
-const selectedTileColour = 0xffff44
-const defaultTileColour = 0xa1fd5e
-const movableTileColour = 0xd1ff8e
+const colourNumber = (colourString: string): number => Color.HexStringToColor(colourString).color
+
+const defaultTileColour = colourNumber("#ccffbe")
+const selectedTileColour = colourNumber("#fffd08")
+const movableTileColour = colourNumber("#dcffd1")
 const actionTextColour = '#cccc00'
-const highlighedActonTextColour = '#ffff00'
+const highlightedActionTextColour = '#ffff00'
+const healthBorderColour = colourNumber("#000000")
+const healthEmptyColour = colourNumber("#ffffff")
+const healthFullColour = colourNumber("#4df037")
+
+
+
 const hexSize = 48
 const drawingOffset = { x: 60, y: 60 }
 
@@ -59,10 +68,11 @@ export class GameScene extends Phaser.Scene {
   private mode: Mode = { type: 'selectHex' }
   private selectedHex?: Hex
 
+  private hexPolygons: Map<String, Phaser.GameObjects.Polygon> = new Map<String, Phaser.GameObjects.Polygon>()
+  private unitImage: Phaser.GameObjects.Image
+  private healthBarGraphics: Phaser.GameObjects.Graphics
   private selectionText: Phaser.GameObjects.Text
   private actionText: Phaser.GameObjects.Text
-  private unitImage: Phaser.GameObjects.Image
-  private hexPolygons: Map<String, Phaser.GameObjects.Polygon> = new Map<String, Phaser.GameObjects.Polygon>()
 
   constructor() {
     super(sceneConfig)
@@ -80,7 +90,15 @@ export class GameScene extends Phaser.Scene {
     }
     if (this.worldState.unitLocation) {
       const unitPoint = this.hexCenter(this.worldState.unitLocation)
-      this.unitImage.setPosition(unitPoint.x, unitPoint.y)
+      this.unitImage.setPosition(unitPoint.x, unitPoint.y + 4)
+      this.healthBarGraphics.setPosition(unitPoint.x - 25, unitPoint.y - 40)
+      this.healthBarGraphics.clear()
+      this.healthBarGraphics.fillStyle(healthBorderColour)
+      this.healthBarGraphics.fillRect(0, 0, 50, 12)
+      this.healthBarGraphics.fillStyle(healthEmptyColour)
+      this.healthBarGraphics.fillRect(2, 2, 46, 8)
+      this.healthBarGraphics.fillStyle(healthFullColour)
+      this.healthBarGraphics.fillRect(2, 2, 36, 8)
     }
     switch (this.mode.type) {
       case 'selectHex':
@@ -111,12 +129,18 @@ export class GameScene extends Phaser.Scene {
       case 'unitMoved':
         const beforeCoords = this.hexCenter(event.from)
         const afterCoords = this.hexCenter(event.to)
-        // this.updateScene()
         this.unitImage.setFlipX(afterCoords.x < beforeCoords.x)
         this.tweens.add({
           targets: this.unitImage,
           x: { from: beforeCoords.x, to: afterCoords.x },
-          y: { from: beforeCoords.y, to: afterCoords.y },
+          y: { from: beforeCoords.y + 4, to: afterCoords.y + 4 },
+          duration: 500,
+          ease: 'Cubic',
+        })
+        this.tweens.add({
+          targets: this.healthBarGraphics,
+          x: { from: beforeCoords.x - 25, to: afterCoords.x - 25 },
+          y: { from: beforeCoords.y - 40, to: afterCoords.y - 40 },
           duration: 500,
           ease: 'Cubic',
         })
@@ -133,14 +157,16 @@ export class GameScene extends Phaser.Scene {
     // this.scale.startFullscreen();
     const { map, unitLocation } = this.worldState
     this.createMap(map)
-    const unitPoint = this.hexCenter(unitLocation)
-    this.unitImage = this.add.image(unitPoint.x, unitPoint.y, 'llama').setScale(0.9)
+    this.unitImage = this.add.image(0, 0, 'llama').setScale(0.8)
+    this.healthBarGraphics = this.add.graphics()
+
     this.createTexts()
 
     this.input.mouse.disableContextMenu()
     this.input.keyboard.on('keydown-ESC', this.handleAbortMove)
     this.input.keyboard.on('keydown-M', this.handleMKey)
     this.input.on('pointerdown', this.handlePointerDown)
+    this.updateScene()
   }
 
   private createTexts = () => {
@@ -148,7 +174,7 @@ export class GameScene extends Phaser.Scene {
     this.selectionText = this.add.text(50, mapHeight(map) * hexSize + 50, '')
     this.actionText = this.add.text(50, mapHeight(map) * hexSize + 75, '', { fill: actionTextColour }).setInteractive()
       .on('pointerdown', () => this.handleActionTextClick())
-      .on('pointerover', () => this.actionText.setFill(highlighedActonTextColour))
+      .on('pointerover', () => this.actionText.setFill(highlightedActionTextColour))
       .on('pointerout', () => this.actionText.setFill(actionTextColour))
   }
 
