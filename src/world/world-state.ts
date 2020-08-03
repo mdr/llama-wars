@@ -28,6 +28,7 @@ export interface HitPoints {
 
 export interface Unit {
   id: UnitId,
+  player: PlayerId
   name: string,
   location: Hex
   hitPoints: HitPoints
@@ -49,17 +50,27 @@ export const INITIAL_WORLD_STATE: WorldState = {
   units: [
     {
       id: 1,
+      player: 1,
       name: 'Walter',
       location: new Hex(1, 1),
       hitPoints: { current: 73, max: 100 },
     },
     {
       id: 2,
+      player: 1,
       name: 'Becky',
       location: new Hex(0, 3),
+      hitPoints: { current: 100, max: 100 },
+    },
+    {
+      id: 3,
+      player: 2,
+      name: 'Chewpaca',
+      location: new Hex(7, 2),
       hitPoints: { current: 100, max: 100 },
     },
   ],
 }
 
 export type UnitId = number
+export type PlayerId = number

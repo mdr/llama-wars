@@ -7,7 +7,7 @@ import {
   getMapHexes,
   HitPoints,
   INITIAL_WORLD_STATE,
-  isInBounds,
+  isInBounds, PlayerId,
   Unit,
   UnitId,
   WorldState,
@@ -59,15 +59,17 @@ class UnitDisplayObject {
   private readonly healthBarGraphics: Phaser.GameObjects.Graphics
   private hex: Hex
   private hitPoints: HitPoints
+  private readonly player: PlayerId
 
   private static IMAGE_OFFSET = 4
   private static HEALTH_BAR_OFFSET = { x: 25, y: 40 }
 
-  constructor(scene: Phaser.Scene, hex: Hex, hitPoints: HitPoints) {
+  constructor(scene: Phaser.Scene, hex: Hex, hitPoints: HitPoints, player: PlayerId) {
     this.scene = scene
     this.hex = hex
     this.hitPoints = hitPoints
-    this.image = scene.add.image(0, 0, 'llama').setScale(0.8).setTint(0xffbbbb)
+    this.player = player
+    this.image = scene.add.image(0, 0, 'llama').setScale(0.8).setTint(this.player == 1 ? 0xffbbbb : 0xbbbbff)
     this.healthBarGraphics = scene.add.graphics()
   }
 
@@ -81,7 +83,7 @@ class UnitDisplayObject {
     const barHeight = 12
     const borderThickness = 2
     const innerWidth = barWidth - 2 * borderThickness
-    let innerHeight = barHeight - 2 * borderThickness
+    const innerHeight = barHeight - 2 * borderThickness
     this.healthBarGraphics.fillRect(0, 0, barWidth, barHeight)
     this.healthBarGraphics.fillStyle(healthEmptyColour)
     this.healthBarGraphics.fillRect(borderThickness, borderThickness, innerWidth, innerHeight)
@@ -203,7 +205,7 @@ export class GameScene extends Phaser.Scene {
     // this.scale.startFullscreen();
     this.createMap()
     for (const unit of this.worldState.units) {
-      const unitDisplayObject = new UnitDisplayObject(this, unit.location, unit.hitPoints)
+      const unitDisplayObject = new UnitDisplayObject(this, unit.location, unit.hitPoints, unit.player)
       this.unitDisplayObjects.set(unit.id, unitDisplayObject)
     }
 
