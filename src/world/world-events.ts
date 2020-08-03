@@ -1,8 +1,9 @@
 import { Hex } from './hex'
-import { UnitId } from './world-state'
+import { PlayerId, UnitId } from './world-state'
 
 export interface UnitMovedWorldEvent {
   type: 'unitMoved'
+  playerId: PlayerId,
   unitId: UnitId
   from: Hex
   to: Hex

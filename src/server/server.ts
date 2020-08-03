@@ -1,8 +1,14 @@
-import { findUnitById, findUnitInLocation, INITIAL_WORLD_STATE, isInBounds, WorldState } from '../world/world-state'
+import {
+  findUnitById,
+  findUnitInLocation,
+  INITIAL_WORLD_STATE,
+  isInBounds,
+  PlayerId,
+  WorldState,
+} from '../world/world-state'
 import { MoveUnitWorldAction, WorldAction } from '../world/world-actions'
 import { applyEvent } from '../world/world-event-evaluator'
 import { UnitMovedWorldEvent, WorldEvent } from '../world/world-events'
-import * as R from 'ramda'
 
 export type WorldEventListener = (event: WorldEvent) => void
 
@@ -20,14 +26,14 @@ export class Server {
     }
   }
 
-  public handleAction = (action: WorldAction): void => {
+  public handleAction = (playerId: PlayerId, action: WorldAction): void => {
     switch (action.type) {
       case 'moveUnit':
-        this.handleMoveUnit(action)
+        this.handleMoveUnit(playerId, action)
     }
   }
 
-  private handleMoveUnit = (action: MoveUnitWorldAction) => {
+  private handleMoveUnit = (playerId: PlayerId, action: MoveUnitWorldAction) => {
     const { unitId, to } = action
     const unit = findUnitById(unitId, this.worldState)
     if (!unit) {
@@ -43,7 +49,7 @@ export class Server {
     if (findUnitInLocation(to, this.worldState)) {
       throw `Invalid unit movement to already-occupied hex`
     }
-    const event: UnitMovedWorldEvent = { type: 'unitMoved', unitId, from, to }
+    const event: UnitMovedWorldEvent = { type: 'unitMoved', playerId: playerId, unitId, from, to }
     this.worldState = applyEvent(this.worldState, event)
     this.notifyListeners(event)
   }

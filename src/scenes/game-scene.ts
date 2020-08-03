@@ -128,6 +128,7 @@ export class GameScene extends Phaser.Scene {
 
   private worldState: WorldState = INITIAL_WORLD_STATE
 
+  private playerId: PlayerId = 1
   private mode: Mode = { type: 'selectHex' }
   private selectedHex?: Hex
 
@@ -164,7 +165,9 @@ export class GameScene extends Phaser.Scene {
           const unit = this.findUnitInLocation(this.selectedHex)
           if (unit) {
             this.selectionText.setText(`${unit.name} - Llama warrior - HP ${unit.hitPoints.current}/${unit.hitPoints.max} `)
-            this.actionText.setText('M - Move')
+            if (unit.playerId == this.playerId) {
+              this.actionText.setText('M - Move')
+            }
           }
         }
         break
@@ -205,7 +208,7 @@ export class GameScene extends Phaser.Scene {
     // this.scale.startFullscreen();
     this.createMap()
     for (const unit of this.worldState.units) {
-      const unitDisplayObject = new UnitDisplayObject(this, unit.location, unit.hitPoints, unit.player)
+      const unitDisplayObject = new UnitDisplayObject(this, unit.location, unit.hitPoints, unit.playerId)
       this.unitDisplayObjects.set(unit.id, unitDisplayObject)
     }
 
@@ -240,7 +243,8 @@ export class GameScene extends Phaser.Scene {
       case 'selectHex':
         this.handleStartMove()
         break
-      default:
+      case 'moveUnit':
+        break
     }
   }
 
@@ -279,7 +283,7 @@ export class GameScene extends Phaser.Scene {
   private handleStartMove = () => {
     if (this.selectedHex) {
       const unit = this.findUnitInLocation(this.selectedHex)
-      if (unit) {
+      if (unit && unit.playerId == this.playerId) {
         this.mode = { type: 'moveUnit', unitId: unit.id }
         this.updateScene()
       }
@@ -304,7 +308,7 @@ export class GameScene extends Phaser.Scene {
       const unit = this.findUnitById(unitId)!
       if (hex.isAdjacentTo(unit.location) && isInBounds(hex, this.worldState.map)) {
         const action: WorldAction = { type: 'moveUnit', unitId: unit.id, to: hex }
-        this.server.handleAction(action)
+        this.server.handleAction(this.playerId, action)
         this.selectedHex = undefined
         this.mode = { type: 'selectHex' }
         this.updateScene()

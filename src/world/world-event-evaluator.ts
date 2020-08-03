@@ -10,7 +10,7 @@ export const applyEvent = (state: WorldState, event: WorldEvent): WorldState => 
 }
 
 const handleUnitMoved = (state: WorldState, event: UnitMovedWorldEvent): WorldState => {
-  const { unitId, from, to } = event
+  const { unitId, playerId, from, to } = event
   if (!from.isAdjacentTo(to)) {
     throw `Invalid unit movement between non-adjacent hexes ${from} to ${to}`
   }
@@ -26,6 +26,9 @@ const handleUnitMoved = (state: WorldState, event: UnitMovedWorldEvent): WorldSt
   }
   if (findUnitInLocation(to, state)) {
     throw `Invalid unit movement to already-occupied hex`
+  }
+  if (unit.playerId != playerId) {
+    throw `Invalid attempt to move unit of another player`
   }
   const updatedUnit: Unit = { ...unit, location: to }
   const updatedUnits = R.append(updatedUnit, R.filter((unit) => unit.id != unitId, state.units))
