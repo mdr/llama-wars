@@ -1,6 +1,6 @@
 import { addPoints, multiplyPoint, Point, subtractPoints } from './point'
 import { Hex } from '../world/hex'
-import { centerPoint, fromPoint, hexCorners, mapHeight } from './hex-geometry'
+import { centerPoint, fromPoint, hexCorners, hexWidth, mapHeight } from './hex-geometry'
 import {
   findUnitById,
   findUnitInLocation,
@@ -124,7 +124,7 @@ class UnitDisplayObject {
 }
 
 export class GameScene extends Phaser.Scene {
-  private server: Server = new Server()
+  private readonly server: Server = new Server()
 
   private worldState: WorldState = INITIAL_WORLD_STATE
 
@@ -135,11 +135,62 @@ export class GameScene extends Phaser.Scene {
   private hexPolygons: Map<String, Phaser.GameObjects.Polygon> = new Map<String, Phaser.GameObjects.Polygon>()
   private selectionText: Phaser.GameObjects.Text
   private actionText: Phaser.GameObjects.Text
+  private endTurnText: Phaser.GameObjects.Text
   private unitDisplayObjects: Map<UnitId, UnitDisplayObject> = new Map()
 
   constructor() {
     super(sceneConfig)
     this.server.addListener(this.handleWorldEvent)
+  }
+
+  public create(): void {
+    // this.scale.startFullscreen();
+    this.createMap()
+    for (const unit of this.worldState.units) {
+      const unitDisplayObject = new UnitDisplayObject(this, unit.location, unit.hitPoints, unit.playerId)
+      this.unitDisplayObjects.set(unit.id, unitDisplayObject)
+    }
+
+    this.createTexts()
+
+    this.input.mouse.disableContextMenu()
+    this.input.keyboard.on('keydown-ESC', this.handleAbortMove)
+    this.input.keyboard.on('keydown-M', this.handleMKey)
+    this.input.on('pointerdown', this.handlePointerDown)
+    this.updateScene()
+  }
+
+  private createTexts = () => {
+    const map = this.worldState.map
+    this.selectionText = this.add.text(drawingOffset.x - hexWidth(hexSize) / 2, mapHeight(map) * hexSize + 50, '')
+    this.actionText = this.add.text(drawingOffset.x - hexWidth(hexSize) / 2, mapHeight(map) * hexSize + 75, '', { fill: actionTextColour }).setInteractive()
+      .on('pointerdown', this.handleActionTextClick)
+      .on('pointerover', () => this.actionText.setFill(highlightedActionTextColour))
+      .on('pointerout', () => this.actionText.setFill(actionTextColour))
+    this.endTurnText = this.add.text(800, mapHeight(map) * hexSize + 50, 'End Turn', { fill: actionTextColour }).setInteractive()
+      .on('pointerdown', this.handleEndTurn)
+      .on('pointerover', () => this.endTurnText.setFill(highlightedActionTextColour))
+      .on('pointerout', () => this.endTurnText.setFill(actionTextColour))
+  }
+
+  private handleEndTurn = () => {
+    this.playerId = this.playerId == 1 ? 2 : 1
+    this.mode = { type: 'selectHex' }
+    this.selectedHex = undefined
+    this.updateScene()
+  }
+
+  private createMap = () => {
+    for (const hex of getMapHexes(this.worldState.map)) {
+      const polygonCenter = this.hexCenter(hex)
+      const polygon = this.addPolygon(polygonCenter, hexSize, defaultTileColour)
+      this.hexPolygons.set(hex.toString(), polygon)
+    }
+  }
+
+  private addPolygon(center: Point, size: number, colour: number): Phaser.GameObjects.Polygon {
+    const vertices = [...hexCorners(point(0, 0), size)]
+    return this.add.polygon(center.x, center.y, vertices, colour).setOrigin(0, 0).setStrokeStyle(3, 0x000000)
   }
 
   private updateScene = () => {
@@ -195,46 +246,6 @@ export class GameScene extends Phaser.Scene {
           throw 'Could not find unit with ID ' + unitId
         unitDisplayObject.move(from, to)
         break
-    }
-  }
-
-
-  private addPolygon(center: Point, size: number, colour: number): Phaser.GameObjects.Polygon {
-    const vertices = [...hexCorners(point(0, 0), size)]
-    return this.add.polygon(center.x, center.y, vertices, colour).setOrigin(0, 0).setStrokeStyle(3, 0x000000)
-  }
-
-  public create(): void {
-    // this.scale.startFullscreen();
-    this.createMap()
-    for (const unit of this.worldState.units) {
-      const unitDisplayObject = new UnitDisplayObject(this, unit.location, unit.hitPoints, unit.playerId)
-      this.unitDisplayObjects.set(unit.id, unitDisplayObject)
-    }
-
-    this.createTexts()
-
-    this.input.mouse.disableContextMenu()
-    this.input.keyboard.on('keydown-ESC', this.handleAbortMove)
-    this.input.keyboard.on('keydown-M', this.handleMKey)
-    this.input.on('pointerdown', this.handlePointerDown)
-    this.updateScene()
-  }
-
-  private createTexts = () => {
-    const map = this.worldState.map
-    this.selectionText = this.add.text(50, mapHeight(map) * hexSize + 50, '')
-    this.actionText = this.add.text(50, mapHeight(map) * hexSize + 75, '', { fill: actionTextColour }).setInteractive()
-      .on('pointerdown', () => this.handleActionTextClick())
-      .on('pointerover', () => this.actionText.setFill(highlightedActionTextColour))
-      .on('pointerout', () => this.actionText.setFill(actionTextColour))
-  }
-
-  private createMap = () => {
-    for (const hex of getMapHexes(this.worldState.map)) {
-      const polygonCenter = this.hexCenter(hex)
-      const polygon = this.addPolygon(polygonCenter, hexSize, defaultTileColour)
-      this.hexPolygons.set(hex.toString(), polygon)
     }
   }
 

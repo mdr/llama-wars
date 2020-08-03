@@ -48,3 +48,6 @@ export function* hexCorners(center: Point, size: number): IterableIterator<Point
 }
 
 export const mapHeight = (map: WorldMap): number => map.height * 3 / 2
+
+export const hexWidth = (hexSize: number): number => hexSize * Math.sqrt(3)
+
