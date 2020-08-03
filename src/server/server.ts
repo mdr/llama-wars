@@ -1,4 +1,4 @@
-import { INITIAL_WORLD_STATE, isInBounds, WorldState } from '../world/world-state'
+import { findUnitById, findUnitInLocation, INITIAL_WORLD_STATE, isInBounds, WorldState } from '../world/world-state'
 import { MoveUnitWorldAction, WorldAction } from '../world/world-actions'
 import { applyEvent } from '../world/world-event-evaluator'
 import { UnitMovedWorldEvent, WorldEvent } from '../world/world-events'
@@ -29,7 +29,7 @@ export class Server {
 
   private handleMoveUnit = (action: MoveUnitWorldAction) => {
     const { unitId, to } = action
-    const unit = R.find((unit) => unit.id == unitId, this.worldState.units)
+    const unit = findUnitById(unitId, this.worldState)
     if (!unit) {
       throw `No unit found with ID ${unitId}`
     }
@@ -39,6 +39,9 @@ export class Server {
     }
     if (!isInBounds(to, this.worldState.map)) {
       throw `Invalid unit movement to out-of-bounds hex ${to}`
+    }
+    if (findUnitInLocation(to, this.worldState)) {
+      throw `Invalid unit movement to already-occupied hex`
     }
     const event: UnitMovedWorldEvent = { type: 'unitMoved', unitId, from, to }
     this.worldState = applyEvent(this.worldState, event)

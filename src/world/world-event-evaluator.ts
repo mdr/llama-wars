@@ -1,4 +1,4 @@
-import { isInBounds, Unit, WorldState } from './world-state'
+import { findUnitById, findUnitInLocation, isInBounds, Unit, WorldState } from './world-state'
 import { UnitMovedWorldEvent, WorldEvent } from './world-events'
 import * as R from 'ramda'
 
@@ -17,9 +17,15 @@ const handleUnitMoved = (state: WorldState, event: UnitMovedWorldEvent): WorldSt
   if (!isInBounds(to, state.map)) {
     throw `Invalid unit movement to out-of-bounds hex ${to}`
   }
-  const unit = R.find((unit) => unit.id == unitId, state.units)
+  const unit = findUnitById(unitId, state)
   if (!unit) {
     throw `No unit found with ID ${unitId}`
+  }
+  if (findUnitInLocation(from, state)?.id != unitId) {
+    throw `Invalid from location for unit movement`
+  }
+  if (findUnitInLocation(to, state)) {
+    throw `Invalid unit movement to already-occupied hex`
   }
   const updatedUnit: Unit = { ...unit, location: to }
   const updatedUnits = R.append(updatedUnit, R.filter((unit) => unit.id != unitId, state.units))

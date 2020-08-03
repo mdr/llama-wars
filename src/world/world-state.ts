@@ -1,4 +1,5 @@
 import { Hex } from './hex'
+import * as R from 'ramda'
 
 export interface WorldMap {
   width: number
@@ -31,6 +32,12 @@ export interface Unit {
   location: Hex
   hitPoints: HitPoints
 }
+
+export const findUnitById = (unitId: UnitId, state: WorldState): Unit | undefined =>
+  R.find((unit) => unit.id == unitId, state.units)
+
+export const findUnitInLocation = (hex: Hex, state: WorldState): Unit | undefined =>
+  R.find((unit) => unit.location.equals(hex), state.units)
 
 export interface WorldState {
   map: WorldMap

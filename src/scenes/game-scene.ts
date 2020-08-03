@@ -1,14 +1,23 @@
 import { addPoints, multiplyPoint, Point, subtractPoints } from './point'
 import { Hex } from '../world/hex'
 import { centerPoint, fromPoint, hexCorners, mapHeight } from './hex-geometry'
-import { getMapHexes, HitPoints, INITIAL_WORLD_STATE, isInBounds, Unit, UnitId, WorldState } from '../world/world-state'
+import {
+  findUnitById,
+  findUnitInLocation,
+  getMapHexes,
+  HitPoints,
+  INITIAL_WORLD_STATE,
+  isInBounds,
+  Unit,
+  UnitId,
+  WorldState,
+} from '../world/world-state'
 import { Server } from '../server/server'
 import { WorldEvent } from '../world/world-events'
 import { applyEvent } from '../world/world-event-evaluator'
 import Polygon = Phaser.GameObjects.Polygon
 import { WorldAction } from '../world/world-actions'
 import Color = Phaser.Display.Color
-import * as R from 'ramda'
 
 const sceneConfig: Phaser.Types.Scenes.SettingsConfig = {
   active: false,
@@ -275,11 +284,9 @@ export class GameScene extends Phaser.Scene {
     }
   }
 
-  private findUnitById = (unitId: number): Unit | undefined =>
-    R.find((unit) => unit.id == unitId, this.worldState.units)
+  private findUnitById = (unitId: number): Unit | undefined => findUnitById(unitId, this.worldState)
 
-  private findUnitInLocation = (hex: Hex): Unit | undefined =>
-    R.find((unit) => unit.location.equals(hex), this.worldState.units)
+  private findUnitInLocation = (hex: Hex): Unit | undefined => findUnitInLocation(hex, this.worldState)
 
   private handleMoveUnit = (hex: Hex, unitId: UnitId) => {
     const unitInHex = this.findUnitInLocation(hex)
