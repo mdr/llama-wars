@@ -1,6 +1,6 @@
-import { addPoints, multiplyPoint, point, Point, subtractPoints } from './point'
+import { addPoints, multiplyPoint, subtractPoints } from './point'
 import { Hex } from '../world/hex'
-import { centerPoint, fromPoint, hexCorners, hexWidth, mapHeight } from './hex-geometry'
+import { centerPoint, fromPoint, hexWidth, mapHeight } from './hex-geometry'
 import { INITIAL_WORLD_STATE, PlayerId, WorldState } from '../world/world-state'
 import { Server } from '../server/server'
 import { WorldEvent } from '../world/world-events'
@@ -8,16 +8,10 @@ import { applyEvent } from '../world/world-event-evaluator'
 import { WorldAction } from '../world/world-actions'
 import { Unit, UnitId } from '../world/unit'
 import { UnitDisplayObject } from './unit-display-object'
-import Polygon = Phaser.GameObjects.Polygon
-import {
-  ACTION_TEXT_COLOUR,
-  DEFAULT_TILE_COLOUR,
-  HOVER_ACTION_TEXT_COLOUR, HOVER_TARGETABLE_TILE_COLOUR, HOVER_SELECTED_TILE_COLOUR, HOVER_DEFAULT_TILE_COLOUR,
-  TARGETABLE_TILE_COLOUR,
-  SELECTED_TILE_COLOUR, ColourNumber,
-} from './colours'
+import { ACTION_TEXT_COLOUR, HOVER_ACTION_TEXT_COLOUR } from './colours'
 import { Mode } from './mode'
 import { UnreachableCaseError } from '../util/unreachable-case-error'
+import { MapDisplayObject } from './map-display-object'
 
 const sceneConfig: Phaser.Types.Scenes.SettingsConfig = {
   active: false,
@@ -25,10 +19,10 @@ const sceneConfig: Phaser.Types.Scenes.SettingsConfig = {
   key: 'Game',
 }
 
-type TileState = 'default' | 'selected' | 'targetable'
+export type TileState = 'default' | 'selected' | 'targetable'
 
-const hexSize = 48
-const drawingOffset = { x: 60, y: 60 }
+export const hexSize = 48
+export const drawingOffset = { x: 60, y: 60 }
 export const hexCenter = (hex: Hex) => addPoints(multiplyPoint(centerPoint(hex), hexSize), drawingOffset)
 
 export class GameScene extends Phaser.Scene {
@@ -39,14 +33,12 @@ export class GameScene extends Phaser.Scene {
   private playerId: PlayerId = 1
   private mode: Mode = { type: 'selectHex' }
   private selectedHex?: Hex
-
-  private hexPolygons: Map<String, Phaser.GameObjects.Polygon> = new Map<String, Phaser.GameObjects.Polygon>()
   private selectionText: Phaser.GameObjects.Text
   private actionText: Phaser.GameObjects.Text
   private actionText2: Phaser.GameObjects.Text
   private endTurnText: Phaser.GameObjects.Text
+  private mapDisplayObject: MapDisplayObject
   private unitDisplayObjects: Map<UnitId, UnitDisplayObject> = new Map()
-  private previousHover?: Hex
 
   constructor() {
     super(sceneConfig)
@@ -55,7 +47,7 @@ export class GameScene extends Phaser.Scene {
 
   public create(): void {
     this.sound.add('attack')
-    this.createMap()
+    this.mapDisplayObject = new MapDisplayObject(this, this.worldState)
     this.worldState.units.forEach(this.createUnit)
     this.createTexts()
 
@@ -97,32 +89,11 @@ export class GameScene extends Phaser.Scene {
     this.syncScene()
   }
 
-  private createMap = () => {
-    for (const hex of this.worldState.map.getMapHexes()) {
-      const polygonCenter = hexCenter(hex)
-      const polygon = this.addPolygon(polygonCenter, hexSize)
-      this.hexPolygons.set(hex.toString(), polygon)
-    }
-  }
-
-  private addPolygon(center: Point, size: number): Phaser.GameObjects.Polygon {
-    const vertices = [...hexCorners(point(0, 0), size)]
-    return this.add.polygon(center.x, center.y, vertices)
-      .setOrigin(0, 0)
-      .setStrokeStyle(3, 0x000000)
-  }
-
   private syncScene = (): void => {
-    this.syncMap()
+    this.mapDisplayObject.stateUpdated(this.worldState, this.playerId, this.selectedHex, this.mode)
+    this.mapDisplayObject.syncScene()
     this.worldState.units.forEach(this.syncUnit)
     this.syncText()
-  }
-
-  private syncMap = (): void => {
-    for (const hex of this.worldState.map.getMapHexes()) {
-      const polygon = this.getHexPolygon(hex)
-      polygon.setFillStyle(this.calculateColour(hex))
-    }
   }
 
   private syncUnit = (unit: Unit): void => {
@@ -227,66 +198,8 @@ export class GameScene extends Phaser.Scene {
   }
 
   private handlePointerMove = (pointer) => {
-    const pressedPoint = { x: pointer.x, y: pointer.y }
-    const hex = fromPoint(multiplyPoint(subtractPoints(pressedPoint, drawingOffset), 1 / hexSize))
-    if (this.previousHover && this.previousHover.equals(hex))
-      return
-    if (this.previousHover) {
-      this.getHexPolygon(this.previousHover).setFillStyle(this.calculateColour(this.previousHover))
-      this.previousHover = undefined
-    }
-    if (this.worldState.map.isInBounds(hex)) {
-      this.getHexPolygon(hex).setFillStyle(this.calculateHoverColour(hex))
-      this.previousHover = hex
-    }
-  }
-
-  private calculateTileState = (hex: Hex): TileState => {
-    if (this.selectedHex && this.selectedHex.equals(hex)) {
-      return 'selected'
-    }
-    if (this.mode.type == 'moveUnit') {
-      if (hex.isAdjacentTo(this.selectedHex!) && !this.findUnitInLocation(hex)) {
-        return 'targetable'
-      }
-    }
-    if (this.mode.type == 'attack') {
-      if (hex.isAdjacentTo(this.selectedHex!)) {
-        const unit = this.findUnitInLocation(hex)
-        if (unit && unit.playerId != this.playerId) {
-          return 'targetable'
-        }
-      }
-    }
-    return 'default'
-  }
-
-  private calculateColour = (hex: Hex): ColourNumber => {
-    const tileState = this.calculateTileState(hex)
-    switch (tileState) {
-      case 'default':
-        return DEFAULT_TILE_COLOUR
-      case 'selected':
-        return SELECTED_TILE_COLOUR
-      case 'targetable':
-        return TARGETABLE_TILE_COLOUR
-      default:
-        throw new UnreachableCaseError(tileState)
-    }
-  }
-
-  private calculateHoverColour = (hex: Hex): ColourNumber => {
-    const tileState = this.calculateTileState(hex)
-    switch (tileState) {
-      case 'default':
-        return HOVER_DEFAULT_TILE_COLOUR
-      case 'selected':
-        return HOVER_SELECTED_TILE_COLOUR
-      case 'targetable':
-        return HOVER_TARGETABLE_TILE_COLOUR
-      default:
-        throw new UnreachableCaseError(tileState)
-    }
+    const pointerPoint = { x: pointer.x, y: pointer.y }
+    this.mapDisplayObject.handlePointerMove(pointerPoint)
   }
 
   private handlePointerDown = (pointer) => {
@@ -456,11 +369,5 @@ export class GameScene extends Phaser.Scene {
     }
   }
 
-  private getHexPolygon = (hex: Hex): Polygon => {
-    const polygon = this.hexPolygons.get(hex.toString())
-    if (!polygon)
-      throw `No polygon found for ${hex}`
-    return polygon
-  }
 }
 

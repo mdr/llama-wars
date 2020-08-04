@@ -1,6 +1,5 @@
 import { Hex } from '../world/hex'
-import { PlayerId } from '../world/world-state'
-import { HitPoints, Unit } from '../world/unit'
+import { Unit } from '../world/unit'
 import { hexCenter } from './game-scene'
 import { HEALTH_BORDER_COLOUR, HEALTH_EMPTY_COLOUR, HEALTH_FULL_COLOUR, PLAYER_1_TINT, PLAYER_2_TINT } from './colours'
 import { addPoints, Point } from './point'
@@ -14,9 +13,9 @@ const HEALTH_BAR_OFFSET = { x: -25, y: -40 }
 
 export class UnitDisplayObject {
   private readonly scene: Phaser.Scene
+  private unit: Unit
   private readonly image: Phaser.GameObjects.Image
   private readonly healthBarGraphics: Phaser.GameObjects.Graphics
-  private unit: Unit
 
   constructor(scene: Phaser.Scene, unit: Unit) {
     this.scene = scene
