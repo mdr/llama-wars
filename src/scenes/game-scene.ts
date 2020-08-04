@@ -1,7 +1,7 @@
 import { addPoints, multiplyPoint, subtractPoints } from './point'
 import { Hex } from '../world/hex'
 import { centerPoint, fromPoint, hexWidth, mapHeight } from './hex-geometry'
-import { INITIAL_WORLD_STATE, PlayerId, WorldState } from '../world/world-state'
+import { INITIAL_WORLD_STATE, WorldState } from '../world/world-state'
 import { Server } from '../server/server'
 import { WorldEvent } from '../world/world-events'
 import { applyEvent } from '../world/world-event-evaluator'
@@ -9,9 +9,10 @@ import { WorldAction } from '../world/world-actions'
 import { Unit, UnitId } from '../world/unit'
 import { UnitDisplayObject } from './unit-display-object'
 import { ACTION_TEXT_COLOUR, HOVER_ACTION_TEXT_COLOUR } from './colours'
-import { Mode } from './mode'
 import { UnreachableCaseError } from '../util/unreachable-case-error'
 import { MapDisplayObject } from './map-display-object'
+import { just, nothing, Option } from '../util/types'
+import { INITIAL_LOCAL_GAME_STATE, LocalGameState } from './local-game-state'
 
 const sceneConfig: Phaser.Types.Scenes.SettingsConfig = {
   active: false,
@@ -27,12 +28,8 @@ export const hexCenter = (hex: Hex) => addPoints(multiplyPoint(centerPoint(hex),
 
 export class GameScene extends Phaser.Scene {
   private readonly server: Server = new Server()
-
   private worldState: WorldState = INITIAL_WORLD_STATE
-
-  private playerId: PlayerId = 1
-  private mode: Mode = { type: 'selectHex' }
-  private selectedHex?: Hex
+  private localGameState: LocalGameState = INITIAL_LOCAL_GAME_STATE
   private selectionText: Phaser.GameObjects.Text
   private actionText: Phaser.GameObjects.Text
   private actionText2: Phaser.GameObjects.Text
@@ -45,9 +42,21 @@ export class GameScene extends Phaser.Scene {
     this.server.addListener(this.handleWorldEvent)
   }
 
+  private get mode() {
+    return this.localGameState.mode
+  }
+
+  private get selectedHex() {
+    return this.localGameState.selectedHex
+  }
+
+  private get playerId() {
+    return this.localGameState.playerId
+  }
+
   public create(): void {
     this.sound.add('attack')
-    this.mapDisplayObject = new MapDisplayObject(this, this.worldState)
+    this.mapDisplayObject = new MapDisplayObject(this, this.worldState, this.localGameState)
     this.worldState.units.forEach(this.createUnit)
     this.createTexts()
 
@@ -83,14 +92,12 @@ export class GameScene extends Phaser.Scene {
   }
 
   private handleEndTurn = () => {
-    this.playerId = this.playerId == 1 ? 2 : 1
-    this.mode = { type: 'selectHex' }
-    this.selectedHex = undefined
+    this.localGameState = this.localGameState.endTurn()
     this.syncScene()
   }
 
   private syncScene = (): void => {
-    this.mapDisplayObject.stateUpdated(this.worldState, this.playerId, this.selectedHex, this.mode)
+    this.mapDisplayObject.stateUpdated(this.worldState, this.localGameState)
     this.mapDisplayObject.syncScene()
     this.worldState.units.forEach(this.syncUnit)
     this.syncText()
@@ -224,7 +231,7 @@ export class GameScene extends Phaser.Scene {
   private handleEscape = (): void => {
     switch (this.mode.type) {
       case 'selectHex':
-        this.selectedHex = undefined
+        this.localGameState = this.localGameState.copy({ selectedHex: nothing })
         this.syncScene()
         break
       case 'attack':
@@ -240,14 +247,14 @@ export class GameScene extends Phaser.Scene {
 
   private handleAbortMove = () => {
     if (this.mode.type == 'moveUnit') {
-      this.mode = { type: 'selectHex' }
+      this.localGameState = this.localGameState.copy({ mode: { type: 'selectHex' } })
       this.syncScene()
     }
   }
 
   private handleAbortAttack = () => {
     if (this.mode.type == 'attack') {
-      this.mode = { type: 'selectHex' }
+      this.localGameState = this.localGameState.copy({ mode: { type: 'selectHex' } })
       this.syncScene()
     }
   }
@@ -267,6 +274,7 @@ export class GameScene extends Phaser.Scene {
         throw new UnreachableCaseError(this.mode)
     }
   }
+
 
   private handleActionText2Click = () => {
     switch (this.mode.type) {
@@ -288,7 +296,7 @@ export class GameScene extends Phaser.Scene {
     if (this.selectedHex) {
       const unit = this.findUnitInLocation(this.selectedHex)
       if (unit && unit.playerId == this.playerId) {
-        this.mode = { type: 'attack', from: this.selectedHex, unitId: unit.id }
+        this.localGameState = this.localGameState.copy({ mode: { type: 'attack', from: this.selectedHex, unitId: unit.id } })
         this.syncScene()
       }
     }
@@ -298,7 +306,7 @@ export class GameScene extends Phaser.Scene {
     if (this.selectedHex) {
       const unit = this.findUnitInLocation(this.selectedHex)
       if (unit && unit.playerId == this.playerId) {
-        this.mode = { type: 'moveUnit', from: this.selectedHex, unitId: unit.id }
+        this.localGameState = this.localGameState.copy({ mode: { type: 'moveUnit', from: this.selectedHex, unitId: unit.id } })
         this.syncScene()
       }
     }
@@ -312,19 +320,19 @@ export class GameScene extends Phaser.Scene {
     return unit
   }
 
-  private findUnitInLocation = (hex: Hex): Unit | undefined => this.worldState.findUnitInLocation(hex)
+  private findUnitInLocation = (hex: Hex): Option<Unit> => this.worldState.findUnitInLocation(hex)
 
   private handleAttack = (targetHex: Hex, unitId: UnitId) => {
     const targetUnit = this.findUnitInLocation(targetHex)
     if (targetUnit) {
       if (targetUnit.playerId == this.playerId) {
         // abort if you attack yourself
-        this.mode = { type: 'selectHex' }
+        this.localGameState = this.localGameState.copy({ mode: { type: 'selectHex' } })
         this.syncScene()
       } else {
         const action: WorldAction = { type: 'attack', unitId: unitId, target: targetHex }
         this.server.handleAction(this.playerId, action)
-        this.mode = { type: 'selectHex' }
+        this.localGameState = this.localGameState.copy({ mode: { type: 'selectHex' } })
         this.syncScene()
       }
     }
@@ -335,7 +343,7 @@ export class GameScene extends Phaser.Scene {
     if (unitInHex) {
       if (unitInHex.id == unitId) {
         // abort if you click yourself
-        this.mode = { type: 'selectHex' }
+        this.localGameState = this.localGameState.copy({ mode: { type: 'selectHex' } })
         this.syncScene()
       } else {
         // do nothing
@@ -345,8 +353,7 @@ export class GameScene extends Phaser.Scene {
       if (hex.isAdjacentTo(unit.location) && this.worldState.map.isInBounds(hex)) {
         const action: WorldAction = { type: 'moveUnit', unitId: unit.id, to: hex }
         this.server.handleAction(this.playerId, action)
-        this.selectedHex = hex
-        this.mode = { type: 'selectHex' }
+        this.localGameState = this.localGameState.copy({ mode: { type: 'selectHex' }, selectedHex: just(hex) })
         this.syncScene()
       }
     }
@@ -356,15 +363,15 @@ export class GameScene extends Phaser.Scene {
     if (!this.worldState.map.isInBounds(hex)) {
       // If click is out of bounds, deselect any selected hex
       if (this.selectedHex) {
-        this.selectedHex = undefined
+        this.localGameState = this.localGameState.copy({ selectedHex: nothing })
         this.syncScene()
       }
     } else if (this.selectedHex && this.selectedHex.equals(hex)) {
       // if selected hex is clicked, toggle selection off
-      this.selectedHex = undefined
+      this.localGameState = this.localGameState.copy({ selectedHex: nothing })
       this.syncScene()
     } else {
-      this.selectedHex = hex
+      this.localGameState = this.localGameState.copy({ selectedHex: just(hex) })
       this.syncScene()
     }
   }

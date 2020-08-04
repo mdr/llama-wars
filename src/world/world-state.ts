@@ -2,6 +2,7 @@ import { Hex } from './hex'
 import * as R from 'ramda'
 import { WorldMap } from './world-map'
 import { HitPoints, Unit, UnitId } from './unit'
+import { Option } from '../util/types'
 
 export class WorldState {
   readonly map: WorldMap
@@ -15,10 +16,10 @@ export class WorldState {
   public copy = ({ map = this.map, units = this.units }: { map?: WorldMap, units?: Unit[] } = {}): WorldState =>
     new WorldState({ map, units })
 
-  public findUnitById = (unitId: UnitId): Unit | undefined =>
+  public findUnitById = (unitId: UnitId): Option<Unit> =>
     R.find((unit) => unit.id == unitId, this.units)
 
-  public findUnitInLocation = (hex: Hex): Unit | undefined =>
+  public findUnitInLocation = (hex: Hex): Option<Unit> =>
     R.find((unit) => unit.location.equals(hex), this.units)
 
   public replaceUnit = (unitId: UnitId, unit: Unit): WorldState =>
