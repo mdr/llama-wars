@@ -2,8 +2,6 @@ import { addPoints, multiplyPoint, Point, subtractPoints } from './point'
 import { Hex } from '../world/hex'
 import { centerPoint, fromPoint, hexCorners, hexWidth, mapHeight } from './hex-geometry'
 import {
-  findUnitById,
-  findUnitInLocation,
   HitPoints,
   INITIAL_WORLD_STATE,
   PlayerId,
@@ -396,9 +394,9 @@ export class GameScene extends Phaser.Scene {
     }
   }
 
-  private findUnitById = (unitId: number): Unit | undefined => findUnitById(unitId, this.worldState)
+  private findUnitById = (unitId: number): Unit | undefined => this.worldState.findUnitById(unitId)
 
-  private findUnitInLocation = (hex: Hex): Unit | undefined => findUnitInLocation(hex, this.worldState)
+  private findUnitInLocation = (hex: Hex): Unit | undefined => this.worldState.findUnitInLocation(hex)
 
   private handleAttack = (targetHex: Hex, unitId: UnitId) => {
     const targetUnit = this.findUnitInLocation(targetHex)

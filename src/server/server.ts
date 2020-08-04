@@ -1,6 +1,4 @@
 import {
-  findUnitById,
-  findUnitInLocation,
   INITIAL_WORLD_STATE,
   PlayerId,
   WorldState,
@@ -42,7 +40,7 @@ export class Server {
 
   private handleAttack = (playerId: PlayerId, action: AttackAction) => {
     const { unitId, target } = action
-    const unit = findUnitById(unitId, this.worldState)
+    const unit = this.worldState.findUnitById(unitId)
     if (!unit) {
       throw `No unit found with ID ${unitId}`
     }
@@ -50,7 +48,7 @@ export class Server {
     if (!from.isAdjacentTo(target)) {
       throw `Invalid unit attack between non-adjacent hexes ${from} to ${target}`
     }
-    const targetUnit = findUnitInLocation(target, this.worldState)
+    const targetUnit = this.worldState.findUnitInLocation(target)
     if (!targetUnit) {
       throw `No target unit to attack at ${target}`
     }
@@ -81,7 +79,7 @@ export class Server {
 
   private handleMoveUnit = (playerId: PlayerId, action: MoveUnitWorldAction) => {
     const { unitId, to } = action
-    const unit = findUnitById(unitId, this.worldState)
+    const unit = this.worldState.findUnitById(unitId)
     if (!unit) {
       throw `No unit found with ID ${unitId}`
     }
@@ -92,7 +90,7 @@ export class Server {
     if (!this.worldState.map.isInBounds(to)) {
       throw `Invalid unit movement to out-of-bounds hex ${to}`
     }
-    if (findUnitInLocation(to, this.worldState)) {
+    if (this.worldState.findUnitInLocation(to)) {
       throw `Invalid unit movement to already-occupied hex`
     }
     const event: UnitMovedWorldEvent = { type: 'unitMoved', playerId: playerId, unitId, from, to }

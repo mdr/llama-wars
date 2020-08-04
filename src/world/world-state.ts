@@ -73,18 +73,30 @@ export class Unit {
 
 }
 
-export const findUnitById = (unitId: UnitId, state: WorldState): Unit | undefined =>
-  R.find((unit) => unit.id == unitId, state.units)
+export class WorldState {
+  readonly map: WorldMap
+  readonly units: Unit[]
 
-export const findUnitInLocation = (hex: Hex, state: WorldState): Unit | undefined =>
-  R.find((unit) => unit.location.equals(hex), state.units)
+  constructor({ map, units }: { map: WorldMap, units: Unit[] }) {
+    this.map = map
+    this.units = units
+  }
 
-export interface WorldState {
-  map: WorldMap
-  units: Unit[]
+  public copy = ({ map = this.map, units = this.units }: { map?: WorldMap, units?: Unit[] } = {}): WorldState =>
+    new WorldState({ map, units })
+
+  public findUnitById = (unitId: UnitId): Unit | undefined =>
+    R.find((unit) => unit.id == unitId, this.units)
+
+  public findUnitInLocation = (hex: Hex): Unit | undefined =>
+    R.find((unit) => unit.location.equals(hex), this.units)
+
+  public replaceUnit = (unitId: UnitId, unit: Unit): WorldState =>
+    this.copy({ units: R.append(unit, R.filter((unit) => unit.id != unitId, this.units)) })
+
 }
 
-export const INITIAL_WORLD_STATE: WorldState = {
+export const INITIAL_WORLD_STATE: WorldState = new WorldState({
   map: new WorldMap({ width: 10, height: 6 }),
   units: [
     new Unit({
@@ -92,24 +104,31 @@ export const INITIAL_WORLD_STATE: WorldState = {
       playerId: 1,
       name: 'Walter',
       location: new Hex(1, 1),
-      hitPoints: new HitPoints({ current: 73, max: 100 }),
+      hitPoints: new HitPoints({ current: 100, max: 100 }),
     }),
     new Unit({
       id: 2,
       playerId: 1,
       name: 'Becky',
       location: new Hex(0, 3),
-      hitPoints: new HitPoints({ current: 73, max: 100 }),
+      hitPoints: new HitPoints({ current: 100, max: 100 }),
     }),
     new Unit({
       id: 3,
       playerId: 2,
       name: 'Chewpaca',
       location: new Hex(2, 1),
-      hitPoints: new HitPoints({ current: 73, max: 100 }),
+      hitPoints: new HitPoints({ current: 100, max: 100 }),
+    }),
+    new Unit({
+      id: 4,
+      playerId: 2,
+      name: 'Barack O. Llama',
+      location: new Hex(3, 2),
+      hitPoints: new HitPoints({ current: 100, max: 100 }),
     }),
   ],
-}
+})
 
 export type UnitId = number
 export type PlayerId = number

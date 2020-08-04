@@ -1,4 +1,4 @@
-import { findUnitById, findUnitInLocation, Unit, WorldState } from './world-state'
+import { Unit, WorldState } from './world-state'
 import { CombatWorldEvent, UnitMovedWorldEvent, WorldEvent } from './world-events'
 import * as R from 'ramda'
 
@@ -14,7 +14,7 @@ export const applyEvent = (state: WorldState, event: WorldEvent): WorldState => 
 const handleCombat = (state: WorldState, event: CombatWorldEvent): WorldState => {
   const { attacker, defender } = event
 
-  const attackerUnit = findUnitById(attacker.unitId, state)
+  const attackerUnit = state.findUnitById(attacker.unitId)
   if (!attackerUnit) {
     throw `No unit found with ID ${attacker.unitId}`
   }
@@ -22,7 +22,7 @@ const handleCombat = (state: WorldState, event: CombatWorldEvent): WorldState =>
     throw `Invalid location for attacker`
   }
 
-  const defenderUnit = findUnitById(defender.unitId, state)
+  const defenderUnit = state.findUnitById(defender.unitId)
   if (!defenderUnit) {
     throw `No unit found with ID ${defender.unitId}`
   }
@@ -36,12 +36,9 @@ const handleCombat = (state: WorldState, event: CombatWorldEvent): WorldState =>
   if (!attacker.location.isAdjacentTo(defender.location)) {
     throw `Invalid combat between non-adjacent hexes ${attacker.location} to ${defender.location}`
   }
-
-  const updatedAttackerUnit: Unit = attackerUnit.damage(attacker.damage)
-  const updatedDefenderUnit: Unit = defenderUnit.damage(defender.damage)
-  const filteredUnits = R.filter((unit) => unit.id != attacker.unitId && unit.id != defender.unitId, state.units)
-  const updatedUnits = R.append(updatedDefenderUnit, R.append(updatedAttackerUnit, filteredUnits))
-  return { ...state, units: updatedUnits }
+  return state
+    .replaceUnit(attackerUnit.id, attackerUnit.damage(attacker.damage))
+    .replaceUnit(defenderUnit.id, defenderUnit.damage(defender.damage))
 }
 
 const handleUnitMoved = (state: WorldState, event: UnitMovedWorldEvent): WorldState => {
@@ -52,20 +49,18 @@ const handleUnitMoved = (state: WorldState, event: UnitMovedWorldEvent): WorldSt
   if (!state.map.isInBounds(to)) {
     throw `Invalid unit movement to out-of-bounds hex ${to}`
   }
-  const unit = findUnitById(unitId, state)
+  const unit = state.findUnitById(unitId)
   if (!unit) {
     throw `No unit found with ID ${unitId}`
   }
-  if (findUnitInLocation(from, state)?.id != unitId) {
+  if (state.findUnitInLocation(from)?.id != unitId) {
     throw `Invalid from location for unit movement`
   }
-  if (findUnitInLocation(to, state)) {
+  if (state.findUnitInLocation(to)) {
     throw `Invalid unit movement to already-occupied hex`
   }
   if (unit.playerId != playerId) {
     throw `Invalid attempt to move unit of another player`
   }
-  const updatedUnit: Unit = unit.copy({ location: to })
-  const updatedUnits = R.append(updatedUnit, R.filter((unit) => unit.id != unitId, state.units))
-  return { ...state, units: updatedUnits }
+  return state.replaceUnit(unit.id, unit.copy({ location: to }))
 }
