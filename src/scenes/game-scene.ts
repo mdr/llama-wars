@@ -17,12 +17,7 @@ import {
   SELECTED_TILE_COLOUR, ColourNumber,
 } from './colours'
 import { Mode } from './mode'
-
-export class UnreachableCaseError extends Error {
-  constructor(value: never) {
-    super(`Unreachable case: ${value}`)
-  }
-}
+import { UnreachableCaseError } from '../util/unreachable-case-error'
 
 const sceneConfig: Phaser.Types.Scenes.SettingsConfig = {
   active: false,
@@ -74,7 +69,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   private createUnit = (unit: Unit) => {
-    const unitDisplayObject = new UnitDisplayObject(this, unit.location, unit.hitPoints, unit.playerId)
+    const unitDisplayObject = new UnitDisplayObject(this, unit)
     this.unitDisplayObjects.set(unit.id, unitDisplayObject)
   }
 
@@ -117,50 +112,57 @@ export class GameScene extends Phaser.Scene {
       .setStrokeStyle(3, 0x000000)
   }
 
-  private syncScene = () => {
+  private syncScene = (): void => {
+    this.syncMap()
+    this.worldState.units.forEach(this.syncUnit)
+    this.syncText()
+  }
+
+  private syncMap = (): void => {
     for (const hex of this.worldState.map.getMapHexes()) {
       const polygon = this.getHexPolygon(hex)
       polygon.setFillStyle(this.calculateColour(hex))
     }
-    for (const unit of this.worldState.units) {
-      const unitDisplayObject = this.getUnitDisplayObject(unit.id)
-      unitDisplayObject.setHex(unit.location)
-      unitDisplayObject.setHitPoints(unit.hitPoints)
-      unitDisplayObject.syncScene()
-    }
+  }
+
+  private syncUnit = (unit: Unit): void => {
+    const unitDisplayObject = this.getUnitDisplayObject(unit.id)
+    unitDisplayObject.unitUpdated(unit)
+    unitDisplayObject.syncScene()
+  }
+
+  private syncText = (): void => {
     this.selectionText.setText('')
     this.actionText.setText('')
     this.actionText2.setText('')
     switch (this.mode.type) {
       case 'selectHex':
-        this.updateSelectHexMode()
+        this.syncSelectHexModeText()
         break
       case 'moveUnit':
-        this.updateMoveUnitMode(this.mode.unitId)
+        this.syncMoveUnitModeText(this.mode.unitId)
         break
       case 'attack':
-        this.updateAttackUnitMode(this.mode.unitId)
+        this.syncAttackModeText(this.mode.unitId)
         break
       default:
         throw new UnreachableCaseError(this.mode)
     }
   }
 
-  private updateAttackUnitMode = (unitId: UnitId) => {
+  private syncAttackModeText = (unitId: UnitId): void => {
     const unit = this.getUnitById(unitId)
     this.selectionText.setText(this.describeUnit(unit))
     this.actionText.setText('Click unit to attack (or ESC to cancel)')
   }
 
-  private describeUnit = (unit: Unit) => `${unit.name} - Llama warrior - HP ${unit.hitPoints.current}/${unit.hitPoints.max}`
-
-  private updateMoveUnitMode = (unitId: UnitId) => {
+  private syncMoveUnitModeText = (unitId: UnitId): void => {
     const unit = this.getUnitById(unitId)
     this.selectionText.setText(this.describeUnit(unit))
     this.actionText.setText('Click tile to move to (or ESC to cancel)')
   }
 
-  private updateSelectHexMode = () => {
+  private syncSelectHexModeText = (): void => {
     if (this.selectedHex) {
       const unit = this.findUnitInLocation(this.selectedHex)
       if (unit) {
@@ -172,6 +174,8 @@ export class GameScene extends Phaser.Scene {
       }
     }
   }
+
+  private describeUnit = (unit: Unit) => `${unit.name} - Llama warrior - HP ${unit.hitPoints.current}/${unit.hitPoints.max}`
 
   private handleWorldEvent = (event: WorldEvent): void => {
     this.worldState = applyEvent(this.worldState, event)
@@ -454,9 +458,8 @@ export class GameScene extends Phaser.Scene {
 
   private getHexPolygon = (hex: Hex): Polygon => {
     const polygon = this.hexPolygons.get(hex.toString())
-    if (!polygon) {
+    if (!polygon)
       throw `No polygon found for ${hex}`
-    }
     return polygon
   }
 }
