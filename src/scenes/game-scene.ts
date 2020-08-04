@@ -10,11 +10,11 @@ import { Unit, UnitId } from '../world/unit'
 import { UnitDisplayObject } from './unit-display-object'
 import Polygon = Phaser.GameObjects.Polygon
 import {
-  actionTextColour,
-  defaultTileColour,
-  highlightedActionTextColour, hoverTargetableTileColour, hoverSelectedTileColour, hoverTileColour,
-  targetableTileColour,
-  selectedTileColour, ColourNumber,
+  ACTION_TEXT_COLOUR,
+  DEFAULT_TILE_COLOUR,
+  HOVER_ACTION_TEXT_COLOUR, HOVER_TARGETABLE_TILE_COLOUR, HOVER_SELECTED_TILE_COLOUR, HOVER_DEFAULT_TILE_COLOUR,
+  TARGETABLE_TILE_COLOUR,
+  SELECTED_TILE_COLOUR, ColourNumber,
 } from './colours'
 import { Mode } from './mode'
 
@@ -61,11 +61,7 @@ export class GameScene extends Phaser.Scene {
   public create(): void {
     this.sound.add('attack')
     this.createMap()
-    for (const unit of this.worldState.units) {
-      const unitDisplayObject = new UnitDisplayObject(this, unit.location, unit.hitPoints, unit.playerId)
-      this.unitDisplayObjects.set(unit.id, unitDisplayObject)
-    }
-
+    this.worldState.units.forEach(this.createUnit)
     this.createTexts()
 
     this.input.mouse.disableContextMenu()
@@ -74,36 +70,41 @@ export class GameScene extends Phaser.Scene {
     this.input.keyboard.on('keydown-A', this.handleAKey)
     this.input.on('pointerdown', this.handlePointerDown)
     this.input.on('pointermove', this.handlePointerMove)
-    this.updateScene()
+    this.syncScene()
+  }
+
+  private createUnit = (unit: Unit) => {
+    const unitDisplayObject = new UnitDisplayObject(this, unit.location, unit.hitPoints, unit.playerId)
+    this.unitDisplayObjects.set(unit.id, unitDisplayObject)
   }
 
   private createTexts = () => {
     const map = this.worldState.map
     this.selectionText = this.add.text(drawingOffset.x - hexWidth(hexSize) / 2, mapHeight(map) * hexSize + 50, '')
-    this.actionText = this.add.text(drawingOffset.x - hexWidth(hexSize) / 2, mapHeight(map) * hexSize + 75, '', { fill: actionTextColour }).setInteractive()
+    this.actionText = this.add.text(drawingOffset.x - hexWidth(hexSize) / 2, mapHeight(map) * hexSize + 75, '', { fill: ACTION_TEXT_COLOUR }).setInteractive()
       .on('pointerdown', this.handleActionTextClick)
-      .on('pointerover', () => this.actionText.setFill(highlightedActionTextColour))
-      .on('pointerout', () => this.actionText.setFill(actionTextColour))
-    this.actionText2 = this.add.text(drawingOffset.x - hexWidth(hexSize) / 2, mapHeight(map) * hexSize + 100, '', { fill: actionTextColour }).setInteractive()
+      .on('pointerover', () => this.actionText.setFill(HOVER_ACTION_TEXT_COLOUR))
+      .on('pointerout', () => this.actionText.setFill(ACTION_TEXT_COLOUR))
+    this.actionText2 = this.add.text(drawingOffset.x - hexWidth(hexSize) / 2, mapHeight(map) * hexSize + 100, '', { fill: ACTION_TEXT_COLOUR }).setInteractive()
       .on('pointerdown', this.handleActionText2Click)
-      .on('pointerover', () => this.actionText2.setFill(highlightedActionTextColour))
-      .on('pointerout', () => this.actionText2.setFill(actionTextColour))
-    this.endTurnText = this.add.text(800, mapHeight(map) * hexSize + 50, 'End Turn', { fill: actionTextColour }).setInteractive()
+      .on('pointerover', () => this.actionText2.setFill(HOVER_ACTION_TEXT_COLOUR))
+      .on('pointerout', () => this.actionText2.setFill(ACTION_TEXT_COLOUR))
+    this.endTurnText = this.add.text(800, mapHeight(map) * hexSize + 50, 'End Turn', { fill: ACTION_TEXT_COLOUR }).setInteractive()
       .on('pointerdown', this.handleEndTurn)
-      .on('pointerover', () => this.endTurnText.setFill(highlightedActionTextColour))
-      .on('pointerout', () => this.endTurnText.setFill(actionTextColour))
+      .on('pointerover', () => this.endTurnText.setFill(HOVER_ACTION_TEXT_COLOUR))
+      .on('pointerout', () => this.endTurnText.setFill(ACTION_TEXT_COLOUR))
   }
 
   private handleEndTurn = () => {
     this.playerId = this.playerId == 1 ? 2 : 1
     this.mode = { type: 'selectHex' }
     this.selectedHex = undefined
-    this.updateScene()
+    this.syncScene()
   }
 
   private createMap = () => {
     for (const hex of this.worldState.map.getMapHexes()) {
-      const polygonCenter = this.hexCenter(hex)
+      const polygonCenter = hexCenter(hex)
       const polygon = this.addPolygon(polygonCenter, hexSize)
       this.hexPolygons.set(hex.toString(), polygon)
     }
@@ -116,7 +117,7 @@ export class GameScene extends Phaser.Scene {
       .setStrokeStyle(3, 0x000000)
   }
 
-  private updateScene = () => {
+  private syncScene = () => {
     for (const hex of this.worldState.map.getMapHexes()) {
       const polygon = this.getHexPolygon(hex)
       polygon.setFillStyle(this.calculateColour(hex))
@@ -125,7 +126,7 @@ export class GameScene extends Phaser.Scene {
       const unitDisplayObject = this.getUnitDisplayObject(unit.id)
       unitDisplayObject.setHex(unit.location)
       unitDisplayObject.setHitPoints(unit.hitPoints)
-      unitDisplayObject.update()
+      unitDisplayObject.syncScene()
     }
     this.selectionText.setText('')
     this.actionText.setText('')
@@ -135,17 +136,17 @@ export class GameScene extends Phaser.Scene {
         this.updateSelectHexMode()
         break
       case 'moveUnit':
-        this.updateMoveUnitMode(this.mode.unitId, this.mode.from)
+        this.updateMoveUnitMode(this.mode.unitId)
         break
       case 'attack':
-        this.updateAttackUnitMode(this.mode.unitId, this.mode.from)
+        this.updateAttackUnitMode(this.mode.unitId)
         break
       default:
         throw new UnreachableCaseError(this.mode)
     }
   }
 
-  private updateAttackUnitMode = (unitId: UnitId, from: Hex) => {
+  private updateAttackUnitMode = (unitId: UnitId) => {
     const unit = this.getUnitById(unitId)
     this.selectionText.setText(this.describeUnit(unit))
     this.actionText.setText('Click unit to attack (or ESC to cancel)')
@@ -153,7 +154,7 @@ export class GameScene extends Phaser.Scene {
 
   private describeUnit = (unit: Unit) => `${unit.name} - Llama warrior - HP ${unit.hitPoints.current}/${unit.hitPoints.max}`
 
-  private updateMoveUnitMode = (unitId: UnitId, from: Hex) => {
+  private updateMoveUnitMode = (unitId: UnitId) => {
     const unit = this.getUnitById(unitId)
     this.selectionText.setText(this.describeUnit(unit))
     this.actionText.setText('Click tile to move to (or ESC to cancel)')
@@ -260,11 +261,11 @@ export class GameScene extends Phaser.Scene {
     const tileState = this.calculateTileState(hex)
     switch (tileState) {
       case 'default':
-        return defaultTileColour
+        return DEFAULT_TILE_COLOUR
       case 'selected':
-        return selectedTileColour
+        return SELECTED_TILE_COLOUR
       case 'targetable':
-        return targetableTileColour
+        return TARGETABLE_TILE_COLOUR
       default:
         throw new UnreachableCaseError(tileState)
     }
@@ -274,11 +275,11 @@ export class GameScene extends Phaser.Scene {
     const tileState = this.calculateTileState(hex)
     switch (tileState) {
       case 'default':
-        return hoverTileColour
+        return HOVER_DEFAULT_TILE_COLOUR
       case 'selected':
-        return hoverSelectedTileColour
+        return HOVER_SELECTED_TILE_COLOUR
       case 'targetable':
-        return hoverTargetableTileColour
+        return HOVER_TARGETABLE_TILE_COLOUR
       default:
         throw new UnreachableCaseError(tileState)
     }
@@ -307,7 +308,7 @@ export class GameScene extends Phaser.Scene {
     switch (this.mode.type) {
       case 'selectHex':
         this.selectedHex = undefined
-        this.updateScene()
+        this.syncScene()
         break
       case 'attack':
         this.handleAbortAttack()
@@ -323,14 +324,14 @@ export class GameScene extends Phaser.Scene {
   private handleAbortMove = () => {
     if (this.mode.type == 'moveUnit') {
       this.mode = { type: 'selectHex' }
-      this.updateScene()
+      this.syncScene()
     }
   }
 
   private handleAbortAttack = () => {
     if (this.mode.type == 'attack') {
       this.mode = { type: 'selectHex' }
-      this.updateScene()
+      this.syncScene()
     }
   }
 
@@ -371,7 +372,7 @@ export class GameScene extends Phaser.Scene {
       const unit = this.findUnitInLocation(this.selectedHex)
       if (unit && unit.playerId == this.playerId) {
         this.mode = { type: 'attack', from: this.selectedHex, unitId: unit.id }
-        this.updateScene()
+        this.syncScene()
       }
     }
   }
@@ -381,7 +382,7 @@ export class GameScene extends Phaser.Scene {
       const unit = this.findUnitInLocation(this.selectedHex)
       if (unit && unit.playerId == this.playerId) {
         this.mode = { type: 'moveUnit', from: this.selectedHex, unitId: unit.id }
-        this.updateScene()
+        this.syncScene()
       }
     }
   }
@@ -402,12 +403,12 @@ export class GameScene extends Phaser.Scene {
       if (targetUnit.playerId == this.playerId) {
         // abort if you attack yourself
         this.mode = { type: 'selectHex' }
-        this.updateScene()
+        this.syncScene()
       } else {
         const action: WorldAction = { type: 'attack', unitId: unitId, target: targetHex }
         this.server.handleAction(this.playerId, action)
         this.mode = { type: 'selectHex' }
-        this.updateScene()
+        this.syncScene()
       }
     }
   }
@@ -418,7 +419,7 @@ export class GameScene extends Phaser.Scene {
       if (unitInHex.id == unitId) {
         // abort if you click yourself
         this.mode = { type: 'selectHex' }
-        this.updateScene()
+        this.syncScene()
       } else {
         // do nothing
       }
@@ -429,7 +430,7 @@ export class GameScene extends Phaser.Scene {
         this.server.handleAction(this.playerId, action)
         this.selectedHex = hex
         this.mode = { type: 'selectHex' }
-        this.updateScene()
+        this.syncScene()
       }
     }
   }
@@ -439,15 +440,15 @@ export class GameScene extends Phaser.Scene {
       // If click is out of bounds, deselect any selected hex
       if (this.selectedHex) {
         this.selectedHex = undefined
-        this.updateScene()
+        this.syncScene()
       }
     } else if (this.selectedHex && this.selectedHex.equals(hex)) {
       // if selected hex is clicked, toggle selection off
       this.selectedHex = undefined
-      this.updateScene()
+      this.syncScene()
     } else {
       this.selectedHex = hex
-      this.updateScene()
+      this.syncScene()
     }
   }
 
@@ -458,7 +459,5 @@ export class GameScene extends Phaser.Scene {
     }
     return polygon
   }
-
-  private hexCenter = (hex: Hex) => addPoints(multiplyPoint(centerPoint(hex), hexSize), drawingOffset)
 }
 

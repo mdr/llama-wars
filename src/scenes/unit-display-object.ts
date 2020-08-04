@@ -2,7 +2,14 @@ import { Hex } from '../world/hex'
 import { PlayerId } from '../world/world-state'
 import { HitPoints } from '../world/unit'
 import { hexCenter } from './game-scene'
-import { healthBorderColour, healthEmptyColour, healthFullColour } from './colours'
+import { HEALTH_BORDER_COLOUR, HEALTH_EMPTY_COLOUR, HEALTH_FULL_COLOUR } from './colours'
+import { addPoints, Point } from './point'
+
+const HEALTH_BAR_WIDTH = 50
+const HEALTH_BAR_HEIGHT = 12
+const HEALTH_BAR_BORDER_THICKNESS = 2
+const IMAGE_OFFSET = { x: 0, y: 4 }
+const HEALTH_BAR_OFFSET = { x: -25, y: -40 }
 
 export class UnitDisplayObject {
   private readonly scene: Phaser.Scene
@@ -11,9 +18,6 @@ export class UnitDisplayObject {
   private hex: Hex
   private hitPoints: HitPoints
   private readonly player: PlayerId
-
-  private static IMAGE_OFFSET = 4
-  private static HEALTH_BAR_OFFSET = { x: 25, y: 40 }
 
   constructor(scene: Phaser.Scene, hex: Hex, hitPoints: HitPoints, player: PlayerId) {
     this.scene = scene
@@ -24,23 +28,27 @@ export class UnitDisplayObject {
     this.healthBarGraphics = scene.add.graphics()
   }
 
-  public update = () => {
+  private getHealthBarPosition = (point: Point): Point => addPoints(point, HEALTH_BAR_OFFSET)
+
+  public syncScene = () => {
     const unitPoint = hexCenter(this.hex)
-    this.image.setPosition(unitPoint.x, unitPoint.y + UnitDisplayObject.IMAGE_OFFSET)
-    this.healthBarGraphics.setPosition(unitPoint.x - UnitDisplayObject.HEALTH_BAR_OFFSET.x, unitPoint.y - UnitDisplayObject.HEALTH_BAR_OFFSET.y)
+    this.image.setPosition(unitPoint.x + IMAGE_OFFSET.x, unitPoint.y + IMAGE_OFFSET.y)
+    this.syncHealthBar(unitPoint)
+  }
+
+  private syncHealthBar = (unitPoint: Point) => {
+    const healthBarPosition = this.getHealthBarPosition(unitPoint)
+    this.healthBarGraphics.setPosition(healthBarPosition.x, healthBarPosition.y)
     this.healthBarGraphics.clear()
-    this.healthBarGraphics.fillStyle(healthBorderColour)
-    const barWidth = 50
-    const barHeight = 12
-    const borderThickness = 2
-    const innerWidth = barWidth - 2 * borderThickness
-    const innerHeight = barHeight - 2 * borderThickness
-    this.healthBarGraphics.fillRect(0, 0, barWidth, barHeight)
-    this.healthBarGraphics.fillStyle(healthEmptyColour)
-    this.healthBarGraphics.fillRect(borderThickness, borderThickness, innerWidth, innerHeight)
-    this.healthBarGraphics.fillStyle(healthFullColour)
+    this.healthBarGraphics.fillStyle(HEALTH_BORDER_COLOUR)
+    const innerWidth = HEALTH_BAR_WIDTH - 2 * HEALTH_BAR_BORDER_THICKNESS
+    const innerHeight = HEALTH_BAR_HEIGHT - 2 * HEALTH_BAR_BORDER_THICKNESS
+    this.healthBarGraphics.fillRect(0, 0, HEALTH_BAR_WIDTH, HEALTH_BAR_HEIGHT)
+    this.healthBarGraphics.fillStyle(HEALTH_EMPTY_COLOUR)
+    this.healthBarGraphics.fillRect(HEALTH_BAR_BORDER_THICKNESS, HEALTH_BAR_BORDER_THICKNESS, innerWidth, innerHeight)
+    this.healthBarGraphics.fillStyle(HEALTH_FULL_COLOUR)
     const { current, max } = this.hitPoints
-    this.healthBarGraphics.fillRect(borderThickness, borderThickness, innerWidth * current / max, 8)
+    this.healthBarGraphics.fillRect(HEALTH_BAR_BORDER_THICKNESS, HEALTH_BAR_BORDER_THICKNESS, innerWidth * current / max, 8)
   }
 
   public setHex = (hex: Hex) => this.hex = hex
@@ -52,27 +60,51 @@ export class UnitDisplayObject {
     this.image.setFlipX(afterCoords.x < beforeCoords.x)
     this.scene.tweens.add({
       targets: this.image,
-      x: { from: beforeCoords.x, to: afterCoords.x },
-      y: { from: beforeCoords.y + UnitDisplayObject.IMAGE_OFFSET, to: afterCoords.y + UnitDisplayObject.IMAGE_OFFSET },
+      ...calculateTweenXY(beforeCoords, afterCoords, IMAGE_OFFSET),
       duration: 500,
       ease: 'Cubic',
     })
     this.scene.tweens.add({
       targets: this.healthBarGraphics,
-      x: {
-        from: beforeCoords.x - UnitDisplayObject.HEALTH_BAR_OFFSET.x,
-        to: afterCoords.x - UnitDisplayObject.HEALTH_BAR_OFFSET.x,
-      },
-      y: {
-        from: beforeCoords.y - UnitDisplayObject.HEALTH_BAR_OFFSET.y,
-        to: afterCoords.y - UnitDisplayObject.HEALTH_BAR_OFFSET.y,
-      },
+      ...calculateTweenXY(beforeCoords, afterCoords, HEALTH_BAR_OFFSET),
       duration: 500,
       ease: 'Cubic',
     })
   }
 
   public attack = (from: Hex, to: Hex) => {
-
+    const beforeCoords = hexCenter(from)
+    const afterCoords = hexCenter(to)
+    this.image.setFlipX(afterCoords.x < beforeCoords.x)
+    this.scene.tweens.add({
+      targets: this.image,
+      ...calculateTweenXY(beforeCoords, afterCoords, IMAGE_OFFSET),
+      duration: 400,
+      ease: 'Cubic',
+      yoyo: true,
+    })
+    this.scene.tweens.add({
+      targets: this.healthBarGraphics,
+      ...calculateTweenXY(beforeCoords, afterCoords, HEALTH_BAR_OFFSET),
+      duration: 400,
+      ease: 'Cubic',
+      yoyo: true,
+    })
   }
+
 }
+
+type TweenXY = { x: { from: number, to: number }, y: { from: number, to: number } }
+
+const calculateTweenXY = (from: Point, to: Point, offset: Point): TweenXY =>
+  ({
+    x: {
+      from: from.x + offset.x,
+      to: to.x + offset.x,
+    },
+    y: {
+      from: from.y + offset.y,
+      to: to.y + offset.y,
+    },
+  })
+
