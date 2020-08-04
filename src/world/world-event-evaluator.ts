@@ -1,12 +1,53 @@
 import { findUnitById, findUnitInLocation, isInBounds, Unit, WorldState } from './world-state'
-import { UnitMovedWorldEvent, WorldEvent } from './world-events'
+import { CombatWorldEvent, UnitMovedWorldEvent, WorldEvent } from './world-events'
 import * as R from 'ramda'
 
 export const applyEvent = (state: WorldState, event: WorldEvent): WorldState => {
   switch (event.type) {
+    case 'combat':
+      return handleCombat(state, event)
     case 'unitMoved':
       return handleUnitMoved(state, event)
   }
+}
+
+const handleCombat = (state: WorldState, event: CombatWorldEvent): WorldState => {
+  const { attacker, defender } = event
+
+  const attackerUnit = findUnitById(attacker.unitId, state)
+  if (!attackerUnit) {
+    throw `No unit found with ID ${attacker.unitId}`
+  }
+  if (attackerUnit.location != attacker.location) {
+    throw `Invalid location for attacker`
+  }
+
+  const defenderUnit = findUnitById(defender.unitId, state)
+  if (!defenderUnit) {
+    throw `No unit found with ID ${defender.unitId}`
+  }
+  if (defenderUnit.location != defender.location) {
+    throw `Invalid location for defender`
+  }
+
+  if (attackerUnit.playerId == defenderUnit.playerId) {
+    throw `Invalid combat with self`
+  }
+  if (!attacker.location.isAdjacentTo(defender.location)) {
+    throw `Invalid combat between non-adjacent hexes ${attacker.location} to ${defender.location}`
+  }
+
+  const updatedAttackerUnit: Unit = {
+    ...attackerUnit,
+    hitPoints: { ...attackerUnit.hitPoints, current: attackerUnit.hitPoints.current - attacker.damage },
+  }
+  const updatedDefenderUnit: Unit = {
+    ...defenderUnit,
+    hitPoints: { ...defenderUnit.hitPoints, current: defenderUnit.hitPoints.current - defender.damage },
+  }
+  const filteredUnits = R.filter((unit) => unit.id != attacker.unitId && unit.id != defender.unitId, state.units)
+  const updatedUnits = R.append(updatedDefenderUnit, R.append(updatedAttackerUnit, filteredUnits))
+  return { ...state, units: updatedUnits }
 }
 
 const handleUnitMoved = (state: WorldState, event: UnitMovedWorldEvent): WorldState => {

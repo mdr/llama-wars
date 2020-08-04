@@ -30,11 +30,16 @@ interface MoveUnitMode {
   unitId: UnitId
 }
 
+interface AttackMode {
+  type: 'attack'
+  unitId: UnitId
+}
+
 interface SelectHexMode {
   type: 'selectHex'
 }
 
-type Mode = MoveUnitMode | SelectHexMode
+type Mode = MoveUnitMode | AttackMode | SelectHexMode
 
 const point = (x: number, y: number): Point => ({ x, y })
 
@@ -135,6 +140,7 @@ export class GameScene extends Phaser.Scene {
   private hexPolygons: Map<String, Phaser.GameObjects.Polygon> = new Map<String, Phaser.GameObjects.Polygon>()
   private selectionText: Phaser.GameObjects.Text
   private actionText: Phaser.GameObjects.Text
+  private actionText2: Phaser.GameObjects.Text
   private endTurnText: Phaser.GameObjects.Text
   private unitDisplayObjects: Map<UnitId, UnitDisplayObject> = new Map()
 
@@ -154,8 +160,9 @@ export class GameScene extends Phaser.Scene {
     this.createTexts()
 
     this.input.mouse.disableContextMenu()
-    this.input.keyboard.on('keydown-ESC', this.handleAbortMove)
+    this.input.keyboard.on('keydown-ESC', this.handleEscape)
     this.input.keyboard.on('keydown-M', this.handleMKey)
+    this.input.keyboard.on('keydown-A', this.handleAKey)
     this.input.on('pointerdown', this.handlePointerDown)
     this.updateScene()
   }
@@ -167,6 +174,10 @@ export class GameScene extends Phaser.Scene {
       .on('pointerdown', this.handleActionTextClick)
       .on('pointerover', () => this.actionText.setFill(highlightedActionTextColour))
       .on('pointerout', () => this.actionText.setFill(actionTextColour))
+    this.actionText2 = this.add.text(drawingOffset.x - hexWidth(hexSize) / 2, mapHeight(map) * hexSize + 100, '', { fill: actionTextColour }).setInteractive()
+      .on('pointerdown', this.handleActionText2Click)
+      .on('pointerover', () => this.actionText2.setFill(highlightedActionTextColour))
+      .on('pointerout', () => this.actionText2.setFill(actionTextColour))
     this.endTurnText = this.add.text(800, mapHeight(map) * hexSize + 50, 'End Turn', { fill: actionTextColour }).setInteractive()
       .on('pointerdown', this.handleEndTurn)
       .on('pointerover', () => this.endTurnText.setFill(highlightedActionTextColour))
@@ -208,36 +219,64 @@ export class GameScene extends Phaser.Scene {
       unitDisplayObject.setHitPoints(unit.hitPoints)
       unitDisplayObject.update()
     }
+    this.selectionText.setText('')
+    this.actionText.setText('')
+    this.actionText2.setText('')
     switch (this.mode.type) {
       case 'selectHex':
-        this.selectionText.setText('')
-        this.actionText.setText('')
-        if (this.selectedHex) {
-          const unit = this.findUnitInLocation(this.selectedHex)
-          if (unit) {
-            this.selectionText.setText(`${unit.name} - Llama warrior - HP ${unit.hitPoints.current}/${unit.hitPoints.max} `)
-            if (unit.playerId == this.playerId) {
-              this.actionText.setText('M - Move')
-            }
-          }
-        }
+        this.updateSelectHexMode()
         break
       case 'moveUnit':
-        const unit = this.findUnitById(this.mode.unitId)!
-        this.selectionText.setText(`${unit.name} - Llama warrior - HP ${unit.hitPoints.current}/${unit.hitPoints.max} `)
-        this.actionText.setText('Click tile to move to (or ESC to cancel)')
-        for (const neighbour of this.selectedHex!.neighbours()) {
-          if (isInBounds(neighbour, this.worldState.map) && !this.findUnitInLocation(neighbour)) {
-            const polygon = this.getHexPolygon(neighbour)
-            polygon.setFillStyle(movableTileColour)
-          }
-        }
+        this.updateMoveUnitMode(this.mode.unitId)
+        break
+      case 'attack':
+        this.updateAttackUnitMode(this.mode.unitId)
         break
     }
   }
 
+  private updateAttackUnitMode = (unitId: UnitId) => {
+    const unit = this.findUnitById(unitId)!
+    this.selectionText.setText(`${unit.name} - Llama warrior - HP ${unit.hitPoints.current}/${unit.hitPoints.max} `)
+    this.actionText.setText('Click unit to attack (or ESC to cancel)')
+    for (const neighbour of this.selectedHex!.neighbours()) {
+      const neighbourUnit = this.findUnitInLocation(neighbour)
+      if (neighbourUnit && neighbourUnit.playerId != unit.playerId) {
+        const polygon = this.getHexPolygon(neighbour)
+        polygon.setFillStyle(movableTileColour)
+      }
+    }
+  }
+
+  private updateMoveUnitMode = (unitId: UnitId) => {
+    const unit = this.findUnitById(unitId)!
+    this.selectionText.setText(`${unit.name} - Llama warrior - HP ${unit.hitPoints.current}/${unit.hitPoints.max} `)
+    this.actionText.setText('Click tile to move to (or ESC to cancel)')
+    for (const neighbour of this.selectedHex!.neighbours()) {
+      if (isInBounds(neighbour, this.worldState.map) && !this.findUnitInLocation(neighbour)) {
+        const polygon = this.getHexPolygon(neighbour)
+        polygon.setFillStyle(movableTileColour)
+      }
+    }
+  }
+
+  private updateSelectHexMode = () => {
+    if (this.selectedHex) {
+      const unit = this.findUnitInLocation(this.selectedHex)
+      if (unit) {
+        this.selectionText.setText(`${unit.name} - Llama warrior - HP ${unit.hitPoints.current}/${unit.hitPoints.max} `)
+        if (unit.playerId == this.playerId) {
+          this.actionText.setText('M - Move')
+          this.actionText2.setText('A - Attack')
+        }
+      }
+    }
+  }
+
   private handleWorldEvent = (event: WorldEvent) => {
+    console.log("handle world event")
     this.worldState = applyEvent(this.worldState, event)
+    console.log(this.worldState)
     switch (event.type) {
       case 'unitMoved':
         const { unitId, from, to } = event
@@ -246,6 +285,8 @@ export class GameScene extends Phaser.Scene {
           throw 'Could not find unit with ID ' + unitId
         unitDisplayObject.move(from, to)
         break
+      case 'combat':
+        break;
     }
   }
 
@@ -255,6 +296,18 @@ export class GameScene extends Phaser.Scene {
         this.handleStartMove()
         break
       case 'moveUnit':
+      case 'attack':
+        break
+    }
+  }
+
+  private handleAKey = () => {
+    switch (this.mode.type) {
+      case 'selectHex':
+        this.handleStartAttack()
+        break
+      case 'moveUnit':
+      case 'attack':
         break
     }
   }
@@ -270,11 +323,29 @@ export class GameScene extends Phaser.Scene {
       case 'moveUnit':
         this.handleMoveUnit(hex, mode.unitId)
         break
+      case 'attack':
+        this.handleAttack(hex, mode.unitId)
+        break;
+    }
+  }
+
+  private handleEscape = () => {
+    if (this.mode.type == 'moveUnit') {
+      this.handleAbortMove()
+    } else if (this.mode.type == 'attack') {
+      this.handleAbortAttack()
     }
   }
 
   private handleAbortMove = () => {
     if (this.mode.type == 'moveUnit') {
+      this.mode = { type: 'selectHex' }
+      this.updateScene()
+    }
+  }
+
+  private handleAbortAttack = () => {
+    if (this.mode.type == 'attack') {
       this.mode = { type: 'selectHex' }
       this.updateScene()
     }
@@ -288,6 +359,33 @@ export class GameScene extends Phaser.Scene {
       case 'moveUnit':
         this.handleAbortMove()
         break
+      case 'attack':
+        this.handleAbortAttack()
+        break
+    }
+  }
+
+  private handleActionText2Click = () => {
+    switch (this.mode.type) {
+      case 'selectHex':
+        this.handleStartAttack()
+        break
+      case 'attack':
+        this.handleAbortAttack()
+        break
+      case 'moveUnit':
+        // Shouldn't happen
+        break
+    }
+  }
+
+  private handleStartAttack = () => {
+    if (this.selectedHex) {
+      const unit = this.findUnitInLocation(this.selectedHex)
+      if (unit && unit.playerId == this.playerId) {
+        this.mode = { type: 'attack', unitId: unit.id }
+        this.updateScene()
+      }
     }
   }
 
@@ -304,6 +402,23 @@ export class GameScene extends Phaser.Scene {
   private findUnitById = (unitId: number): Unit | undefined => findUnitById(unitId, this.worldState)
 
   private findUnitInLocation = (hex: Hex): Unit | undefined => findUnitInLocation(hex, this.worldState)
+
+  private handleAttack = (targetHex: Hex, unitId: UnitId) => {
+    const targetUnit = this.findUnitInLocation(targetHex)
+    if (targetUnit) {
+      if (targetUnit.playerId == this.playerId) {
+        // abort if you attack yourself
+        this.mode = { type: 'selectHex' }
+        this.updateScene()
+      } else {
+        const action: WorldAction = { type: 'attack', unitId: unitId, target: targetHex }
+        this.server.handleAction(this.playerId, action)
+        this.selectedHex = undefined
+        this.mode = { type: 'selectHex' }
+        this.updateScene()
+      }
+    }
+  }
 
   private handleMoveUnit = (hex: Hex, unitId: UnitId) => {
     const unitInHex = this.findUnitInLocation(hex)

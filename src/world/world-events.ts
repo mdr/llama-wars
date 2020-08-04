@@ -9,4 +9,18 @@ export interface UnitMovedWorldEvent {
   to: Hex
 }
 
-export type WorldEvent = UnitMovedWorldEvent
+export interface CombatParticipantInfo {
+  playerId: PlayerId
+  unitId: UnitId
+  location: Hex,
+  damage: number,
+  killed: boolean
+}
+
+export interface CombatWorldEvent {
+  type: 'combat'
+  attacker: CombatParticipantInfo
+  defender: CombatParticipantInfo
+}
+
+export type WorldEvent = UnitMovedWorldEvent | CombatWorldEvent
