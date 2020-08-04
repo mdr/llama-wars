@@ -4,10 +4,9 @@ import { centerPoint, fromPoint, hexCorners, hexWidth, mapHeight } from './hex-g
 import {
   findUnitById,
   findUnitInLocation,
-  getMapHexes,
   HitPoints,
   INITIAL_WORLD_STATE,
-  isInBounds, PlayerId,
+  PlayerId,
   Unit,
   UnitId,
   WorldState,
@@ -192,7 +191,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   private createMap = () => {
-    for (const hex of getMapHexes(this.worldState.map)) {
+    for (const hex of this.worldState.map.getMapHexes()) {
       const polygonCenter = this.hexCenter(hex)
       const polygon = this.addPolygon(polygonCenter, hexSize, defaultTileColour)
       this.hexPolygons.set(hex.toString(), polygon)
@@ -205,7 +204,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   private updateScene = () => {
-    for (const hex of getMapHexes(this.worldState.map)) {
+    for (const hex of this.worldState.map.getMapHexes()) {
       const polygon = this.getHexPolygon(hex)
       if (this.selectedHex && this.selectedHex.equals(hex)) {
         polygon.setFillStyle(selectedTileColour)
@@ -253,7 +252,7 @@ export class GameScene extends Phaser.Scene {
     this.selectionText.setText(`${unit.name} - Llama warrior - HP ${unit.hitPoints.current}/${unit.hitPoints.max} `)
     this.actionText.setText('Click tile to move to (or ESC to cancel)')
     for (const neighbour of this.selectedHex!.neighbours()) {
-      if (isInBounds(neighbour, this.worldState.map) && !this.findUnitInLocation(neighbour)) {
+      if (this.worldState.map.isInBounds(neighbour) && !this.findUnitInLocation(neighbour)) {
         const polygon = this.getHexPolygon(neighbour)
         polygon.setFillStyle(movableTileColour)
       }
@@ -430,7 +429,7 @@ export class GameScene extends Phaser.Scene {
       }
     } else {
       const unit = this.findUnitById(unitId)!
-      if (hex.isAdjacentTo(unit.location) && isInBounds(hex, this.worldState.map)) {
+      if (hex.isAdjacentTo(unit.location) && this.worldState.map.isInBounds(hex)) {
         const action: WorldAction = { type: 'moveUnit', unitId: unit.id, to: hex }
         this.server.handleAction(this.playerId, action)
         this.selectedHex = undefined
@@ -441,7 +440,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   private handleSelectHex = (hex: Hex) => {
-    if (!isInBounds(hex, this.worldState.map)) {
+    if (!this.worldState.map.isInBounds(hex)) {
       // If click is out of bounds, deselect any selected hex
       if (this.selectedHex) {
         this.selectedHex = undefined

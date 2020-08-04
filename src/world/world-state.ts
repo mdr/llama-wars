@@ -1,22 +1,27 @@
 import { Hex } from './hex'
 import * as R from 'ramda'
 
-export interface WorldMap {
-  width: number
-  height: number
-}
+export class WorldMap {
+  readonly width: number
+  readonly height: number
 
-export const isInBounds = (hex: Hex, map: WorldMap): boolean => {
-  const q = hex.x + Math.floor(hex.y / 2)
-  return 0 <= q && q < map.width && 0 <= hex.y && hex.y < map.height
-}
+  constructor({ width, height }: { width: number, height: number }) {
+    this.width = width
+    this.height = height
+  }
 
-export function* getMapHexes(map: WorldMap): IterableIterator<Hex> {
-  for (let r = 0; r < map.height; r++) {
-    for (let c = 0; c < map.width; c++) {
-      const x = -Math.floor(r / 2) + c
-      const hex = new Hex(x, r)
-      yield hex
+  public isInBounds = (hex: Hex): boolean => {
+    const q = hex.x + Math.floor(hex.y / 2)
+    return 0 <= q && q < this.width && 0 <= hex.y && hex.y < this.height
+  }
+
+  public* getMapHexes(): IterableIterator<Hex> {
+    for (let r = 0; r < this.height; r++) {
+      for (let c = 0; c < this.width; c++) {
+        const x = -Math.floor(r / 2) + c
+        const hex = new Hex(x, r)
+        yield hex
+      }
     }
   }
 }
@@ -46,7 +51,7 @@ export interface WorldState {
 }
 
 export const INITIAL_WORLD_STATE: WorldState = {
-  map: { width: 10, height: 6 },
+  map: new WorldMap({ width: 10, height: 6 }),
   units: [
     {
       id: 1,

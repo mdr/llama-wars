@@ -1,4 +1,4 @@
-import { findUnitById, findUnitInLocation, isInBounds, Unit, WorldState } from './world-state'
+import { findUnitById, findUnitInLocation,  Unit, WorldState } from './world-state'
 import { CombatWorldEvent, UnitMovedWorldEvent, WorldEvent } from './world-events'
 import * as R from 'ramda'
 
@@ -55,7 +55,7 @@ const handleUnitMoved = (state: WorldState, event: UnitMovedWorldEvent): WorldSt
   if (!from.isAdjacentTo(to)) {
     throw `Invalid unit movement between non-adjacent hexes ${from} to ${to}`
   }
-  if (!isInBounds(to, state.map)) {
+  if (!state.map.isInBounds(to)) {
     throw `Invalid unit movement to out-of-bounds hex ${to}`
   }
   const unit = findUnitById(unitId, state)

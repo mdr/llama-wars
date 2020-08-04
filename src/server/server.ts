@@ -2,7 +2,6 @@ import {
   findUnitById,
   findUnitInLocation,
   INITIAL_WORLD_STATE,
-  isInBounds,
   PlayerId,
   WorldState,
 } from '../world/world-state'
@@ -65,14 +64,14 @@ export class Server {
         unitId: unit.id,
         location: from,
         damage: 10,
-        killed: false
+        killed: false,
       },
       defender: {
         playerId: targetUnit.playerId,
         unitId: targetUnit.id,
         location: targetUnit.location,
         damage: 10,
-        killed: false
+        killed: false,
       },
     }
     this.worldState = applyEvent(this.worldState, event)
@@ -90,7 +89,7 @@ export class Server {
     if (!from.isAdjacentTo(to)) {
       throw `Invalid unit movement between non-adjacent hexes ${from} to ${to}`
     }
-    if (!isInBounds(to, this.worldState.map)) {
+    if (!this.worldState.map.isInBounds(to)) {
       throw `Invalid unit movement to out-of-bounds hex ${to}`
     }
     if (findUnitInLocation(to, this.worldState)) {
