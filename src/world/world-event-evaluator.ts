@@ -37,14 +37,8 @@ const handleCombat = (state: WorldState, event: CombatWorldEvent): WorldState =>
     throw `Invalid combat between non-adjacent hexes ${attacker.location} to ${defender.location}`
   }
 
-  const updatedAttackerUnit: Unit = {
-    ...attackerUnit,
-    hitPoints: attackerUnit.hitPoints.damage(attacker.damage),
-  }
-  const updatedDefenderUnit: Unit = {
-    ...defenderUnit,
-    hitPoints: defenderUnit.hitPoints.damage(defender.damage),
-  }
+  const updatedAttackerUnit: Unit = attackerUnit.damage(attacker.damage)
+  const updatedDefenderUnit: Unit = defenderUnit.damage(defender.damage)
   const filteredUnits = R.filter((unit) => unit.id != attacker.unitId && unit.id != defender.unitId, state.units)
   const updatedUnits = R.append(updatedDefenderUnit, R.append(updatedAttackerUnit, filteredUnits))
   return { ...state, units: updatedUnits }
@@ -71,7 +65,7 @@ const handleUnitMoved = (state: WorldState, event: UnitMovedWorldEvent): WorldSt
   if (unit.playerId != playerId) {
     throw `Invalid attempt to move unit of another player`
   }
-  const updatedUnit: Unit = { ...unit, location: to }
+  const updatedUnit: Unit = unit.copy({ location: to })
   const updatedUnits = R.append(updatedUnit, R.filter((unit) => unit.id != unitId, state.units))
   return { ...state, units: updatedUnits }
 }

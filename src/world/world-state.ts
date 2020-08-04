@@ -47,12 +47,30 @@ export class HitPoints {
     new HitPoints({ current, max })
 }
 
-export interface Unit {
-  id: UnitId,
-  playerId: PlayerId
-  name: string,
-  location: Hex
-  hitPoints: HitPoints
+export class Unit {
+  readonly id: UnitId
+  readonly playerId: PlayerId
+  readonly name: string
+  readonly location: Hex
+  readonly hitPoints: HitPoints
+
+  constructor({
+                id, playerId, name, location, hitPoints,
+              }: { id: UnitId, playerId: PlayerId, name: string, location: Hex, hitPoints: HitPoints }) {
+    this.id = id
+    this.playerId = playerId
+    this.name = name
+    this.location = location
+    this.hitPoints = hitPoints
+  }
+
+  public damage = (points: number): Unit => this.copy({ hitPoints: this.hitPoints.damage(points) })
+
+  public copy = ({
+                   id = this.id, playerId = this.playerId, name = this.name, location = this.location, hitPoints = this.hitPoints,
+                 }: { id?: UnitId, playerId?: PlayerId, name?: string, location?: Hex, hitPoints?: HitPoints } = {}): Unit =>
+    new Unit({ id, playerId, name, location, hitPoints })
+
 }
 
 export const findUnitById = (unitId: UnitId, state: WorldState): Unit | undefined =>
@@ -69,27 +87,27 @@ export interface WorldState {
 export const INITIAL_WORLD_STATE: WorldState = {
   map: new WorldMap({ width: 10, height: 6 }),
   units: [
-    {
+    new Unit({
       id: 1,
       playerId: 1,
       name: 'Walter',
       location: new Hex(1, 1),
       hitPoints: new HitPoints({ current: 73, max: 100 }),
-    },
-    {
+    }),
+    new Unit({
       id: 2,
       playerId: 1,
       name: 'Becky',
       location: new Hex(0, 3),
       hitPoints: new HitPoints({ current: 73, max: 100 }),
-    },
-    {
+    }),
+    new Unit({
       id: 3,
       playerId: 2,
       name: 'Chewpaca',
       location: new Hex(2, 1),
       hitPoints: new HitPoints({ current: 73, max: 100 }),
-    },
+    }),
   ],
 }
 
