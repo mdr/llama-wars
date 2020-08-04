@@ -1,11 +1,14 @@
 import { Hex } from './hex'
 import * as R from 'ramda'
+import assert = require('assert')
 
 export class WorldMap {
   readonly width: number
   readonly height: number
 
   constructor({ width, height }: { width: number, height: number }) {
+    assert(width > 0)
+    assert(height > 0)
     this.width = width
     this.height = height
   }
@@ -26,9 +29,22 @@ export class WorldMap {
   }
 }
 
-export interface HitPoints {
-  current: number
-  max: number
+export class HitPoints {
+  readonly current: number
+  readonly max: number
+
+  constructor({ current, max }: { current: number, max: number }) {
+    this.current = current
+    this.max = max
+    assert(max > 0)
+    assert(current >= 0)
+    assert(current <= max)
+  }
+
+  public damage = (points: number): HitPoints => this.copy({ current: this.current - points })
+
+  public copy = ({ current = this.current, max = this.max }: { current?: number, max?: number } = {}): HitPoints =>
+    new HitPoints({ current, max })
 }
 
 export interface Unit {
@@ -58,22 +74,21 @@ export const INITIAL_WORLD_STATE: WorldState = {
       playerId: 1,
       name: 'Walter',
       location: new Hex(1, 1),
-      hitPoints: { current: 73, max: 100 },
+      hitPoints: new HitPoints({ current: 73, max: 100 }),
     },
     {
       id: 2,
       playerId: 1,
       name: 'Becky',
       location: new Hex(0, 3),
-      hitPoints: { current: 100, max: 100 },
+      hitPoints: new HitPoints({ current: 73, max: 100 }),
     },
     {
       id: 3,
       playerId: 2,
       name: 'Chewpaca',
       location: new Hex(2, 1),
-      // location: new Hex(7, 2),
-      hitPoints: { current: 100, max: 100 },
+      hitPoints: new HitPoints({ current: 73, max: 100 }),
     },
   ],
 }

@@ -1,4 +1,4 @@
-import { findUnitById, findUnitInLocation,  Unit, WorldState } from './world-state'
+import { findUnitById, findUnitInLocation, Unit, WorldState } from './world-state'
 import { CombatWorldEvent, UnitMovedWorldEvent, WorldEvent } from './world-events'
 import * as R from 'ramda'
 
@@ -39,11 +39,11 @@ const handleCombat = (state: WorldState, event: CombatWorldEvent): WorldState =>
 
   const updatedAttackerUnit: Unit = {
     ...attackerUnit,
-    hitPoints: { ...attackerUnit.hitPoints, current: attackerUnit.hitPoints.current - attacker.damage },
+    hitPoints: attackerUnit.hitPoints.damage(attacker.damage),
   }
   const updatedDefenderUnit: Unit = {
     ...defenderUnit,
-    hitPoints: { ...defenderUnit.hitPoints, current: defenderUnit.hitPoints.current - defender.damage },
+    hitPoints: defenderUnit.hitPoints.damage(defender.damage),
   }
   const filteredUnits = R.filter((unit) => unit.id != attacker.unitId && unit.id != defender.unitId, state.units)
   const updatedUnits = R.append(updatedDefenderUnit, R.append(updatedAttackerUnit, filteredUnits))
