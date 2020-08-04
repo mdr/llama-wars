@@ -42,7 +42,6 @@ export class Server {
   }
 
   private handleAttack = (playerId: PlayerId, action: AttackAction) => {
-    console.log("handle attack")
     const { unitId, target } = action
     const unit = findUnitById(unitId, this.worldState)
     if (!unit) {

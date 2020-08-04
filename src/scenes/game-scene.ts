@@ -274,9 +274,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   private handleWorldEvent = (event: WorldEvent) => {
-    console.log("handle world event")
     this.worldState = applyEvent(this.worldState, event)
-    console.log(this.worldState)
     switch (event.type) {
       case 'unitMoved':
         const { unitId, from, to } = event
