@@ -1,5 +1,5 @@
 import { Hex } from './hex'
-import { UnitId } from './world-state'
+import { UnitId } from './unit'
 
 export interface MoveUnitWorldAction {
   type: 'moveUnit'

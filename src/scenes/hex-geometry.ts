@@ -1,6 +1,6 @@
 import { Hex } from '../world/hex'
 import { Point } from './point'
-import { WorldMap } from '../world/world-state'
+import { WorldMap } from '../world/world-map'
 
 export const centerPoint = (hex: Hex): Point =>
   ({

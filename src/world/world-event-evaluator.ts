@@ -1,6 +1,5 @@
-import { Unit, WorldState } from './world-state'
+import {  WorldState } from './world-state'
 import { CombatWorldEvent, UnitMovedWorldEvent, WorldEvent } from './world-events'
-import * as R from 'ramda'
 
 export const applyEvent = (state: WorldState, event: WorldEvent): WorldState => {
   switch (event.type) {

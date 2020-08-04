@@ -2,11 +2,8 @@ import { addPoints, multiplyPoint, Point, subtractPoints } from './point'
 import { Hex } from '../world/hex'
 import { centerPoint, fromPoint, hexCorners, hexWidth, mapHeight } from './hex-geometry'
 import {
-  HitPoints,
   INITIAL_WORLD_STATE,
   PlayerId,
-  Unit,
-  UnitId,
   WorldState,
 } from '../world/world-state'
 import { Server } from '../server/server'
@@ -15,6 +12,7 @@ import { applyEvent } from '../world/world-event-evaluator'
 import Polygon = Phaser.GameObjects.Polygon
 import { WorldAction } from '../world/world-actions'
 import Color = Phaser.Display.Color
+import { HitPoints, Unit, UnitId } from '../world/unit'
 
 const sceneConfig: Phaser.Types.Scenes.SettingsConfig = {
   active: false,
