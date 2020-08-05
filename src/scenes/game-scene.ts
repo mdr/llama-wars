@@ -78,12 +78,12 @@ export class GameScene extends Phaser.Scene {
       case 'ArrowLeft':
       case '4':
         if (this.selectedHex)
-        this.moveOrAttackHex(this.selectedHex.goLeft())
+          this.moveOrAttackHex(this.selectedHex.goLeft())
         break
       case 'ArrowRight':
       case '6':
         if (this.selectedHex)
-        this.moveOrAttackHex(this.selectedHex.goRight())
+          this.moveOrAttackHex(this.selectedHex.goRight())
         break
       case '7':
         if (this.selectedHex)
@@ -402,11 +402,6 @@ export class GameScene extends Phaser.Scene {
     }
   }
 
-  private dispatchMoveUnitAction = (unit: Unit, hex: Hex): void => {
-    const action: MoveUnitWorldAction = { type: 'moveUnit', unitId: unit.id, to: hex }
-    this.sendActionToServer(action)
-  }
-
   private setMode = (mode: Mode): void => {
     this.localGameState = this.localGameState.setMode(mode)
   }
@@ -484,7 +479,6 @@ export class GameScene extends Phaser.Scene {
     }
   }
 
-
   private handleActionText2Click = () => {
     switch (this.mode.type) {
       case 'selectHex':
@@ -536,19 +530,9 @@ export class GameScene extends Phaser.Scene {
   private findUnitInLocation = (hex: Hex): Option<Unit> => this.worldState.findUnitInLocation(hex)
 
   private handleCompleteAttack = (targetHex: Hex, unitId: UnitId) => {
-    const targetUnit = this.findUnitInLocation(targetHex)
-    if (targetUnit) {
-      if (targetUnit.playerId == this.playerId) {
-        // abort if you attack yourself
-        this.localGameState = this.localGameState.setMode({ type: 'selectHex' })
-        this.syncScene()
-      } else {
-        const action: WorldAction = { type: 'attack', unitId: unitId, target: targetHex }
-        this.sendActionToServer(action)
-        this.localGameState = this.localGameState.setMode({ type: 'selectHex' })
-        this.syncScene()
-      }
-    }
+    const attacker = this.getUnitById(unitId)
+    if (this.unitCanAttackHex(attacker, targetHex))
+      this.dispatchAttackAction(attacker, targetHex)
   }
 
   private handleCompleteMove = (destination: Hex, unitId: UnitId): void => {
@@ -574,10 +558,11 @@ export class GameScene extends Phaser.Scene {
     }
   }
 
-  private dispatchAttackAction = (unit: Unit, hex: Hex): void => {
-    const action: WorldAction = { type: 'attack', unitId: unit.id, target: hex }
-    this.sendActionToServer(action)
-  }
+  private dispatchMoveUnitAction = (unit: Unit, hex: Hex): void =>
+    this.sendActionToServer({ type: 'moveUnit', unitId: unit.id, to: hex })
+
+  private dispatchAttackAction = (attacker: Unit, targetHex: Hex): void =>
+    this.sendActionToServer({ type: 'attack', unitId: attacker.id, target: targetHex })
 
   private sendActionToServer = (action: WorldAction): void =>
     this.server.handleAction(this.playerId, action)
