@@ -1,27 +1,24 @@
 import { LocalGameState } from './local-game-state'
 import { WorldAction } from '../world/world-actions'
-import { Player, PlayerId, WorldState } from '../world/world-state'
+import { WorldState } from '../world/world-state'
 import { LocalAction } from './local-action'
 import { nothing, Option } from '../util/types'
 import { Unit, UnitId } from '../world/unit'
 import { Hex } from '../world/hex'
-import * as R from 'ramda'
 import { UnreachableCaseError } from '../util/unreachable-case-error'
 import { HexDirection } from '../world/hex-direction'
 import { Mode } from './mode'
+import { CombinedStateMethods } from './combined-state-methods'
 
 export interface LocalActionResult {
   newLocalGameState?: LocalGameState
   worldAction?: WorldAction
 }
 
-export class LocalActionProcessor {
-  private readonly worldState: WorldState
-  private readonly localGameState: LocalGameState
+export class LocalActionProcessor extends CombinedStateMethods {
 
   constructor(worldState: WorldState, localGameState: LocalGameState) {
-    this.worldState = worldState
-    this.localGameState = localGameState
+    super(worldState, localGameState)
   }
 
   public process = (action: LocalAction): Option<LocalActionResult> => {
@@ -60,32 +57,6 @@ export class LocalActionProcessor {
     } else {
       return undefined
     }
-  }
-
-  private findSelectedUnit = (): Option<Unit> => this.selectedHex ? this.findUnitInLocation(this.selectedHex) : undefined
-
-  private get mode(): Mode {
-    return this.localGameState.mode
-  }
-
-  private get selectedHex(): Option<Hex> {
-    return this.localGameState.selectedHex
-  }
-
-  private get playerId(): PlayerId {
-    return this.localGameState.playerId
-  }
-
-  private findUnitInLocation = (hex: Hex): Option<Unit> => this.worldState.findUnitInLocation(hex)
-
-  private findNextUnitWithActionPoints = (unitId: UnitId): Option<Unit> => {
-    const candidateUnits = R.sortBy(unit => unit.id, this.worldState.units.filter(unit => unit.playerId == this.playerId && unit.actionPoints.current > 0))
-    return R.head(candidateUnits.filter(unit => unit.id > unitId)) ?? R.head(candidateUnits.filter(unit => unit.id < unitId))
-  }
-
-  private findFirstUnitWithActionPoints = (): Option<Unit> => {
-    const candidateUnits = R.sortBy(unit => unit.id, this.worldState.units.filter(unit => unit.playerId == this.playerId && unit.actionPoints.current > 0))
-    return R.head(candidateUnits)
   }
 
   private handleAbort = (): Option<LocalActionResult> => {
@@ -131,19 +102,6 @@ export class LocalActionProcessor {
       && unit.location.isAdjacentTo(location)
   }
 
-  private unitCouldPotentiallyMove = (unit: Unit): boolean =>
-    unit.playerId == this.playerId && unit.actionPoints.current > 0 && !this.getCurrentPlayer().endedTurn
-
-  private unitCouldPotentiallyAttack = (unit: Unit): boolean =>
-    unit.playerId == this.playerId && unit.actionPoints.current > 0 && !this.getCurrentPlayer().endedTurn
-
-  private getCurrentPlayer = (): Player => {
-    const player = this.worldState.findPlayer(this.playerId)
-    if (!player)
-      throw `Could not find player with id ${this.playerId}`
-    return player
-  }
-
   private handleEndTurn = (): Option<LocalActionResult> => {
     if (!this.getCurrentPlayer().endedTurn) {
       return { worldAction: { type: 'endTurn' } }
@@ -177,14 +135,6 @@ export class LocalActionProcessor {
     const attacker = this.getUnitById(unitId)
     if (this.unitCanAttackHex(attacker, targetHex))
       return { worldAction: { type: 'attack', unitId: attacker.id, target: targetHex } }
-  }
-
-  private getUnitById = (unitId: number): Unit => {
-    const unit = this.worldState.findUnitById(unitId)
-    if (!unit) {
-      throw `No unit found with ID ${unitId}`
-    }
-    return unit
   }
 
   private handleSelectHex = (hex: Hex): Option<LocalActionResult> => {
