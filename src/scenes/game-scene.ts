@@ -15,8 +15,8 @@ import { MapDisplayObject } from './map-display-object'
 import { nothing, Option, toMaybe } from '../util/types'
 import { INITIAL_LOCAL_GAME_STATE, LocalGameState } from './local-game-state'
 import { Mode } from './mode'
-import Pointer = Phaser.Input.Pointer
 import { ALL_AUDIO_KEYS, AudioKeys } from './asset-keys'
+import Pointer = Phaser.Input.Pointer
 
 const sceneConfig: Phaser.Types.Scenes.SettingsConfig = {
   active: false,
@@ -68,13 +68,59 @@ export class GameScene extends Phaser.Scene {
 
   private setUpInputs = (): void => {
     this.input.mouse.disableContextMenu()
-    this.input.keyboard.on('keydown-ESC', this.handleEscape)
-    this.input.keyboard.on('keydown-M', this.handleMKey)
-    this.input.keyboard.on('keydown-A', this.handleAKey)
-    this.input.keyboard.on('keydown-N', this.handleNKey)
-    this.input.keyboard.on('keydown-ENTER', this.handleEnter)
+    this.input.keyboard.on('keydown', this.handleKey)
     this.input.on('pointerdown', this.handlePointerDown)
     this.input.on('pointermove', this.handlePointerMove)
+  }
+
+  private handleKey = (event: KeyboardEvent): void => {
+    console.log(event)
+    switch (event.key) {
+      case 'ArrowLeft':
+      case '4':
+        if (this.selectedHex)
+        this.moveOrAttackHex(this.selectedHex.goLeft())
+        break
+      case 'ArrowRight':
+      case '6':
+        if (this.selectedHex)
+        this.moveOrAttackHex(this.selectedHex.goRight())
+        break
+      case '7':
+        if (this.selectedHex)
+          this.moveOrAttackHex(this.selectedHex.goNorthWest())
+        break
+      case '3':
+        if (this.selectedHex)
+          this.moveOrAttackHex(this.selectedHex.goSouthEast())
+        break
+      case '9':
+        if (this.selectedHex)
+          this.moveOrAttackHex(this.selectedHex.goNorthEast())
+        break
+      case '1':
+        if (this.selectedHex)
+          this.moveOrAttackHex(this.selectedHex.goSouthWest())
+        break
+      case 'Enter':
+        this.handleEnter(event)
+        break
+      case 'Escape':
+        this.handleEscape()
+        break
+      case 'm':
+        this.handleMKey()
+        break
+      case 'a':
+        this.handleAKey()
+        break
+      case 'n':
+        this.handleNKey(event)
+        break
+
+      default:
+        break
+    }
   }
 
   private createUnit = (unit: Unit) => {
@@ -290,7 +336,8 @@ export class GameScene extends Phaser.Scene {
       const selectedUnit = this.findSelectedUnit()
       const unitToSelect = selectedUnit ? this.findNextUnitWithActionPoints(selectedUnit.id) : this.findFirstUnitWithActionPoints()
       if (unitToSelect) {
-        this.localGameState = this.localGameState.setSelectedHex(unitToSelect?.location)
+        this.localGameState = this.localGameState.setSelectedHex(unitToSelect?.location).setMode({ type: 'selectHex' })
+        this.syncScene()
       }
     }
   }
@@ -323,7 +370,7 @@ export class GameScene extends Phaser.Scene {
     const pressedPoint = { x: pointer.x, y: pointer.y }
     const hex = fromPoint(multiplyPoint(subtractPoints(pressedPoint, DRAWING_OFFSET), 1 / HEX_SIZE))
     if (pointer.button == 2) {
-      this.handleRightClick(hex)
+      this.moveOrAttackHex(hex)
     } else {
       this.handleLeftClick(hex)
     }
@@ -346,7 +393,7 @@ export class GameScene extends Phaser.Scene {
     }
   }
 
-  private handleRightClick = (hex: Hex): void => {
+  private moveOrAttackHex = (hex: Hex): void => {
     const selectedUnit = this.findSelectedUnit()
     if (selectedUnit) {
       if (this.unitCanMoveToHex(selectedUnit, hex))
@@ -472,11 +519,11 @@ export class GameScene extends Phaser.Scene {
 
   private handleStartMove = () => {
     const unit = this.findSelectedUnit()
-      if (unit && this.unitCouldPotentiallyMove(unit)) {
-        const newMode: Mode = { type: 'moveUnit', from: unit.location, unitId: unit.id }
-        this.localGameState = this.localGameState.setMode(newMode)
-        this.syncScene()
-      }
+    if (unit && this.unitCouldPotentiallyMove(unit)) {
+      const newMode: Mode = { type: 'moveUnit', from: unit.location, unitId: unit.id }
+      this.localGameState = this.localGameState.setMode(newMode)
+      this.syncScene()
+    }
   }
 
   private getUnitById = (unitId: number): Unit => {
