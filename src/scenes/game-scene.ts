@@ -318,13 +318,13 @@ export class GameScene extends Phaser.Scene {
     const mode = this.mode
     switch (mode.type) {
       case 'selectHex':
-        this.handleSelectHex(hex)
+        this.handleLocalAction({ type: 'selectHex', hex})
         break
       case 'moveUnit':
-        this.handleCompleteMove(hex, mode.unitId)
+        this.handleLocalAction({ type: 'completeMove', unitId: mode.unitId, hex})
         break
       case 'attack':
-        this.handleCompleteAttack(hex, mode.unitId)
+        this.handleLocalAction({ type: 'completeAttack', unitId: mode.unitId, hex})
         break
       default:
         throw new UnreachableCaseError(mode)
@@ -334,22 +334,8 @@ export class GameScene extends Phaser.Scene {
   private unitCouldPotentiallyMove = (unit: Unit): boolean =>
     unit.playerId == this.playerId && unit.actionPoints.current > 0 && !this.getCurrentPlayer().endedTurn
 
-  private unitCanMoveToHex = (unit: Unit, hex: Hex): boolean =>
-    this.unitCouldPotentiallyMove(unit)
-    && hex.isAdjacentTo(unit.location)
-    && this.worldState.map.isInBounds(hex)
-    && !this.findUnitInLocation(hex)
-
   private unitCouldPotentiallyAttack = (unit: Unit): boolean =>
     unit.playerId == this.playerId && unit.actionPoints.current > 0 && !this.getCurrentPlayer().endedTurn
-
-  private unitCanAttackHex = (unit: Unit, location: Hex): boolean => {
-    const targetUnit = this.findUnitInLocation(location)
-    return this.unitCouldPotentiallyAttack(unit)
-      && targetUnit != undefined
-      && targetUnit.playerId != this.playerId
-      && unit.location.isAdjacentTo(location)
-  }
 
   private handleActionTextClick = (): void => {
     switch (this.mode.type) {
@@ -387,41 +373,6 @@ export class GameScene extends Phaser.Scene {
   }
 
   private findUnitInLocation = (hex: Hex): Option<Unit> => this.worldState.findUnitInLocation(hex)
-
-  private handleCompleteAttack = (targetHex: Hex, unitId: UnitId): void => {
-    const attacker = this.getUnitById(unitId)
-    if (this.unitCanAttackHex(attacker, targetHex))
-      this.dispatchAttackAction(attacker, targetHex)
-  }
-
-  private handleCompleteMove = (destination: Hex, unitId: UnitId): void => {
-    const unit = this.getUnitById(unitId)
-    if (this.unitCanMoveToHex(unit, destination))
-      this.dispatchMoveUnitAction(unit, destination)
-  }
-
-  private handleSelectHex = (hex: Hex): void => {
-    if (!this.worldState.map.isInBounds(hex)) {
-      // If click is out of bounds, deselect any selected hex
-      if (this.selectedHex) {
-        this.localGameState = this.localGameState.setSelectedHex(undefined)
-        this.syncScene()
-      }
-    } else if (this.selectedHex && this.selectedHex.equals(hex)) {
-      // if selected hex is clicked, toggle selection off
-      this.localGameState = this.localGameState.setSelectedHex(undefined)
-      this.syncScene()
-    } else {
-      this.localGameState = this.localGameState.setSelectedHex(hex)
-      this.syncScene()
-    }
-  }
-
-  private dispatchMoveUnitAction = (unit: Unit, hex: Hex): void =>
-    this.sendWorldActionToServer({ type: 'moveUnit', unitId: unit.id, to: hex })
-
-  private dispatchAttackAction = (attacker: Unit, targetHex: Hex): void =>
-    this.sendWorldActionToServer({ type: 'attack', unitId: attacker.id, target: targetHex })
 
   private sendWorldActionToServer = (action: WorldAction): void =>
     this.server.handleAction(this.playerId, action)

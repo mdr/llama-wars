@@ -40,8 +40,14 @@ export class LocalActionProcessor {
         return this.handleEnterMoveMode()
       case 'enterAttackMode':
         return this.handleEnterAttackMode()
+      case 'completeMove':
+        return this.handleCompleteMove(action.unitId, action.hex)
+      case 'completeAttack':
+        return this.handleCompleteAttack(action.unitId, action.hex)
+      case 'selectHex':
+        return this.handleSelectHex(action.hex)
       default:
-        return
+        throw new UnreachableCaseError(action)
     }
   }
 
@@ -160,4 +166,39 @@ export class LocalActionProcessor {
       return { newLocalGameState }
     }
   }
+
+  private handleCompleteMove = (unitId: UnitId, destination: Hex): Option<LocalActionResult> => {
+    const unit = this.getUnitById(unitId)
+    if (this.unitCanMoveToHex(unit, destination))
+      return { worldAction: { type: 'moveUnit', unitId: unit.id, to: destination } }
+  }
+
+  private handleCompleteAttack = (unitId: UnitId, targetHex: Hex): Option<LocalActionResult> => {
+    const attacker = this.getUnitById(unitId)
+    if (this.unitCanAttackHex(attacker, targetHex))
+      return { worldAction: { type: 'attack', unitId: attacker.id, target: targetHex } }
+  }
+
+  private getUnitById = (unitId: number): Unit => {
+    const unit = this.worldState.findUnitById(unitId)
+    if (!unit) {
+      throw `No unit found with ID ${unitId}`
+    }
+    return unit
+  }
+
+  private handleSelectHex = (hex: Hex): Option<LocalActionResult> => {
+    if (!this.worldState.map.isInBounds(hex)) {
+      // If click is out of bounds, deselect any selected hex
+      if (this.selectedHex) {
+        return { newLocalGameState: this.localGameState.setSelectedHex(undefined) }
+      }
+    } else if (this.selectedHex && this.selectedHex.equals(hex)) {
+      // if selected hex is clicked, toggle selection off
+      return { newLocalGameState: this.localGameState.setSelectedHex(undefined) }
+    } else {
+      return { newLocalGameState: this.localGameState.setSelectedHex(hex) }
+    }
+  }
+
 }
