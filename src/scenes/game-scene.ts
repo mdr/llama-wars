@@ -3,7 +3,7 @@ import { Hex } from '../world/hex'
 import { centerPoint, fromPoint, hexWidth, mapHeight } from './hex-geometry'
 import { INITIAL_WORLD_STATE, WorldState } from '../world/world-state'
 import { Server } from '../server/server'
-import { WorldEvent } from '../world/world-events'
+import { CombatWorldEvent, WorldEvent } from '../world/world-events'
 import { applyEvent } from '../world/world-event-evaluator'
 import { WorldAction } from '../world/world-actions'
 import { Unit, UnitId } from '../world/unit'
@@ -163,25 +163,29 @@ export class GameScene extends Phaser.Scene {
         this.getUnitDisplayObject(unitId).move(from, to)
         break
       case 'combat':
-        const { attacker, defender } = event
-        this.sound.play('attack')
-        if (attacker.killed || defender.killed) {
-          this.sound.play('death')
-        }
-        const attackerDisplayObject = this.getUnitDisplayObject(attacker.unitId)
-        const defenderDisplayObject = this.getUnitDisplayObject(defender.unitId)
-        attackerDisplayObject.attack(attacker.location, defender.location)
-        if (attacker.killed) {
-          attackerDisplayObject.destroy()
-          this.unitDisplayObjects.delete(attacker.unitId)
-        }
-        if (defender.killed) {
-          defenderDisplayObject.destroy()
-          this.unitDisplayObjects.delete(defender.unitId)
-        }
+        this.handleCombatWorldEvent(event)
         break
       default:
         throw new UnreachableCaseError(event)
+    }
+  }
+
+  private handleCombatWorldEvent = (event: CombatWorldEvent) => {
+    const { attacker, defender } = event
+    this.sound.play('attack')
+    if (attacker.killed || defender.killed) {
+      this.sound.play('death')
+    }
+    const attackerDisplayObject = this.getUnitDisplayObject(attacker.unitId)
+    const defenderDisplayObject = this.getUnitDisplayObject(defender.unitId)
+    attackerDisplayObject.attack(attacker.location, defender.location)
+    if (attacker.killed) {
+      attackerDisplayObject.destroy()
+      this.unitDisplayObjects.delete(attacker.unitId)
+    }
+    if (defender.killed) {
+      defenderDisplayObject.destroy()
+      this.unitDisplayObjects.delete(defender.unitId)
     }
   }
 
