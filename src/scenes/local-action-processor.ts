@@ -1,6 +1,6 @@
 import { LocalGameState } from './local-game-state'
 import { WorldAction } from '../world/world-actions'
-import { Player, WorldState } from '../world/world-state'
+import { Player, PlayerId, WorldState } from '../world/world-state'
 import { LocalAction } from './local-action'
 import { nothing, Option } from '../util/types'
 import { Unit, UnitId } from '../world/unit'
@@ -8,6 +8,7 @@ import { Hex } from '../world/hex'
 import * as R from 'ramda'
 import { UnreachableCaseError } from '../util/unreachable-case-error'
 import { HexDirection } from '../world/hex-direction'
+import { Mode } from './mode'
 
 export interface LocalActionResult {
   newLocalGameState?: LocalGameState
@@ -33,6 +34,12 @@ export class LocalActionProcessor {
         return this.handleSelectNextUnit()
       case 'abort':
         return this.handleAbort()
+      case 'endTurn':
+        return this.handleEndTurn()
+      case 'enterMoveMode':
+        return this.handleEnterMoveMode()
+      case 'enterAttackMode':
+        return this.handleEnterAttackMode()
       default:
         return
     }
@@ -51,16 +58,16 @@ export class LocalActionProcessor {
 
   private findSelectedUnit = (): Option<Unit> => this.selectedHex ? this.findUnitInLocation(this.selectedHex) : undefined
 
-  private get playerId() {
-    return this.localGameState.playerId
-  }
-
-  private get mode() {
+  private get mode(): Mode {
     return this.localGameState.mode
   }
 
-  private get selectedHex() {
+  private get selectedHex(): Option<Hex> {
     return this.localGameState.selectedHex
+  }
+
+  private get playerId(): PlayerId {
+    return this.localGameState.playerId
   }
 
   private findUnitInLocation = (hex: Hex): Option<Unit> => this.worldState.findUnitInLocation(hex)
@@ -131,4 +138,26 @@ export class LocalActionProcessor {
     return player
   }
 
+  private handleEndTurn = (): Option<LocalActionResult> => {
+    if (!this.getCurrentPlayer().endedTurn) {
+      return { worldAction: { type: 'endTurn' } }
+    }
+  }
+
+  private handleEnterMoveMode = (): Option<LocalActionResult> => {
+    const unit = this.findSelectedUnit()
+    if (unit && this.unitCouldPotentiallyMove(unit)) {
+      const newMode: Mode = { type: 'moveUnit', from: unit.location, unitId: unit.id }
+      return { newLocalGameState: this.localGameState.setMode(newMode) }
+    }
+  }
+
+  private handleEnterAttackMode = (): Option<LocalActionResult> => {
+    const unit = this.findSelectedUnit()
+    if (unit && this.unitCouldPotentiallyAttack(unit)) {
+      const newMode: Mode = { type: 'attack', from: unit.location, unitId: unit.id }
+      const newLocalGameState = this.localGameState.setMode(newMode)
+      return { newLocalGameState }
+    }
+  }
 }

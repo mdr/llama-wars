@@ -2,7 +2,7 @@ import * as R from 'ramda'
 import { addPoints, multiplyPoint, subtractPoints } from './point'
 import { Hex } from '../world/hex'
 import { centerPoint, fromPoint, hexWidth, mapHeight } from './hex-geometry'
-import { INITIAL_WORLD_STATE, Player, WorldState } from '../world/world-state'
+import { INITIAL_WORLD_STATE, Player, PlayerId, WorldState } from '../world/world-state'
 import { Server } from '../server/server'
 import { CombatWorldEvent, UnitMovedWorldEvent, WorldEvent } from '../world/world-events'
 import { applyEvent } from '../world/world-event-evaluator'
@@ -14,12 +14,12 @@ import { UnreachableCaseError } from '../util/unreachable-case-error'
 import { MapDisplayObject } from './map-display-object'
 import { Option, toMaybe } from '../util/types'
 import { INITIAL_LOCAL_GAME_STATE, LocalGameState } from './local-game-state'
-import { Mode } from './mode'
 import { ALL_AUDIO_KEYS, AudioKeys } from './asset-keys'
 import { mapToLocalAction } from './keyboard-mapper'
 import { LocalAction } from './local-action'
 import { LocalActionProcessor, LocalActionResult } from './local-action-processor'
 import Pointer = Phaser.Input.Pointer
+import { Mode } from './mode'
 
 const sceneConfig: Phaser.Types.Scenes.SettingsConfig = {
   active: false,
@@ -48,15 +48,15 @@ export class GameScene extends Phaser.Scene {
     this.server.addListener(this.handleWorldEvent)
   }
 
-  private get mode() {
+  private get mode(): Mode {
     return this.localGameState.mode
   }
 
-  private get selectedHex() {
+  private get selectedHex(): Option<Hex> {
     return this.localGameState.selectedHex
   }
 
-  private get playerId() {
+  private get playerId(): PlayerId {
     return this.localGameState.playerId
   }
 
@@ -87,18 +87,6 @@ export class GameScene extends Phaser.Scene {
     const result = localActionProcessor.process(localAction)
     if (result) {
       this.enactLocalActionResult(result)
-    } else {
-      switch (localAction.type) {
-        case 'endTurn':
-          this.endTurn()
-          break
-        case 'enterMoveMode':
-          this.handleStartMove()
-          break
-        case 'enterAttackMode':
-          this.handleStartAttack()
-          break
-      }
     }
   }
 
@@ -133,12 +121,6 @@ export class GameScene extends Phaser.Scene {
       .on('pointerover', () => this.endTurnText.setFill(HOVER_ACTION_TEXT_COLOUR))
       .on('pointerout', () => this.endTurnText.setFill(ACTION_TEXT_COLOUR))
     this.playerText = this.add.text(23, 20, '')
-  }
-
-  private endTurn = () => {
-    if (!this.getCurrentPlayer().endedTurn) {
-      this.sendWorldActionToServer({ type: 'endTurn' })
-    }
   }
 
   private syncScene = (): void => {
@@ -313,12 +295,12 @@ export class GameScene extends Phaser.Scene {
 
   private findSelectedUnit = (): Option<Unit> => this.selectedHex ? this.findUnitInLocation(this.selectedHex) : undefined
 
-  private handlePointerMove = (pointer) => {
+  private handlePointerMove = (pointer: Pointer): void => {
     const pointerPoint = { x: pointer.x, y: pointer.y }
     this.mapDisplayObject.handlePointerMove(pointerPoint)
   }
 
-  private handlePointerDown = (pointer: Pointer) => {
+  private handlePointerDown = (pointer: Pointer): void => {
     // Ignore clicks on these as they have their own handlers
     for (const obj of [this.endTurnText, this.actionText, this.actionText2])
       if (obj.getBounds().contains(pointer.x, pointer.y))
@@ -383,17 +365,9 @@ export class GameScene extends Phaser.Scene {
     }
   }
 
-  private handleActionText2Click = () => {
+  private handleActionText2Click = (): void => {
     if (this.mode.type === 'selectHex') {
       this.handleLocalAction({ type: 'enterAttackMode' })
-    }
-  }
-
-  private handleStartAttack = (): void => {
-    const unit = this.findSelectedUnit()
-    if (unit && this.unitCouldPotentiallyAttack(unit)) {
-      this.localGameState = this.localGameState.setMode({ type: 'attack', from: unit.location, unitId: unit.id })
-      this.syncScene()
     }
   }
 
@@ -402,15 +376,6 @@ export class GameScene extends Phaser.Scene {
     if (!player)
       throw `Could not find player with id ${this.playerId}`
     return player
-  }
-
-  private handleStartMove = () => {
-    const unit = this.findSelectedUnit()
-    if (unit && this.unitCouldPotentiallyMove(unit)) {
-      const newMode: Mode = { type: 'moveUnit', from: unit.location, unitId: unit.id }
-      this.localGameState = this.localGameState.setMode(newMode)
-      this.syncScene()
-    }
   }
 
   private getUnitById = (unitId: number): Unit => {
@@ -423,7 +388,7 @@ export class GameScene extends Phaser.Scene {
 
   private findUnitInLocation = (hex: Hex): Option<Unit> => this.worldState.findUnitInLocation(hex)
 
-  private handleCompleteAttack = (targetHex: Hex, unitId: UnitId) => {
+  private handleCompleteAttack = (targetHex: Hex, unitId: UnitId): void => {
     const attacker = this.getUnitById(unitId)
     if (this.unitCanAttackHex(attacker, targetHex))
       this.dispatchAttackAction(attacker, targetHex)
