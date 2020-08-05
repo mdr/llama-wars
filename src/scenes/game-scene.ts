@@ -1,3 +1,4 @@
+import * as R from 'ramda'
 import { addPoints, multiplyPoint, subtractPoints } from './point'
 import { Hex } from '../world/hex'
 import { centerPoint, fromPoint, hexWidth, mapHeight } from './hex-geometry'
@@ -14,8 +15,8 @@ import { MapDisplayObject } from './map-display-object'
 import { nothing, Option, toMaybe } from '../util/types'
 import { INITIAL_LOCAL_GAME_STATE, LocalGameState } from './local-game-state'
 import { Mode } from './mode'
-import * as R from 'ramda'
 import Pointer = Phaser.Input.Pointer
+import { ALL_AUDIO_KEYS, AudioKeys } from './asset-keys'
 
 const sceneConfig: Phaser.Types.Scenes.SettingsConfig = {
   active: false,
@@ -57,14 +58,15 @@ export class GameScene extends Phaser.Scene {
   }
 
   public create(): void {
-    this.sound.add('attack')
-    this.sound.add('death')
-    this.sound.add('walk')
-    this.sound.add('new-turn')
+    ALL_AUDIO_KEYS.forEach(key => this.sound.add(key))
     this.mapDisplayObject = new MapDisplayObject(this, this.worldState, this.localGameState)
     this.worldState.units.forEach(this.createUnit)
     this.createTexts()
+    this.setUpInputs()
+    this.syncScene()
+  }
 
+  private setUpInputs = (): void => {
     this.input.mouse.disableContextMenu()
     this.input.keyboard.on('keydown-ESC', this.handleEscape)
     this.input.keyboard.on('keydown-M', this.handleMKey)
@@ -73,7 +75,6 @@ export class GameScene extends Phaser.Scene {
     this.input.keyboard.on('keydown-ENTER', this.handleEnter)
     this.input.on('pointerdown', this.handlePointerDown)
     this.input.on('pointermove', this.handlePointerMove)
-    this.syncScene()
   }
 
   private createUnit = (unit: Unit) => {
@@ -156,15 +157,13 @@ export class GameScene extends Phaser.Scene {
   }
 
   private syncSelectHexModeText = (): void => {
-    if (this.selectedHex) {
-      const unit = this.findUnitInLocation(this.selectedHex)
-      if (unit) {
-        this.selectionText.setText(this.describeUnit(unit))
-        if (unit.playerId == this.playerId && unit.actionPoints.current > 0 && !this.getCurrentPlayer().endedTurn) {
-          this.actionText.setText('Move (m)')
-          this.actionText2.setText('Attack (a)')
-        }
-      }
+    const selectedUnit = this.findSelectedUnit()
+    if (selectedUnit) {
+      this.selectionText.setText(this.describeUnit(selectedUnit))
+      if (this.unitCouldPotentiallyMove(selectedUnit))
+        this.actionText.setText('Move (m)')
+      if (this.unitCouldPotentiallyAttack(selectedUnit))
+        this.actionText2.setText('Attack (a)')
     }
   }
 
@@ -196,7 +195,7 @@ export class GameScene extends Phaser.Scene {
     this.localGameState = this.localGameState.copy({ playerId: player.id })
     const unitToSelect = this.findFirstUnitWithActionPoints()
     this.localGameState = this.localGameState.copy({ selectedHex: toMaybe(unitToSelect?.location) })
-    this.sound.play('new-turn')
+    this.sound.play(AudioKeys.NEW_TURN)
     this.syncScene()
   }
 
@@ -212,7 +211,7 @@ export class GameScene extends Phaser.Scene {
 
   private handleUnitMovedWorldEvent = (event: UnitMovedWorldEvent) => {
     const { unitId, from, to } = event
-    this.sound.play('walk')
+    this.sound.play(AudioKeys.WALK)
     const unit = this.getUnitById(unitId)
     if (unit.playerId == this.playerId) {
       const newSelectedHex = this.calculateNewSelectedUnitAfterMoveOrAttack(unitId, to)
@@ -241,9 +240,9 @@ export class GameScene extends Phaser.Scene {
 
   private handleCombatWorldEvent = (event: CombatWorldEvent) => {
     const { attacker, defender } = event
-    this.sound.play('attack')
+    this.sound.play(AudioKeys.ATTACK)
     if (attacker.killed || defender.killed) {
-      this.sound.play('death')
+      this.sound.play(AudioKeys.DEATH)
     }
     if (attacker.playerId == this.playerId) {
       const newSelectedHex = this.calculateNewSelectedUnitAfterMoveOrAttack(attacker.unitId, attacker.location)
@@ -348,17 +347,13 @@ export class GameScene extends Phaser.Scene {
   }
 
   private handleRightClick = (hex: Hex): void => {
-    if (!this.selectedHex)
-      return
-    const unit = this.findUnitInLocation(this.selectedHex)
-    if (!unit)
-      return
-
-    if (this.unitCanMoveToHex(unit, hex))
-      this.dispatchMoveUnitAction(unit, hex)
-
-    if (this.unitCanAttackHex(unit, hex))
-      this.dispatchAttackAction(unit, hex)
+    const selectedUnit = this.findSelectedUnit()
+    if (selectedUnit) {
+      if (this.unitCanMoveToHex(selectedUnit, hex))
+        this.dispatchMoveUnitAction(selectedUnit, hex)
+      else if (this.unitCanAttackHex(selectedUnit, hex))
+        this.dispatchAttackAction(selectedUnit, hex)
+    }
   }
 
   private dispatchMoveUnitAction = (unit: Unit, hex: Hex): void => {
@@ -413,21 +408,21 @@ export class GameScene extends Phaser.Scene {
     }
   }
 
-  private handleAbortMove = () => {
+  private handleAbortMove = (): void => {
     if (this.mode.type == 'moveUnit') {
       this.setMode({ type: 'selectHex' })
       this.syncScene()
     }
   }
 
-  private handleAbortAttack = () => {
+  private handleAbortAttack = (): void => {
     if (this.mode.type == 'attack') {
       this.localGameState = this.localGameState.setMode({ type: 'selectHex' })
       this.syncScene()
     }
   }
 
-  private handleActionTextClick = () => {
+  private handleActionTextClick = (): void => {
     switch (this.mode.type) {
       case 'selectHex':
         this.handleStartMove()
@@ -460,13 +455,11 @@ export class GameScene extends Phaser.Scene {
     }
   }
 
-  private handleStartAttack = () => {
-    if (this.selectedHex) {
-      const unit = this.findUnitInLocation(this.selectedHex)
-      if (unit && this.unitCouldPotentiallyAttack(unit)) {
-        this.localGameState = this.localGameState.setMode({ type: 'attack', from: this.selectedHex, unitId: unit.id })
-        this.syncScene()
-      }
+  private handleStartAttack = (): void => {
+    const unit = this.findSelectedUnit()
+    if (unit && this.unitCouldPotentiallyAttack(unit)) {
+      this.localGameState = this.localGameState.setMode({ type: 'attack', from: unit.location, unitId: unit.id })
+      this.syncScene()
     }
   }
 
@@ -478,14 +471,12 @@ export class GameScene extends Phaser.Scene {
   }
 
   private handleStartMove = () => {
-    if (this.selectedHex) {
-      const unit = this.findUnitInLocation(this.selectedHex)
+    const unit = this.findSelectedUnit()
       if (unit && this.unitCouldPotentiallyMove(unit)) {
-        const newMode: Mode = { type: 'moveUnit', from: this.selectedHex, unitId: unit.id }
+        const newMode: Mode = { type: 'moveUnit', from: unit.location, unitId: unit.id }
         this.localGameState = this.localGameState.setMode(newMode)
         this.syncScene()
       }
-    }
   }
 
   private getUnitById = (unitId: number): Unit => {

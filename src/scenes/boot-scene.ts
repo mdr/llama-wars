@@ -1,4 +1,5 @@
 import { getGameWidth, getGameHeight } from '../helpers'
+import { AudioKeys } from './asset-keys'
 
 const sceneConfig: Phaser.Types.Scenes.SettingsConfig = {
   active: false,
@@ -64,13 +65,14 @@ export class BootScene extends Phaser.Scene {
   private loadAssets() {
     // Source: https://opengameart.org/content/hex-tileset-pack
     this.load.image('llama', 'assets/sprites/llama_14.png')
+
     // https://opengameart.org/content/37-hitspunches
-    this.load.audio('attack', 'assets/audio/hit18.mp3.ogg')
+    this.load.audio(AudioKeys.ATTACK, 'assets/audio/hit18.mp3.ogg')
     // https://opengameart.org/content/male-gruntyelling-sounds
-    this.load.audio('death', 'assets/audio/1yell4.wav')
+    this.load.audio(AudioKeys.DEATH, 'assets/audio/1yell4.wav')
     // https://opengameart.org/content/grass-foot-step-sounds-yo-frankie
-    this.load.audio('walk', 'assets/audio/sfx_step_grass_l.ogg')
+    this.load.audio(AudioKeys.WALK, 'assets/audio/sfx_step_grass_l.ogg')
     // https://opengameart.org/content/ui-sound-effects-pack
-    this.load.audio('new-turn', 'assets/audio/MENU A_Select.wav')
+    this.load.audio(AudioKeys.NEW_TURN, 'assets/audio/MENU A_Select.wav')
   }
 }
