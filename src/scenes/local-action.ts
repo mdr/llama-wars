@@ -1,8 +1,14 @@
 import { HexDirection } from '../world/hex-direction'
+import { Hex } from '../world/hex'
 
 export interface GoLocalAction {
   type: 'go'
   direction: HexDirection
+}
+
+export interface GoHexAction {
+  type: 'goHex'
+  hex: Hex
 }
 
 export interface EndTurnLocalAction {
@@ -27,6 +33,7 @@ export interface AbortLocalAction {
 
 export type LocalAction =
   GoLocalAction
+  | GoHexAction
   | EndTurnLocalAction
   | SelectNextUnitLocalAction
   | EnterMoveModeLocalAction

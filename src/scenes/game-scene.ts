@@ -12,14 +12,14 @@ import { UnitDisplayObject } from './unit-display-object'
 import { ACTION_TEXT_COLOUR, HOVER_ACTION_TEXT_COLOUR } from './colours'
 import { UnreachableCaseError } from '../util/unreachable-case-error'
 import { MapDisplayObject } from './map-display-object'
-import { nothing, Option, toMaybe } from '../util/types'
+import { Option, toMaybe } from '../util/types'
 import { INITIAL_LOCAL_GAME_STATE, LocalGameState } from './local-game-state'
 import { Mode } from './mode'
 import { ALL_AUDIO_KEYS, AudioKeys } from './asset-keys'
-import Pointer = Phaser.Input.Pointer
 import { mapToLocalAction } from './keyboard-mapper'
 import { LocalAction } from './local-action'
 import { LocalActionProcessor, LocalActionResult } from './local-action-processor'
+import Pointer = Phaser.Input.Pointer
 
 const sceneConfig: Phaser.Types.Scenes.SettingsConfig = {
   active: false,
@@ -89,10 +89,6 @@ export class GameScene extends Phaser.Scene {
       this.enactLocalActionResult(result)
     } else {
       switch (localAction.type) {
-        case 'go':
-          if (this.selectedHex)
-            this.moveOrAttackHex(this.selectedHex.go(localAction.direction))
-          break
         case 'endTurn':
           this.endTurn()
           break
@@ -330,7 +326,7 @@ export class GameScene extends Phaser.Scene {
     const pressedPoint = { x: pointer.x, y: pointer.y }
     const hex = fromPoint(multiplyPoint(subtractPoints(pressedPoint, DRAWING_OFFSET), 1 / HEX_SIZE))
     if (pointer.button == 2) {
-      this.moveOrAttackHex(hex)
+      this.handleLocalAction({ type: 'goHex', hex })
     } else {
       this.handleLeftClick(hex)
     }
@@ -351,20 +347,6 @@ export class GameScene extends Phaser.Scene {
       default:
         throw new UnreachableCaseError(mode)
     }
-  }
-
-  private moveOrAttackHex = (hex: Hex): void => {
-    const selectedUnit = this.findSelectedUnit()
-    if (selectedUnit) {
-      if (this.unitCanMoveToHex(selectedUnit, hex))
-        this.dispatchMoveUnitAction(selectedUnit, hex)
-      else if (this.unitCanAttackHex(selectedUnit, hex))
-        this.dispatchAttackAction(selectedUnit, hex)
-    }
-  }
-
-  private setMode = (mode: Mode): void => {
-    this.localGameState = this.localGameState.setMode(mode)
   }
 
   private unitCouldPotentiallyMove = (unit: Unit): boolean =>
