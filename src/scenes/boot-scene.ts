@@ -67,11 +67,11 @@ export class BootScene extends Phaser.Scene {
     this.load.image('llama', 'assets/sprites/llama_14.png')
 
     // https://opengameart.org/content/37-hitspunches
-    this.load.audio(AudioKeys.ATTACK, 'assets/audio/hit18.mp3.ogg')
+    this.load.audio(AudioKeys.ATTACK, 'assets/audio/hit18.mp3.mp3')
     // https://opengameart.org/content/male-gruntyelling-sounds
     this.load.audio(AudioKeys.DEATH, 'assets/audio/1yell4.wav')
     // https://opengameart.org/content/grass-foot-step-sounds-yo-frankie
-    this.load.audio(AudioKeys.WALK, 'assets/audio/sfx_step_grass_l.ogg')
+    this.load.audio(AudioKeys.WALK, 'assets/audio/sfx_step_grass_l.mp3')
     // https://opengameart.org/content/ui-sound-effects-pack
     this.load.audio(AudioKeys.NEW_TURN, 'assets/audio/MENU A_Select.wav')
   }

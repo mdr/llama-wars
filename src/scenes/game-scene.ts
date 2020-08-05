@@ -74,7 +74,6 @@ export class GameScene extends Phaser.Scene {
   }
 
   private handleKey = (event: KeyboardEvent): void => {
-    console.log(event)
     switch (event.key) {
       case 'ArrowLeft':
       case '4':
