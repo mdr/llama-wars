@@ -145,7 +145,7 @@ export class GameScene extends Phaser.Scene {
       const unit = this.findUnitInLocation(this.selectedHex)
       if (unit) {
         this.selectionText.setText(this.describeUnit(unit))
-        if (unit.playerId == this.playerId) {
+        if (unit.playerId == this.playerId && unit.actionPoints.current > 0) {
           this.actionText.setText('M - Move')
           this.actionText2.setText('A - Attack')
         }
@@ -153,7 +153,7 @@ export class GameScene extends Phaser.Scene {
     }
   }
 
-  private describeUnit = (unit: Unit) => `${unit.name} - Llama warrior - HP ${unit.hitPoints.current}/${unit.hitPoints.max}`
+  private describeUnit = (unit: Unit) => `${unit.name} - Llama warrior - HP ${unit.hitPoints.current}/${unit.hitPoints.max} - actions ${unit.actionPoints.current}/${unit.actionPoints.max}`
 
   private handleWorldEvent = (event: WorldEvent): void => {
     this.worldState = applyEvent(this.worldState, event)
@@ -309,7 +309,7 @@ export class GameScene extends Phaser.Scene {
   private handleStartAttack = () => {
     if (this.selectedHex) {
       const unit = this.findUnitInLocation(this.selectedHex)
-      if (unit && unit.playerId == this.playerId) {
+      if (unit && unit.playerId == this.playerId && unit.actionPoints.current > 0) {
         this.localGameState = this.localGameState.setMode({ type: 'attack', from: this.selectedHex, unitId: unit.id })
         this.syncScene()
       }
@@ -319,7 +319,7 @@ export class GameScene extends Phaser.Scene {
   private handleStartMove = () => {
     if (this.selectedHex) {
       const unit = this.findUnitInLocation(this.selectedHex)
-      if (unit && unit.playerId == this.playerId) {
+      if (unit && unit.playerId == this.playerId && unit.actionPoints.current > 0) {
         const newMode: Mode = { type: 'moveUnit', from: this.selectedHex, unitId: unit.id }
         this.localGameState = this.localGameState.setMode(newMode)
         this.syncScene()

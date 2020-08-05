@@ -17,14 +17,11 @@ export class Server {
   private worldState: WorldState = INITIAL_WORLD_STATE
   private listeners: WorldEventListener[] = []
 
-  public addListener = (listener: WorldEventListener) => {
-    this.listeners.push(listener)
-  }
+  public addListener = (listener: WorldEventListener) => this.listeners.push(listener)
 
   private notifyListeners = (event: WorldEvent): void => {
-    for (const listener of this.listeners) {
+    for (const listener of this.listeners)
       listener(event)
-    }
   }
 
   public handleAction = (playerId: PlayerId, action: WorldAction): void => {
@@ -41,20 +38,18 @@ export class Server {
   private handleAttack = (playerId: PlayerId, action: AttackAction) => {
     const { unitId, target } = action
     const attacker = this.worldState.findUnitById(unitId)
-    if (!attacker) {
+    if (!attacker)
       throw `No unit found with ID ${unitId}`
-    }
     const from = attacker.location
-    if (!from.isAdjacentTo(target)) {
+    if (!from.isAdjacentTo(target))
       throw `Invalid unit attack between non-adjacent hexes ${from} to ${target}`
-    }
     const defender = this.worldState.findUnitInLocation(target)
-    if (!defender) {
+    if (!defender)
       throw `No target unit to attack at ${target}`
-    }
-    if (playerId == defender.playerId) {
+    if (playerId == defender.playerId)
       throw `Cannot attack own unit`
-    }
+    if (attacker.actionPoints.current < 1)
+      throw `Not enough action points to attack`
 
     const attackerDamage = Math.min(attacker.hitPoints.current, 10)
     const defenderDamage = Math.min(defender.hitPoints.current, 20)
@@ -74,6 +69,7 @@ export class Server {
         damage: defenderDamage,
         killed: defender.hitPoints.current == defenderDamage,
       },
+      actionPointsConsumed: 1,
     }
     this.worldState = applyEvent(this.worldState, event)
     this.notifyListeners(event)
@@ -83,20 +79,25 @@ export class Server {
   private handleMoveUnit = (playerId: PlayerId, action: MoveUnitWorldAction) => {
     const { unitId, to } = action
     const unit = this.worldState.findUnitById(unitId)
-    if (!unit) {
+    if (!unit)
       throw `No unit found with ID ${unitId}`
-    }
     const from = unit.location
-    if (!from.isAdjacentTo(to)) {
+    if (!from.isAdjacentTo(to))
       throw `Invalid unit movement between non-adjacent hexes ${from} to ${to}`
-    }
-    if (!this.worldState.map.isInBounds(to)) {
+    if (!this.worldState.map.isInBounds(to))
       throw `Invalid unit movement to out-of-bounds hex ${to}`
-    }
-    if (this.worldState.findUnitInLocation(to)) {
+    if (this.worldState.findUnitInLocation(to))
       throw `Invalid unit movement to already-occupied hex`
+    if (unit.actionPoints.current < 1)
+      throw `Not enough action points to move`
+    const event: UnitMovedWorldEvent = {
+      type: 'unitMoved',
+      playerId: playerId,
+      actionPointsConsumed: 1,
+      unitId,
+      from,
+      to,
     }
-    const event: UnitMovedWorldEvent = { type: 'unitMoved', playerId: playerId, unitId, from, to }
     this.worldState = applyEvent(this.worldState, event)
     this.notifyListeners(event)
   }

@@ -6,6 +6,7 @@ export interface UnitMovedWorldEvent {
   type: 'unitMoved'
   playerId: PlayerId,
   unitId: UnitId
+  actionPointsConsumed: number,
   from: Hex
   to: Hex
 }
@@ -22,6 +23,7 @@ export interface CombatWorldEvent {
   type: 'combat'
   attacker: CombatParticipantInfo
   defender: CombatParticipantInfo
+  actionPointsConsumed: number
 }
 
 export type WorldEvent = UnitMovedWorldEvent | CombatWorldEvent

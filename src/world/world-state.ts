@@ -1,7 +1,7 @@
 import { Hex } from './hex'
 import * as R from 'ramda'
 import { WorldMap } from './world-map'
-import { HitPoints, Unit, UnitId } from './unit'
+import { ActionPoints, HitPoints, Unit, UnitId } from './unit'
 import { Option } from '../util/types'
 
 export class WorldState {
@@ -39,6 +39,7 @@ export const INITIAL_WORLD_STATE: WorldState = new WorldState({
       name: 'Walter',
       location: new Hex(1, 1),
       hitPoints: new HitPoints({ current: 100, max: 100 }),
+      actionPoints: new ActionPoints({ current: 2, max: 2 }),
     }),
     new Unit({
       id: 2,
@@ -46,6 +47,7 @@ export const INITIAL_WORLD_STATE: WorldState = new WorldState({
       name: 'Becky',
       location: new Hex(0, 3),
       hitPoints: new HitPoints({ current: 100, max: 100 }),
+      actionPoints: new ActionPoints({ current: 2, max: 2 }),
     }),
     new Unit({
       id: 3,
@@ -53,6 +55,7 @@ export const INITIAL_WORLD_STATE: WorldState = new WorldState({
       name: 'Chewpaca',
       location: new Hex(2, 1),
       hitPoints: new HitPoints({ current: 100, max: 100 }),
+      actionPoints: new ActionPoints({ current: 2, max: 2 }),
     }),
     new Unit({
       id: 4,
@@ -60,6 +63,7 @@ export const INITIAL_WORLD_STATE: WorldState = new WorldState({
       name: 'Barack O. Llama',
       location: new Hex(3, 2),
       hitPoints: new HitPoints({ current: 100, max: 100 }),
+      actionPoints: new ActionPoints({ current: 2, max: 2 }),
     }),
   ],
 })
