@@ -1,4 +1,4 @@
-import {  WorldState } from './world-state'
+import { WorldState } from './world-state'
 import { CombatWorldEvent, UnitMovedWorldEvent, WorldEvent } from './world-events'
 
 export const applyEvent = (state: WorldState, event: WorldEvent): WorldState => {
@@ -35,9 +35,20 @@ const handleCombat = (state: WorldState, event: CombatWorldEvent): WorldState =>
   if (!attacker.location.isAdjacentTo(defender.location)) {
     throw `Invalid combat between non-adjacent hexes ${attacker.location} to ${defender.location}`
   }
-  return state
-    .replaceUnit(attackerUnit.id, attackerUnit.damage(attacker.damage))
-    .replaceUnit(defenderUnit.id, defenderUnit.damage(defender.damage))
+
+  let newState = state
+
+  if (attacker.killed)
+    newState = newState.removeUnit(attackerUnit.id)
+  else
+    newState = newState.replaceUnit(attackerUnit.id, attackerUnit.damage(attacker.damage))
+
+  if (defender.killed)
+    newState = newState.removeUnit(defenderUnit.id)
+  else
+    newState = newState.replaceUnit(defenderUnit.id, defenderUnit.damage(defender.damage))
+
+  return newState
 }
 
 const handleUnitMoved = (state: WorldState, event: UnitMovedWorldEvent): WorldState => {

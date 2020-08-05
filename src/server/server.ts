@@ -40,36 +40,39 @@ export class Server {
 
   private handleAttack = (playerId: PlayerId, action: AttackAction) => {
     const { unitId, target } = action
-    const unit = this.worldState.findUnitById(unitId)
-    if (!unit) {
+    const attacker = this.worldState.findUnitById(unitId)
+    if (!attacker) {
       throw `No unit found with ID ${unitId}`
     }
-    const from = unit.location
+    const from = attacker.location
     if (!from.isAdjacentTo(target)) {
       throw `Invalid unit attack between non-adjacent hexes ${from} to ${target}`
     }
-    const targetUnit = this.worldState.findUnitInLocation(target)
-    if (!targetUnit) {
+    const defender = this.worldState.findUnitInLocation(target)
+    if (!defender) {
       throw `No target unit to attack at ${target}`
     }
-    if (playerId == targetUnit.playerId) {
+    if (playerId == defender.playerId) {
       throw `Cannot attack own unit`
     }
+
+    const attackerDamage = Math.min(attacker.hitPoints.current, 10)
+    const defenderDamage = Math.min(defender.hitPoints.current, 20)
     const event: CombatWorldEvent = {
       type: 'combat',
       attacker: {
-        playerId: playerId,
-        unitId: unit.id,
-        location: from,
-        damage: 10,
-        killed: false,
+        playerId: attacker.playerId,
+        unitId: attacker.id,
+        location: attacker.location,
+        damage: attackerDamage,
+        killed: attacker.hitPoints.current == attackerDamage,
       },
       defender: {
-        playerId: targetUnit.playerId,
-        unitId: targetUnit.id,
-        location: targetUnit.location,
-        damage: 10,
-        killed: false,
+        playerId: defender.playerId,
+        unitId: defender.id,
+        location: defender.location,
+        damage: defenderDamage,
+        killed: defender.hitPoints.current == defenderDamage,
       },
     }
     this.worldState = applyEvent(this.worldState, event)

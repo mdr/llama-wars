@@ -66,5 +66,7 @@ export class BootScene extends Phaser.Scene {
     this.load.image('llama', 'assets/sprites/llama_14.png')
     // https://opengameart.org/content/37-hitspunches
     this.load.audio('attack', 'assets/audio/hit18.mp3.ogg')
+    // https://opengameart.org/content/male-gruntyelling-sounds
+    this.load.audio('death', 'assets/audio/1yell4.wav')
   }
 }

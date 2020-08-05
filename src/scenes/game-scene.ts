@@ -13,14 +13,13 @@ import { UnreachableCaseError } from '../util/unreachable-case-error'
 import { MapDisplayObject } from './map-display-object'
 import { just, nothing, Option } from '../util/types'
 import { INITIAL_LOCAL_GAME_STATE, LocalGameState } from './local-game-state'
+import { Mode } from './mode'
 
 const sceneConfig: Phaser.Types.Scenes.SettingsConfig = {
   active: false,
   visible: false,
   key: 'Game',
 }
-
-export type TileState = 'default' | 'selected' | 'targetable'
 
 export const hexSize = 48
 export const drawingOffset = { x: 60, y: 60 }
@@ -30,12 +29,12 @@ export class GameScene extends Phaser.Scene {
   private readonly server: Server = new Server()
   private worldState: WorldState = INITIAL_WORLD_STATE
   private localGameState: LocalGameState = INITIAL_LOCAL_GAME_STATE
+  private mapDisplayObject: MapDisplayObject
+  private unitDisplayObjects: Map<UnitId, UnitDisplayObject> = new Map()
   private selectionText: Phaser.GameObjects.Text
   private actionText: Phaser.GameObjects.Text
   private actionText2: Phaser.GameObjects.Text
   private endTurnText: Phaser.GameObjects.Text
-  private mapDisplayObject: MapDisplayObject
-  private unitDisplayObjects: Map<UnitId, UnitDisplayObject> = new Map()
 
   constructor() {
     super(sceneConfig)
@@ -56,6 +55,7 @@ export class GameScene extends Phaser.Scene {
 
   public create(): void {
     this.sound.add('attack')
+    this.sound.add('death')
     this.mapDisplayObject = new MapDisplayObject(this, this.worldState, this.localGameState)
     this.worldState.units.forEach(this.createUnit)
     this.createTexts()
@@ -163,8 +163,22 @@ export class GameScene extends Phaser.Scene {
         this.getUnitDisplayObject(unitId).move(from, to)
         break
       case 'combat':
+        const { attacker, defender } = event
         this.sound.play('attack')
-        this.getUnitDisplayObject(event.attacker.unitId).attack(event.attacker.location, event.defender.location)
+        if (attacker.killed || defender.killed) {
+          this.sound.play('death')
+        }
+        const attackerDisplayObject = this.getUnitDisplayObject(attacker.unitId)
+        const defenderDisplayObject = this.getUnitDisplayObject(defender.unitId)
+        attackerDisplayObject.attack(attacker.location, defender.location)
+        if (attacker.killed) {
+          attackerDisplayObject.destroy()
+          this.unitDisplayObjects.delete(attacker.unitId)
+        }
+        if (defender.killed) {
+          defenderDisplayObject.destroy()
+          this.unitDisplayObjects.delete(defender.unitId)
+        }
         break
       default:
         throw new UnreachableCaseError(event)
@@ -247,14 +261,14 @@ export class GameScene extends Phaser.Scene {
 
   private handleAbortMove = () => {
     if (this.mode.type == 'moveUnit') {
-      this.localGameState = this.localGameState.copy({ mode: { type: 'selectHex' } })
+      this.localGameState = this.localGameState.setMode({ type: 'selectHex' })
       this.syncScene()
     }
   }
 
   private handleAbortAttack = () => {
     if (this.mode.type == 'attack') {
-      this.localGameState = this.localGameState.copy({ mode: { type: 'selectHex' } })
+      this.localGameState = this.localGameState.setMode({ type: 'selectHex' })
       this.syncScene()
     }
   }
@@ -296,7 +310,7 @@ export class GameScene extends Phaser.Scene {
     if (this.selectedHex) {
       const unit = this.findUnitInLocation(this.selectedHex)
       if (unit && unit.playerId == this.playerId) {
-        this.localGameState = this.localGameState.copy({ mode: { type: 'attack', from: this.selectedHex, unitId: unit.id } })
+        this.localGameState = this.localGameState.setMode({ type: 'attack', from: this.selectedHex, unitId: unit.id })
         this.syncScene()
       }
     }
@@ -306,7 +320,8 @@ export class GameScene extends Phaser.Scene {
     if (this.selectedHex) {
       const unit = this.findUnitInLocation(this.selectedHex)
       if (unit && unit.playerId == this.playerId) {
-        this.localGameState = this.localGameState.copy({ mode: { type: 'moveUnit', from: this.selectedHex, unitId: unit.id } })
+        const newMode: Mode = { type: 'moveUnit', from: this.selectedHex, unitId: unit.id }
+        this.localGameState = this.localGameState.setMode(newMode)
         this.syncScene()
       }
     }
@@ -327,12 +342,12 @@ export class GameScene extends Phaser.Scene {
     if (targetUnit) {
       if (targetUnit.playerId == this.playerId) {
         // abort if you attack yourself
-        this.localGameState = this.localGameState.copy({ mode: { type: 'selectHex' } })
+        this.localGameState = this.localGameState.setMode({ type: 'selectHex' })
         this.syncScene()
       } else {
         const action: WorldAction = { type: 'attack', unitId: unitId, target: targetHex }
         this.server.handleAction(this.playerId, action)
-        this.localGameState = this.localGameState.copy({ mode: { type: 'selectHex' } })
+        this.localGameState = this.localGameState.setMode({ type: 'selectHex' })
         this.syncScene()
       }
     }
@@ -343,7 +358,7 @@ export class GameScene extends Phaser.Scene {
     if (unitInHex) {
       if (unitInHex.id == unitId) {
         // abort if you click yourself
-        this.localGameState = this.localGameState.copy({ mode: { type: 'selectHex' } })
+        this.localGameState = this.localGameState.setMode({ type: 'selectHex' })
         this.syncScene()
       } else {
         // do nothing

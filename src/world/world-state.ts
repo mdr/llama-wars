@@ -25,6 +25,9 @@ export class WorldState {
   public replaceUnit = (unitId: UnitId, unit: Unit): WorldState =>
     this.copy({ units: R.append(unit, R.filter((unit) => unit.id != unitId, this.units)) })
 
+  public removeUnit = (unitId: UnitId): WorldState =>
+    this.copy({ units: R.filter((unit) => unit.id != unitId, this.units) })
+
 }
 
 export const INITIAL_WORLD_STATE: WorldState = new WorldState({

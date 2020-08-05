@@ -21,6 +21,7 @@ export class LocalGameState {
                  }: { playerId?: PlayerId, mode?: Mode, selectedHex?: Maybe<Hex> } = {}): LocalGameState =>
     new LocalGameState({ playerId, mode, selectedHex: toOption(selectedHex) })
 
+  public setMode = (mode: Mode): LocalGameState => this.copy({ mode })
 
   public endTurn = (): LocalGameState =>
     this.copy({

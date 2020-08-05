@@ -1,5 +1,5 @@
 import { WorldState } from '../world/world-state'
-import { drawingOffset, hexCenter, hexSize, TileState } from './game-scene'
+import { drawingOffset, hexCenter, hexSize } from './game-scene'
 import { multiplyPoint, point, Point, subtractPoints } from './point'
 import { fromPoint, hexCorners } from './hex-geometry'
 import { Hex } from '../world/hex'
@@ -17,6 +17,8 @@ import { Unit } from '../world/unit'
 import { Option } from '../util/types'
 import { LocalGameState } from './local-game-state'
 import Polygon = Phaser.GameObjects.Polygon
+
+type TileState = 'default' | 'selected' | 'targetable'
 
 export class MapDisplayObject {
 

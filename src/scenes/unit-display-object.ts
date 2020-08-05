@@ -98,6 +98,10 @@ export class UnitDisplayObject {
     })
   }
 
+  public destroy = () => {
+    this.healthBarGraphics.destroy()
+    this.image.destroy()
+  }
 }
 
 type TweenXY = { x: { from: number, to: number }, y: { from: number, to: number } }
