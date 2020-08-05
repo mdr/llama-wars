@@ -6,7 +6,7 @@ import { INITIAL_WORLD_STATE, Player, WorldState } from '../world/world-state'
 import { Server } from '../server/server'
 import { CombatWorldEvent, UnitMovedWorldEvent, WorldEvent } from '../world/world-events'
 import { applyEvent } from '../world/world-event-evaluator'
-import { MoveUnitWorldAction, WorldAction } from '../world/world-actions'
+import { WorldAction } from '../world/world-actions'
 import { Unit, UnitId } from '../world/unit'
 import { UnitDisplayObject } from './unit-display-object'
 import { ACTION_TEXT_COLOUR, HOVER_ACTION_TEXT_COLOUR } from './colours'
@@ -17,6 +17,7 @@ import { INITIAL_LOCAL_GAME_STATE, LocalGameState } from './local-game-state'
 import { Mode } from './mode'
 import { ALL_AUDIO_KEYS, AudioKeys } from './asset-keys'
 import Pointer = Phaser.Input.Pointer
+import { mapToLocalAction } from './keyboard-mapper'
 
 const sceneConfig: Phaser.Types.Scenes.SettingsConfig = {
   active: false,
@@ -74,51 +75,31 @@ export class GameScene extends Phaser.Scene {
   }
 
   private handleKey = (event: KeyboardEvent): void => {
-    switch (event.key) {
-      case 'ArrowLeft':
-      case '4':
-        if (this.selectedHex)
-          this.moveOrAttackHex(this.selectedHex.goLeft())
-        break
-      case 'ArrowRight':
-      case '6':
-        if (this.selectedHex)
-          this.moveOrAttackHex(this.selectedHex.goRight())
-        break
-      case '7':
-        if (this.selectedHex)
-          this.moveOrAttackHex(this.selectedHex.goNorthWest())
-        break
-      case '3':
-        if (this.selectedHex)
-          this.moveOrAttackHex(this.selectedHex.goSouthEast())
-        break
-      case '9':
-        if (this.selectedHex)
-          this.moveOrAttackHex(this.selectedHex.goNorthEast())
-        break
-      case '1':
-        if (this.selectedHex)
-          this.moveOrAttackHex(this.selectedHex.goSouthWest())
-        break
-      case 'Enter':
-        this.handleEnter(event)
-        break
-      case 'Escape':
-        this.handleEscape()
-        break
-      case 'm':
-        this.handleMKey()
-        break
-      case 'a':
-        this.handleAKey()
-        break
-      case 'n':
-        this.handleNKey(event)
-        break
-
-      default:
-        break
+    const localAction = mapToLocalAction(event, this.mode)
+    if (localAction) {
+      switch (localAction.type) {
+        case 'go':
+          if (this.selectedHex)
+            this.moveOrAttackHex(this.selectedHex.go(localAction.direction))
+          break;
+        case 'endTurn':
+          this.endTurn()
+          break
+        case 'selectNextUnit':
+          this.selectNextUnit()
+          break
+        case 'enterMoveMode':
+          this.handleStartMove()
+          break
+        case 'enterAttackMode':
+          this.handleStartAttack()
+          break
+        case 'abort':
+          this.handleAbort()
+          break
+        default:
+          throw new UnreachableCaseError(localAction)
+      }
     }
   }
 
@@ -139,13 +120,13 @@ export class GameScene extends Phaser.Scene {
       .on('pointerover', () => this.actionText2.setFill(HOVER_ACTION_TEXT_COLOUR))
       .on('pointerout', () => this.actionText2.setFill(ACTION_TEXT_COLOUR))
     this.endTurnText = this.add.text(700, mapHeight(map) * HEX_SIZE + DRAWING_OFFSET.y, '', { fill: ACTION_TEXT_COLOUR }).setInteractive()
-      .on('pointerdown', this.handleEndTurn)
+      .on('pointerdown', this.endTurn)
       .on('pointerover', () => this.endTurnText.setFill(HOVER_ACTION_TEXT_COLOUR))
       .on('pointerout', () => this.endTurnText.setFill(ACTION_TEXT_COLOUR))
     this.playerText = this.add.text(23, 20, '')
   }
 
-  private handleEndTurn = () => {
+  private endTurn = () => {
     if (!this.getCurrentPlayer().endedTurn) {
       this.sendActionToServer({ type: 'endTurn' })
     }
@@ -317,44 +298,16 @@ export class GameScene extends Phaser.Scene {
     return unitDisplayObject
   }
 
-  private handleMKey = () => {
-    switch (this.mode.type) {
-      case 'selectHex':
-        this.handleStartMove()
-        break
-      case 'moveUnit':
-      case 'attack':
-        break
-      default:
-        throw new UnreachableCaseError(this.mode)
-    }
-  }
-
-  private handleNKey = (event: KeyboardEvent) => {
-    if (event.ctrlKey) {
-      const selectedUnit = this.findSelectedUnit()
-      const unitToSelect = selectedUnit ? this.findNextUnitWithActionPoints(selectedUnit.id) : this.findFirstUnitWithActionPoints()
-      if (unitToSelect) {
-        this.localGameState = this.localGameState.setSelectedHex(unitToSelect?.location).setMode({ type: 'selectHex' })
-        this.syncScene()
-      }
+  private selectNextUnit = (): void => {
+    const selectedUnit = this.findSelectedUnit()
+    const unitToSelect = selectedUnit ? this.findNextUnitWithActionPoints(selectedUnit.id) : this.findFirstUnitWithActionPoints()
+    if (unitToSelect) {
+      this.localGameState = this.localGameState.setSelectedHex(unitToSelect?.location).setMode({ type: 'selectHex' })
+      this.syncScene()
     }
   }
 
   private findSelectedUnit = (): Option<Unit> => this.selectedHex ? this.findUnitInLocation(this.selectedHex) : undefined
-
-  private handleAKey = () => {
-    switch (this.mode.type) {
-      case 'selectHex':
-        this.handleStartAttack()
-        break
-      case 'moveUnit':
-      case 'attack':
-        break
-      default:
-        throw new UnreachableCaseError(this.mode)
-    }
-  }
 
   private handlePointerMove = (pointer) => {
     const pointerPoint = { x: pointer.x, y: pointer.y }
@@ -426,13 +379,7 @@ export class GameScene extends Phaser.Scene {
       && unit.location.isAdjacentTo(location)
   }
 
-  private handleEnter = (event: KeyboardEvent): void => {
-    if (!event.shiftKey)
-      return
-    this.handleEndTurn()
-  }
-
-  private handleEscape = (): void => {
+  private handleAbort = (): void => {
     switch (this.mode.type) {
       case 'selectHex':
         this.localGameState = this.localGameState.copy({ selectedHex: nothing })

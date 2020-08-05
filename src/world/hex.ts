@@ -1,4 +1,5 @@
 import * as R from 'ramda'
+import { getUnitVector, HexDirection } from './hex-direction'
 
 export class Hex {
   readonly x: number
@@ -32,11 +33,7 @@ export class Hex {
 
   public toString = (): string => `Hex(${this.x}, ${this.y})`
 
-  public goLeft = (): Hex => new Hex(this.x - 1, this.y)
-  public goRight = (): Hex => new Hex(this.x + 1, this.y)
-
-  public goNorthWest = (): Hex => new Hex(this.x, this.y - 1)
-  public goSouthEast = (): Hex => new Hex(this.x, this.y + 1)
-  public goNorthEast = (): Hex => new Hex(this.x + 1, this.y - 1)
-  public goSouthWest = (): Hex => new Hex(this.x - 1, this.y + 1)
+  public go = (direction: HexDirection): Hex => this.plus(getUnitVector(direction))
 }
+
+export type HexVector = Hex
