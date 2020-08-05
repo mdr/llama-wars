@@ -1,5 +1,10 @@
 import { WorldState } from './world-state'
-import { CombatWorldEvent, UnitMovedWorldEvent, WorldEvent } from './world-events'
+import {
+  CombatWorldEvent,
+  PlayerEndedTurnWorldEvent,
+  UnitMovedWorldEvent,
+  WorldEvent,
+} from './world-events'
 import { UnreachableCaseError } from '../util/unreachable-case-error'
 
 export const applyEvent = (state: WorldState, event: WorldEvent): WorldState => {
@@ -8,6 +13,10 @@ export const applyEvent = (state: WorldState, event: WorldEvent): WorldState => 
       return handleUnitMoved(state, event)
     case 'combat':
       return handleCombat(state, event)
+    case 'playerEndedTurn':
+      return handlePlayerEndedTurn(state, event)
+    case 'wholeTurnEnded':
+      return handleWholeTurnEnded(state)
     default:
       throw new UnreachableCaseError(event)
   }
@@ -69,3 +78,18 @@ const handleCombat = (state: WorldState, event: CombatWorldEvent): WorldState =>
 
   return newState
 }
+
+const handlePlayerEndedTurn = (state: WorldState, event: PlayerEndedTurnWorldEvent): WorldState => {
+  const { playerId } = event
+  const player = state.findPlayer(playerId)
+  if (!player)
+    throw `No player found with ID ${playerId}`
+  return state.replacePlayer(playerId, player.copy({ endedTurn: true }))
+}
+
+const handleWholeTurnEnded = (state: WorldState): WorldState =>
+  state.copy({
+    units: state.units.map(unit => unit.refreshActionPoints()),
+    players: state.players.map(player => player.copy({ endedTurn: false })),
+  })
+

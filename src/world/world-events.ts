@@ -26,4 +26,13 @@ export interface CombatWorldEvent {
   actionPointsConsumed: number
 }
 
-export type WorldEvent = UnitMovedWorldEvent | CombatWorldEvent
+export interface PlayerEndedTurnWorldEvent {
+  type: 'playerEndedTurn'
+  playerId: PlayerId
+}
+
+export interface WholeTurnEndedWorldEvent {
+  type: 'wholeTurnEnded'
+}
+
+export type WorldEvent = UnitMovedWorldEvent | CombatWorldEvent | PlayerEndedTurnWorldEvent | WholeTurnEndedWorldEvent

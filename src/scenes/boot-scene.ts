@@ -68,5 +68,9 @@ export class BootScene extends Phaser.Scene {
     this.load.audio('attack', 'assets/audio/hit18.mp3.ogg')
     // https://opengameart.org/content/male-gruntyelling-sounds
     this.load.audio('death', 'assets/audio/1yell4.wav')
+    // https://opengameart.org/content/grass-foot-step-sounds-yo-frankie
+    this.load.audio('walk', 'assets/audio/sfx_step_grass_l.ogg')
+    // https://opengameart.org/content/ui-sound-effects-pack
+    this.load.audio('new-turn', 'assets/audio/MENU A_Select.wav')
   }
 }

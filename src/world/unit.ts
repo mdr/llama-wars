@@ -18,6 +18,9 @@ export class ActionPoints {
 
   public copy = ({ current = this.current, max = this.max }: { current?: number, max?: number } = {}): ActionPoints =>
     new ActionPoints({ current, max })
+
+  public refresh = (): ActionPoints => new ActionPoints({ current: this.max, max: this.max })
+
 }
 
 export class HitPoints {
@@ -74,6 +77,9 @@ export class Unit {
 
   public reduceActionPoints = (actionPointsConsumed: number): Unit =>
     this.copy({ actionPoints: this.actionPoints.reduce(actionPointsConsumed) })
+
+  public refreshActionPoints = (): Unit =>
+    this.copy({ actionPoints: this.actionPoints.refresh() })
 }
 
 export type UnitId = number

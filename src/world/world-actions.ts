@@ -13,4 +13,8 @@ export interface AttackAction {
   target: Hex
 }
 
-export type WorldAction = MoveUnitWorldAction | AttackAction
+export interface EndTurnAction {
+  type: 'endTurn'
+}
+
+export type WorldAction = MoveUnitWorldAction | AttackAction | EndTurnAction

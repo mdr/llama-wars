@@ -1,5 +1,5 @@
 import { WorldState } from '../world/world-state'
-import { drawingOffset, hexCenter, hexSize } from './game-scene'
+import { DRAWING_OFFSET, hexCenter, HEX_SIZE } from './game-scene'
 import { multiplyPoint, point, Point, subtractPoints } from './point'
 import { fromPoint, hexCorners } from './hex-geometry'
 import { Hex } from '../world/hex'
@@ -38,7 +38,7 @@ export class MapDisplayObject {
 
   private createHex = (hex: Hex): void => {
     const polygonCenter = hexCenter(hex)
-    const polygon = this.addPolygon(polygonCenter, hexSize)
+    const polygon = this.addPolygon(polygonCenter, HEX_SIZE)
     this.hexPolygons.set(hex.toString(), polygon)
   }
 
@@ -119,7 +119,7 @@ export class MapDisplayObject {
   private findUnitInLocation = (hex: Hex): Option<Unit> => this.worldState.findUnitInLocation(hex)
 
   public handlePointerMove(pointerPoint: Point): void {
-    const hex = fromPoint(multiplyPoint(subtractPoints(pointerPoint, drawingOffset), 1 / hexSize))
+    const hex = fromPoint(multiplyPoint(subtractPoints(pointerPoint, DRAWING_OFFSET), 1 / HEX_SIZE))
     if (this.previousHover && this.previousHover.equals(hex))
       return
     if (this.previousHover) {

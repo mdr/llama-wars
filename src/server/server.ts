@@ -1,15 +1,9 @@
-import {
-  INITIAL_WORLD_STATE,
-  PlayerId,
-  WorldState,
-} from '../world/world-state'
+import { INITIAL_WORLD_STATE, PlayerId, WorldState } from '../world/world-state'
 import { AttackAction, MoveUnitWorldAction, WorldAction } from '../world/world-actions'
 import { applyEvent } from '../world/world-event-evaluator'
-import {
-  CombatWorldEvent,
-  UnitMovedWorldEvent,
-  WorldEvent,
-} from '../world/world-events'
+import { CombatWorldEvent, UnitMovedWorldEvent, WorldEvent } from '../world/world-events'
+import * as R from 'ramda'
+import { UnreachableCaseError } from '../util/unreachable-case-error'
 
 export type WorldEventListener = (event: WorldEvent) => void
 
@@ -32,6 +26,11 @@ export class Server {
       case 'moveUnit':
         this.handleMoveUnit(playerId, action)
         break
+      case 'endTurn':
+        this.handleEndTurn(playerId)
+        break
+      default:
+        throw new UnreachableCaseError(action)
     }
   }
 
@@ -98,6 +97,19 @@ export class Server {
       from,
       to,
     }
+    this.worldState = applyEvent(this.worldState, event)
+    this.notifyListeners(event)
+  }
+
+  private handleEndTurn(playerId: PlayerId): void {
+    const player = this.worldState.findPlayer(playerId)
+    if (!player)
+      throw `No player with ID ${playerId}`
+    if (player.endedTurn)
+      throw `Player has already ended their turn`
+    let playersYetToEndTheirTurn = this.worldState.players.filter(player => !player.endedTurn).map(player => player.id)
+    let wholeTurnEnded = R.equals(playersYetToEndTheirTurn, [playerId])
+    const event: WorldEvent = wholeTurnEnded ? { type: 'wholeTurnEnded' } : { type: 'playerEndedTurn', playerId }
     this.worldState = applyEvent(this.worldState, event)
     this.notifyListeners(event)
   }
