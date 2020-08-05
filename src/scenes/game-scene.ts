@@ -18,6 +18,8 @@ import { Mode } from './mode'
 import { ALL_AUDIO_KEYS, AudioKeys } from './asset-keys'
 import Pointer = Phaser.Input.Pointer
 import { mapToLocalAction } from './keyboard-mapper'
+import { LocalAction } from './local-action'
+import { LocalActionProcessor, LocalActionResult } from './local-action-processor'
 
 const sceneConfig: Phaser.Types.Scenes.SettingsConfig = {
   active: false,
@@ -76,17 +78,23 @@ export class GameScene extends Phaser.Scene {
 
   private handleKey = (event: KeyboardEvent): void => {
     const localAction = mapToLocalAction(event, this.mode)
-    if (localAction) {
+    if (localAction)
+      this.handleLocalAction(localAction)
+  }
+
+  private handleLocalAction(localAction: LocalAction): void {
+    const localActionProcessor = new LocalActionProcessor(this.worldState, this.localGameState)
+    const result = localActionProcessor.process(localAction)
+    if (result) {
+      this.enactLocalActionResult(result)
+    } else {
       switch (localAction.type) {
         case 'go':
           if (this.selectedHex)
             this.moveOrAttackHex(this.selectedHex.go(localAction.direction))
-          break;
+          break
         case 'endTurn':
           this.endTurn()
-          break
-        case 'selectNextUnit':
-          this.selectNextUnit()
           break
         case 'enterMoveMode':
           this.handleStartMove()
@@ -94,12 +102,17 @@ export class GameScene extends Phaser.Scene {
         case 'enterAttackMode':
           this.handleStartAttack()
           break
-        case 'abort':
-          this.handleAbort()
-          break
-        default:
-          throw new UnreachableCaseError(localAction)
       }
+    }
+  }
+
+  private enactLocalActionResult(result: LocalActionResult): void {
+    if (result.newLocalGameState) {
+      this.localGameState = result.newLocalGameState
+      this.syncScene()
+    }
+    if (result.worldAction) {
+      this.sendWorldActionToServer(result.worldAction)
     }
   }
 
@@ -120,7 +133,7 @@ export class GameScene extends Phaser.Scene {
       .on('pointerover', () => this.actionText2.setFill(HOVER_ACTION_TEXT_COLOUR))
       .on('pointerout', () => this.actionText2.setFill(ACTION_TEXT_COLOUR))
     this.endTurnText = this.add.text(700, mapHeight(map) * HEX_SIZE + DRAWING_OFFSET.y, '', { fill: ACTION_TEXT_COLOUR }).setInteractive()
-      .on('pointerdown', this.endTurn)
+      .on('pointerdown', () => this.handleLocalAction({ type: 'endTurn' }))
       .on('pointerover', () => this.endTurnText.setFill(HOVER_ACTION_TEXT_COLOUR))
       .on('pointerout', () => this.endTurnText.setFill(ACTION_TEXT_COLOUR))
     this.playerText = this.add.text(23, 20, '')
@@ -128,7 +141,7 @@ export class GameScene extends Phaser.Scene {
 
   private endTurn = () => {
     if (!this.getCurrentPlayer().endedTurn) {
-      this.sendActionToServer({ type: 'endTurn' })
+      this.sendWorldActionToServer({ type: 'endTurn' })
     }
   }
 
@@ -220,7 +233,10 @@ export class GameScene extends Phaser.Scene {
       throw `Could not find player to take next turn`
     this.localGameState = this.localGameState.copy({ playerId: player.id })
     const unitToSelect = this.findFirstUnitWithActionPoints()
-    this.localGameState = this.localGameState.copy({ selectedHex: toMaybe(unitToSelect?.location) })
+    this.localGameState = this.localGameState.copy({
+      mode: { type: 'selectHex' },
+      selectedHex: toMaybe(unitToSelect?.location),
+    })
     this.sound.play(AudioKeys.NEW_TURN)
     this.syncScene()
   }
@@ -253,7 +269,7 @@ export class GameScene extends Phaser.Scene {
 
   private calculateNewSelectedUnitAfterMoveOrAttack = (unitId: UnitId, defaultLocation: Hex): Option<Hex> => {
     const unit = this.worldState.findUnitById(unitId)
-    // Retain selection if we still have action points, else select next unit (or nothing)
+    // Retain selection if unit still exists and we still have action points, else select next unit (or nothing if there isn't one)
     let newSelectedHex
     if (!unit || unit.actionPoints.current == 0) {
       const nextUnit = this.findNextUnitWithActionPoints(unitId)
@@ -277,6 +293,7 @@ export class GameScene extends Phaser.Scene {
         selectedHex: toMaybe(newSelectedHex),
       })
     }
+    // TODO: deselect unit killed by another player
     this.syncScene()
     const attackerDisplayObject = this.getUnitDisplayObject(attacker.unitId)
     const defenderDisplayObject = this.getUnitDisplayObject(defender.unitId)
@@ -294,17 +311,8 @@ export class GameScene extends Phaser.Scene {
   private getUnitDisplayObject = (unitId: number): UnitDisplayObject => {
     const unitDisplayObject = this.unitDisplayObjects.get(unitId)
     if (!unitDisplayObject)
-      throw 'Could not find unit with ID ' + unitId
+      throw `Could not find unit with ID ${unitId}`
     return unitDisplayObject
-  }
-
-  private selectNextUnit = (): void => {
-    const selectedUnit = this.findSelectedUnit()
-    const unitToSelect = selectedUnit ? this.findNextUnitWithActionPoints(selectedUnit.id) : this.findFirstUnitWithActionPoints()
-    if (unitToSelect) {
-      this.localGameState = this.localGameState.setSelectedHex(unitToSelect?.location).setMode({ type: 'selectHex' })
-      this.syncScene()
-    }
   }
 
   private findSelectedUnit = (): Option<Unit> => this.selectedHex ? this.findUnitInLocation(this.selectedHex) : undefined
@@ -379,47 +387,14 @@ export class GameScene extends Phaser.Scene {
       && unit.location.isAdjacentTo(location)
   }
 
-  private handleAbort = (): void => {
-    switch (this.mode.type) {
-      case 'selectHex':
-        this.localGameState = this.localGameState.copy({ selectedHex: nothing })
-        this.syncScene()
-        break
-      case 'attack':
-        this.handleAbortAttack()
-        return
-      case 'moveUnit':
-        this.handleAbortMove()
-        return
-      default:
-        throw new UnreachableCaseError(this.mode)
-    }
-  }
-
-  private handleAbortMove = (): void => {
-    if (this.mode.type == 'moveUnit') {
-      this.setMode({ type: 'selectHex' })
-      this.syncScene()
-    }
-  }
-
-  private handleAbortAttack = (): void => {
-    if (this.mode.type == 'attack') {
-      this.localGameState = this.localGameState.setMode({ type: 'selectHex' })
-      this.syncScene()
-    }
-  }
-
   private handleActionTextClick = (): void => {
     switch (this.mode.type) {
       case 'selectHex':
-        this.handleStartMove()
+        this.handleLocalAction({ type: 'enterMoveMode' })
         break
       case 'moveUnit':
-        this.handleAbortMove()
-        break
       case 'attack':
-        this.handleAbortAttack()
+        this.handleLocalAction({ type: 'abort' })
         break
       default:
         throw new UnreachableCaseError(this.mode)
@@ -427,18 +402,8 @@ export class GameScene extends Phaser.Scene {
   }
 
   private handleActionText2Click = () => {
-    switch (this.mode.type) {
-      case 'selectHex':
-        this.handleStartAttack()
-        break
-      case 'attack':
-        this.handleAbortAttack()
-        break
-      case 'moveUnit':
-        // Shouldn't happen
-        break
-      default:
-        throw new UnreachableCaseError(this.mode)
+    if (this.mode.type === 'selectHex') {
+      this.handleLocalAction({ type: 'enterAttackMode' })
     }
   }
 
@@ -506,12 +471,12 @@ export class GameScene extends Phaser.Scene {
   }
 
   private dispatchMoveUnitAction = (unit: Unit, hex: Hex): void =>
-    this.sendActionToServer({ type: 'moveUnit', unitId: unit.id, to: hex })
+    this.sendWorldActionToServer({ type: 'moveUnit', unitId: unit.id, to: hex })
 
   private dispatchAttackAction = (attacker: Unit, targetHex: Hex): void =>
-    this.sendActionToServer({ type: 'attack', unitId: attacker.id, target: targetHex })
+    this.sendWorldActionToServer({ type: 'attack', unitId: attacker.id, target: targetHex })
 
-  private sendActionToServer = (action: WorldAction): void =>
+  private sendWorldActionToServer = (action: WorldAction): void =>
     this.server.handleAction(this.playerId, action)
 
 }
