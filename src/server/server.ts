@@ -44,6 +44,8 @@ export class Server {
       throw `Cannot control another player's unit: ${attacker.id}`
     if (attacker.actionPoints.current < 1)
       throw `Not enough action points to attack`
+    if (!attacker.location.equals(action.attacker.location))
+      throw `Attacker not in expected location`
 
     const defenderId = action.defender.unitId
     const defender = this.worldState.findUnitById(defenderId)
@@ -51,6 +53,8 @@ export class Server {
       throw `No unit found with ID ${defenderId}`
     if (defender.playerId == playerId)
       throw `Cannot attack own unit`
+    if (!defender.location.equals(action.defender.location))
+      throw `Defender not in expected location`
 
     if (!attacker.location.isAdjacentTo(defender.location))
       throw `Invalid unit attack between non-adjacent hexes ${attacker.location} to ${defender.location}`
