@@ -57,9 +57,7 @@ export class LocalActionProcessor {
 
   private handleSelectNextUnit = (): Option<LocalActionResult> => {
     const selectedUnit = this.combinedState.findSelectedUnit()
-    const unitToSelect = selectedUnit ?
-      this.combinedState.findNextUnitWithActionPoints(selectedUnit.id) :
-      this.combinedState.findFirstUnitWithActionPoints()
+    const unitToSelect = this.combinedState.findNextUnitWithActionPoints(selectedUnit?.id)
     if (unitToSelect) {
       const newLocalGameState = this.localGameState.setSelectedHex(unitToSelect?.location).setMode({ type: 'selectHex' })
       return { newLocalGameState: newLocalGameState }

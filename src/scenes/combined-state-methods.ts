@@ -47,14 +47,12 @@ export class CombinedState {
       && unit.location.isAdjacentTo(location)
   }
 
-  public findFirstUnitWithActionPoints = (): Option<Unit> => {
+  public findNextUnitWithActionPoints = (unitId?: UnitId): Option<Unit> => {
     const candidateUnits = R.sortBy(unit => unit.id, this.worldState.units.filter(unit => unit.playerId == this.playerId && unit.actionPoints.current > 0))
-    return R.head(candidateUnits)
-  }
-
-  public findNextUnitWithActionPoints = (unitId: UnitId): Option<Unit> => {
-    const candidateUnits = R.sortBy(unit => unit.id, this.worldState.units.filter(unit => unit.playerId == this.playerId && unit.actionPoints.current > 0))
-    return R.head(candidateUnits.filter(unit => unit.id > unitId)) ?? R.head(candidateUnits.filter(unit => unit.id < unitId))
+    if (unitId)
+      return R.head(candidateUnits.filter(unit => unit.id > unitId)) ?? R.head(candidateUnits.filter(unit => unit.id < unitId))
+    else
+      return R.head(candidateUnits)
   }
 
   public getCurrentPlayer = (): Player => {

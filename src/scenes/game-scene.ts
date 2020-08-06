@@ -167,9 +167,11 @@ export class GameScene extends Phaser.Scene {
     const player = R.head(R.sortBy(player => player.id, (this.worldState.players.filter(player => !player.endedTurn))))
     if (!player)
       throw `Could not find player to take next turn`
-    const unitToSelect = this.combinedState.findFirstUnitWithActionPoints()
     this.localGameState = this.localGameState.copy({
       playerId: player.id,
+    })
+    const unitToSelect = this.combinedState.findNextUnitWithActionPoints()
+    this.localGameState = this.localGameState.copy({
       mode: { type: 'selectHex' },
       selectedHex: toMaybe(unitToSelect?.location),
     })
