@@ -15,7 +15,6 @@ export class TextsDisplayObject {
   private readonly scene: Phaser.Scene
   private worldState: WorldState
   private localGameState: LocalGameState
-  private combinedState: CombinedState
   private readonly localActionDispatcher: LocalActionDispatcher
 
   private readonly selectionText: Phaser.GameObjects.Text
@@ -23,14 +22,21 @@ export class TextsDisplayObject {
   private readonly actionText2: Phaser.GameObjects.Text
   private readonly endTurnText: Phaser.GameObjects.Text
   private readonly playerText: Phaser.GameObjects.Text
+  private readonly hourglass: Phaser.GameObjects.Image
+
+  private get combinedState(): CombinedState {
+    return new CombinedState(this.worldState, this.localGameState)
+  }
 
   constructor(scene: Phaser.Scene, worldState: WorldState, localGameState: LocalGameState, localActionDispatcher: LocalActionDispatcher) {
     this.scene = scene
     this.worldState = worldState
     this.localGameState = localGameState
-    this.combinedState = new CombinedState(worldState, localGameState)
     this.localActionDispatcher = localActionDispatcher
     const map = this.worldState.map
+    this.playerText = this.scene.add.text(23, 20, '')
+    this.hourglass = this.scene.add.image(875, 30, 'hourglass').setVisible(false)
+
     this.selectionText = this.scene.add.text(DRAWING_OFFSET.x - hexWidth(HEX_SIZE) / 2, mapHeight(map) * HEX_SIZE + DRAWING_OFFSET.y, '')
     this.actionText = this.scene.add.text(DRAWING_OFFSET.x - hexWidth(HEX_SIZE) / 2, mapHeight(map) * HEX_SIZE + DRAWING_OFFSET.y + 25, '', { fill: ACTION_TEXT_COLOUR }).setInteractive()
       .on('pointerdown', this.handleActionTextClick)
@@ -44,7 +50,6 @@ export class TextsDisplayObject {
       .on('pointerdown', () => this.localActionDispatcher({ type: 'endTurn' }))
       .on('pointerover', () => this.endTurnText.setFill(HOVER_ACTION_TEXT_COLOUR))
       .on('pointerout', () => this.endTurnText.setFill(ACTION_TEXT_COLOUR))
-    this.playerText = this.scene.add.text(23, 20, '')
   }
 
   private handleActionTextClick = (): void => {
@@ -78,8 +83,7 @@ export class TextsDisplayObject {
   public syncScene = (worldState: WorldState, localGameState: LocalGameState): void => {
     this.worldState = worldState
     this.localGameState = localGameState
-    this.combinedState = new CombinedState(worldState, localGameState)
-
+    this.hourglass.setVisible(localGameState.actionOutstandingWithServer)
     this.playerText.setText(`Player ${this.localGameState.playerId} - Turn ${this.worldState.turn}`)
     this.selectionText.setText('')
     this.actionText.setText('')

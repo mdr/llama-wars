@@ -65,6 +65,8 @@ export class BootScene extends Phaser.Scene {
   private loadAssets() {
     // Source: https://opengameart.org/content/hex-tileset-pack
     this.load.image('llama', 'assets/sprites/llama_14.png')
+    // https://opengameart.org/content/hourglass-icon
+    this.load.image('hourglass', 'assets/sprites/Hourglass.png')
 
     // https://opengameart.org/content/37-hitspunches
     this.load.audio(AudioKeys.ATTACK, 'assets/audio/hit18.mp3.mp3')

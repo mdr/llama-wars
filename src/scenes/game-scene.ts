@@ -19,6 +19,7 @@ import { LocalActionProcessor, LocalActionResult } from './local-action-processo
 import { TextsDisplayObject } from './texts-display-object'
 import Pointer = Phaser.Input.Pointer
 import { CombinedState } from './combined-state-methods'
+import { WorldAction } from '../world/world-actions'
 
 const sceneConfig: Phaser.Types.Scenes.SettingsConfig = {
   active: false,
@@ -96,8 +97,19 @@ export class GameScene extends Phaser.Scene {
       this.syncScene()
     }
     if (result.worldAction) {
-      this.server.handleAction(this.playerId, result.worldAction)
+      this.localGameState = this.localGameState.copy({ actionOutstandingWithServer: true })
+      this.syncScene()
+
+      this.asyncSendToServer(result.worldAction).then(() => {
+        this.localGameState = this.localGameState.copy({ actionOutstandingWithServer: false })
+        this.syncScene()
+      })
     }
+  }
+
+  private asyncSendToServer = async (worldAction: WorldAction): Promise<void> => {
+    await new Promise(resolve => setTimeout(() => resolve(), 100))
+    this.server.handleAction(this.playerId, worldAction)
   }
 
   private handlePointerMove = (pointer: Pointer): void => {
