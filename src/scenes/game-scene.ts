@@ -1,16 +1,16 @@
 import * as R from 'ramda'
-import { addPoints, multiplyPoint, subtractPoints } from './point'
+import { addPoints, multiplyPoint, Point, subtractPoints } from './point'
 import { Hex } from '../world/hex'
 import { centerPoint, fromPoint } from './hex-geometry'
 import { INITIAL_WORLD_STATE, PlayerId, WorldState } from '../world/world-state'
 import { Server } from '../server/server'
-import { CombatWorldEvent, UnitMovedWorldEvent, WorldEvent } from '../world/world-events'
+import { CombatParticipantInfo, CombatWorldEvent, UnitMovedWorldEvent, WorldEvent } from '../world/world-events'
 import { applyEvent } from '../world/world-event-evaluator'
 import { UnitId } from '../world/unit'
 import { UnitDisplayObject } from './unit-display-object'
 import { UnreachableCaseError } from '../util/unreachable-case-error'
 import { MapDisplayObject } from './map-display-object'
-import { Option, toMaybe } from '../util/types'
+import { nothing, Option, toMaybe } from '../util/types'
 import { INITIAL_LOCAL_GAME_STATE, LocalGameState } from './local-game-state'
 import { ALL_AUDIO_KEYS, AudioKeys } from './asset-keys'
 import { mapToLocalAction } from './keyboard-mapper'
@@ -28,7 +28,7 @@ const sceneConfig: Phaser.Types.Scenes.SettingsConfig = {
 
 export const HEX_SIZE = 48
 export const DRAWING_OFFSET = { x: 60, y: 100 }
-export const hexCenter = (hex: Hex) => addPoints(multiplyPoint(centerPoint(hex), HEX_SIZE), DRAWING_OFFSET)
+export const hexCenter = (hex: Hex): Point => addPoints(multiplyPoint(centerPoint(hex), HEX_SIZE), DRAWING_OFFSET)
 
 export class GameScene extends Phaser.Scene {
   private readonly server: Server = new Server()
@@ -60,8 +60,10 @@ export class GameScene extends Phaser.Scene {
   private createDisplayObjects() {
     this.mapDisplayObject = new MapDisplayObject(this, this.worldState, this.localGameState)
     this.textsDisplayObject = new TextsDisplayObject(this, this.worldState, this.localGameState, this.handleLocalAction)
-    for (const unit of this.worldState.units)
-      this.unitDisplayObjects.set(unit.id, new UnitDisplayObject(this, unit))
+    for (const unit of this.worldState.units) {
+      const unitDisplayObject = new UnitDisplayObject(this, unit)
+      this.unitDisplayObjects.set(unit.id, unitDisplayObject)
+    }
   }
 
   // Input handlers
@@ -80,7 +82,7 @@ export class GameScene extends Phaser.Scene {
       this.handleLocalAction(localAction)
   }
 
-  private handleLocalAction(localAction: LocalAction): void {
+  private handleLocalAction = (localAction: LocalAction): void => {
     const localActionProcessor = new LocalActionProcessor(this.worldState, this.localGameState)
     const result = localActionProcessor.process(localAction)
     if (result) {
@@ -88,7 +90,7 @@ export class GameScene extends Phaser.Scene {
     }
   }
 
-  private enactLocalActionResult(result: LocalActionResult): void {
+  private enactLocalActionResult = (result: LocalActionResult): void => {
     if (result.newLocalGameState) {
       this.localGameState = result.newLocalGameState
       this.syncScene()
@@ -155,7 +157,7 @@ export class GameScene extends Phaser.Scene {
         this.handleCombatWorldEvent(event)
         break
       case 'playerEndedTurn':
-      case 'wholeTurnEnded':
+      case 'newTurn':
         this.handleTurnEnded()
         break
       default:
@@ -214,15 +216,9 @@ export class GameScene extends Phaser.Scene {
     if (attacker.killed || defender.killed) {
       this.sound.play(AudioKeys.DEATH)
     }
-    if (attacker.playerId == this.playerId) {
-      const newSelectedHex = this.calculateNewSelectedUnitAfterMoveOrAttack(attacker.unitId, attacker.location)
-      this.localGameState = this.localGameState.copy({
-        mode: { type: 'selectHex' },
-        selectedHex: toMaybe(newSelectedHex),
-      })
-    }
-    // TODO: deselect unit killed by another player
+    this.updateSelectionAfterCombat(attacker, defender)
     this.syncScene()
+
     const attackerDisplayObject = this.getUnitDisplayObject(attacker.unitId)
     const defenderDisplayObject = this.getUnitDisplayObject(defender.unitId)
     attackerDisplayObject.attack(attacker.location, defender.location)
@@ -233,6 +229,25 @@ export class GameScene extends Phaser.Scene {
     if (defender.killed) {
       defenderDisplayObject.destroy()
       this.unitDisplayObjects.delete(defender.unitId)
+    }
+  }
+
+  private updateSelectionAfterCombat = (attacker: CombatParticipantInfo, defender: CombatParticipantInfo) => {
+    if (attacker.playerId == this.playerId) {
+      const newSelectedHex = this.calculateNewSelectedUnitAfterMoveOrAttack(attacker.unitId, attacker.location)
+      this.localGameState = this.localGameState.copy({
+        mode: { type: 'selectHex' },
+        selectedHex: toMaybe(newSelectedHex),
+      })
+    } else {
+      // deselect unit killed by another player
+      const selectedUnitId = this.combinedState.findSelectedUnit()?.id
+      if (defender.killed && defender.unitId == selectedUnitId) {
+        this.localGameState = this.localGameState.copy({
+          mode: { type: 'selectHex' },
+          selectedHex: nothing,
+        })
+      }
     }
   }
 

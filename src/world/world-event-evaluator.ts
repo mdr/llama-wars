@@ -15,8 +15,8 @@ export const applyEvent = (state: WorldState, event: WorldEvent): WorldState => 
       return handleCombat(state, event)
     case 'playerEndedTurn':
       return handlePlayerEndedTurn(state, event)
-    case 'wholeTurnEnded':
-      return handleWholeTurnEnded(state)
+    case 'newTurn':
+      return handleNewTurn(state)
     default:
       throw new UnreachableCaseError(event)
   }
@@ -87,9 +87,9 @@ const handlePlayerEndedTurn = (state: WorldState, event: PlayerEndedTurnWorldEve
   return state.replacePlayer(playerId, player.copy({ endedTurn: true }))
 }
 
-const handleWholeTurnEnded = (state: WorldState): WorldState =>
+const handleNewTurn = (state: WorldState): WorldState =>
   state.copy({
+    turn: state.turn + 1,
     units: state.units.map(unit => unit.refreshActionPoints()),
     players: state.players.map(player => player.copy({ endedTurn: false })),
   })
-

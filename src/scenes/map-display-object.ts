@@ -1,5 +1,5 @@
 import { WorldState } from '../world/world-state'
-import { DRAWING_OFFSET, hexCenter, HEX_SIZE } from './game-scene'
+import { DRAWING_OFFSET, HEX_SIZE, hexCenter } from './game-scene'
 import { multiplyPoint, point, Point, subtractPoints } from './point'
 import { fromPoint, hexCorners } from './hex-geometry'
 import { Hex } from '../world/hex'
@@ -12,7 +12,6 @@ import {
   SELECTED_TILE_COLOUR,
   TARGETABLE_TILE_COLOUR,
 } from './colours'
-import { UnreachableCaseError } from '../util/unreachable-case-error'
 import { Unit } from '../world/unit'
 import { Option } from '../util/types'
 import { LocalGameState } from './local-game-state'
@@ -86,30 +85,24 @@ export class MapDisplayObject {
   }
 
   private calculateColour = (hex: Hex): ColourNumber => {
-    const tileState = this.calculateTileState(hex)
-    switch (tileState) {
+    switch (this.calculateTileState(hex)) {
       case 'default':
         return DEFAULT_TILE_COLOUR
       case 'selected':
         return SELECTED_TILE_COLOUR
       case 'targetable':
         return TARGETABLE_TILE_COLOUR
-      default:
-        throw new UnreachableCaseError(tileState)
     }
   }
 
   private calculateHoverColour = (hex: Hex): ColourNumber => {
-    const tileState = this.calculateTileState(hex)
-    switch (tileState) {
+    switch (this.calculateTileState(hex)) {
       case 'default':
         return HOVER_DEFAULT_TILE_COLOUR
       case 'selected':
         return HOVER_SELECTED_TILE_COLOUR
       case 'targetable':
         return HOVER_TARGETABLE_TILE_COLOUR
-      default:
-        throw new UnreachableCaseError(tileState)
     }
   }
 

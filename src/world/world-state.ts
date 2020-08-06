@@ -21,18 +21,21 @@ export class Player {
 }
 
 export class WorldState {
+  readonly turn: number
   readonly map: WorldMap
   readonly units: Unit[]
   readonly players: Player[]
 
-  constructor({ map, units, players }: { map: WorldMap, units: Unit[], players: Player[] }) {
+  constructor({ turn, map, units, players }: { turn: number, map: WorldMap, units: Unit[], players: Player[] }) {
+    this.turn = turn
     this.map = map
     this.units = units
     this.players = players
   }
 
-  public copy = ({ map = this.map, units = this.units, players = this.players }: { map?: WorldMap, units?: Unit[], players?: Player[] } = {}): WorldState =>
-    new WorldState({ map, units, players })
+  public copy = ({ turn = this.turn, map = this.map, units = this.units, players = this.players }:
+                   { turn?: number, map?: WorldMap, units?: Unit[], players?: Player[] } = {}): WorldState =>
+    new WorldState({ turn, map, units, players })
 
   public findPlayer = (playerId: PlayerId): Option<Player> =>
     R.find((player) => player.id == playerId, this.players)
@@ -63,6 +66,7 @@ export class WorldState {
 }
 
 export const INITIAL_WORLD_STATE: WorldState = new WorldState({
+  turn: 1,
   map: new WorldMap({ width: 10, height: 6 }),
   players: [
     new Player({

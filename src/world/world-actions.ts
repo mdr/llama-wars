@@ -7,14 +7,20 @@ export interface MoveUnitWorldAction {
   to: Hex
 }
 
-export interface AttackAction {
+export interface AttackWorldAction {
   type: 'attack'
-  unitId: UnitId
-  target: Hex
+  attacker: {
+    unitId: UnitId
+    location: Hex
+  }
+  defender: {
+    unitId: UnitId
+    location: Hex
+  }
 }
 
-export interface EndTurnAction {
+export interface EndTurnWorldAction {
   type: 'endTurn'
 }
 
-export type WorldAction = MoveUnitWorldAction | AttackAction | EndTurnAction
+export type WorldAction = MoveUnitWorldAction | AttackWorldAction | EndTurnWorldAction

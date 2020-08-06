@@ -80,7 +80,7 @@ export class TextsDisplayObject {
     this.localGameState = localGameState
     this.combinedState = new CombinedState(worldState, localGameState)
 
-    this.playerText.setText(`Player ${this.localGameState.playerId}`)
+    this.playerText.setText(`Player ${this.localGameState.playerId} - Turn ${this.worldState.turn}`)
     this.selectionText.setText('')
     this.actionText.setText('')
     this.actionText2.setText('')

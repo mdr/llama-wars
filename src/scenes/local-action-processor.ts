@@ -3,7 +3,7 @@ import { WorldAction } from '../world/world-actions'
 import { WorldState } from '../world/world-state'
 import { LocalAction } from './local-action'
 import { nothing, Option } from '../util/types'
-import { UnitId } from '../world/unit'
+import { Unit, UnitId } from '../world/unit'
 import { Hex } from '../world/hex'
 import { UnreachableCaseError } from '../util/unreachable-case-error'
 import { HexDirection } from '../world/hex-direction'
@@ -90,11 +90,31 @@ export class LocalActionProcessor {
     const selectedUnit = this.combinedState.findSelectedUnit()
     if (selectedUnit) {
       if (this.combinedState.unitCanMoveToHex(selectedUnit, hex))
-        return { worldAction: { type: 'moveUnit', unitId: selectedUnit.id, to: hex } }
-      else if (this.combinedState.unitCanAttackHex(selectedUnit, hex))
-        return { worldAction: { type: 'attack', unitId: selectedUnit.id, target: hex } }
+        return this.moveToHex(selectedUnit, hex)
+      else if (this.combinedState.unitCanAttackHex(selectedUnit, hex)) {
+        return this.attackHex(selectedUnit, hex)
+      }
     }
   }
+
+  private attackHex = (attacker: Unit, targetHex: Hex): LocalActionResult => {
+    const defender = this.combinedState.findUnitInLocation(targetHex)!
+    return {
+      worldAction: {
+        type: 'attack',
+        attacker: { unitId: attacker.id, location: attacker.location },
+        defender: { unitId: defender.id, location: targetHex },
+      },
+    }
+  }
+
+  private moveToHex = (unit: Unit, destination: Hex): LocalActionResult => ({
+    worldAction: {
+      type: 'moveUnit',
+      unitId: unit.id,
+      to: destination,
+    },
+  })
 
   private handleEndTurn = (): Option<LocalActionResult> => {
     if (!this.combinedState.getCurrentPlayer().endedTurn) {
@@ -122,13 +142,13 @@ export class LocalActionProcessor {
   private handleCompleteMove = (unitId: UnitId, destination: Hex): Option<LocalActionResult> => {
     const unit = this.worldState.getUnitById(unitId)
     if (this.combinedState.unitCanMoveToHex(unit, destination))
-      return { worldAction: { type: 'moveUnit', unitId: unit.id, to: destination } }
+      return this.moveToHex(unit, destination)
   }
 
   private handleCompleteAttack = (unitId: UnitId, targetHex: Hex): Option<LocalActionResult> => {
     const attacker = this.worldState.getUnitById(unitId)
     if (this.combinedState.unitCanAttackHex(attacker, targetHex))
-      return { worldAction: { type: 'attack', unitId: attacker.id, target: targetHex } }
+      return this.attackHex(attacker, targetHex)
   }
 
   private handleSelectHex = (hex: Hex): Option<LocalActionResult> => {

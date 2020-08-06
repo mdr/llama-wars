@@ -1,9 +1,10 @@
 import { INITIAL_WORLD_STATE, PlayerId, WorldState } from '../world/world-state'
-import { AttackAction, MoveUnitWorldAction, WorldAction } from '../world/world-actions'
+import { AttackWorldAction, MoveUnitWorldAction, WorldAction } from '../world/world-actions'
 import { applyEvent } from '../world/world-event-evaluator'
 import { CombatWorldEvent, UnitMovedWorldEvent, WorldEvent } from '../world/world-events'
 import * as R from 'ramda'
 import { UnreachableCaseError } from '../util/unreachable-case-error'
+import { Unit } from '../world/unit'
 
 export type WorldEventListener = (event: WorldEvent) => void
 
@@ -34,46 +35,51 @@ export class Server {
     }
   }
 
-  private handleAttack = (playerId: PlayerId, action: AttackAction) => {
-    const { unitId, target } = action
-    const attacker = this.worldState.findUnitById(unitId)
+  private handleAttack = (playerId: PlayerId, action: AttackWorldAction) => {
+    const attackerId = action.attacker.unitId
+    const attacker = this.worldState.findUnitById(attackerId)
     if (!attacker)
-      throw `No unit found with ID ${unitId}`
-    const from = attacker.location
-    if (!from.isAdjacentTo(target))
-      throw `Invalid unit attack between non-adjacent hexes ${from} to ${target}`
-    const defender = this.worldState.findUnitInLocation(target)
-    if (!defender)
-      throw `No target unit to attack at ${target}`
-    if (playerId == defender.playerId)
-      throw `Cannot attack own unit`
+      throw `No unit found with ID ${attackerId}`
+    if (attacker.playerId != playerId)
+      throw `Cannot control another player's unit: ${attacker.id}`
     if (attacker.actionPoints.current < 1)
       throw `Not enough action points to attack`
 
+    const defenderId = action.defender.unitId
+    const defender = this.worldState.findUnitById(defenderId)
+    if (!defender)
+      throw `No unit found with ID ${defenderId}`
+    if (defender.playerId == playerId)
+      throw `Cannot attack own unit`
+
+    if (!attacker.location.isAdjacentTo(defender.location))
+      throw `Invalid unit attack between non-adjacent hexes ${attacker.location} to ${defender.location}`
+
     const attackerDamage = Math.min(attacker.hitPoints.current, 10)
     const defenderDamage = Math.min(defender.hitPoints.current, 20)
-    const event: CombatWorldEvent = {
-      type: 'combat',
-      attacker: {
-        playerId: attacker.playerId,
-        unitId: attacker.id,
-        location: attacker.location,
-        damage: attackerDamage,
-        killed: attacker.hitPoints.current == attackerDamage,
-      },
-      defender: {
-        playerId: defender.playerId,
-        unitId: defender.id,
-        location: defender.location,
-        damage: defenderDamage,
-        killed: defender.hitPoints.current == defenderDamage,
-      },
-      actionPointsConsumed: 1,
-    }
+    const event = this.makeCombatWorldEvent(attacker, attackerDamage, defender, defenderDamage)
     this.worldState = applyEvent(this.worldState, event)
     this.notifyListeners(event)
   }
 
+  private makeCombatWorldEvent = (attacker: Unit, attackerDamage: number, defender: Unit, defenderDamage: number): CombatWorldEvent => ({
+    type: 'combat',
+    attacker: {
+      playerId: attacker.playerId,
+      unitId: attacker.id,
+      location: attacker.location,
+      damage: attackerDamage,
+      killed: attacker.hitPoints.current == attackerDamage,
+    },
+    defender: {
+      playerId: defender.playerId,
+      unitId: defender.id,
+      location: defender.location,
+      damage: defenderDamage,
+      killed: defender.hitPoints.current == defenderDamage,
+    },
+    actionPointsConsumed: 1,
+  })
 
   private handleMoveUnit = (playerId: PlayerId, action: MoveUnitWorldAction) => {
     const { unitId, to } = action
@@ -109,7 +115,7 @@ export class Server {
       throw `Player has already ended their turn`
     let playersYetToEndTheirTurn = this.worldState.players.filter(player => !player.endedTurn).map(player => player.id)
     let wholeTurnEnded = R.equals(playersYetToEndTheirTurn, [playerId])
-    const event: WorldEvent = wholeTurnEnded ? { type: 'wholeTurnEnded' } : { type: 'playerEndedTurn', playerId }
+    const event: WorldEvent = wholeTurnEnded ? { type: 'newTurn' } : { type: 'playerEndedTurn', playerId }
     this.worldState = applyEvent(this.worldState, event)
     this.notifyListeners(event)
   }

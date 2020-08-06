@@ -31,8 +31,8 @@ export interface PlayerEndedTurnWorldEvent {
   playerId: PlayerId
 }
 
-export interface WholeTurnEndedWorldEvent {
-  type: 'wholeTurnEnded'
+export interface NewTurnWorldEvent {
+  type: 'newTurn'
 }
 
-export type WorldEvent = UnitMovedWorldEvent | CombatWorldEvent | PlayerEndedTurnWorldEvent | WholeTurnEndedWorldEvent
+export type WorldEvent = UnitMovedWorldEvent | CombatWorldEvent | PlayerEndedTurnWorldEvent | NewTurnWorldEvent
