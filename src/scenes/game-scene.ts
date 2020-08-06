@@ -108,7 +108,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   private asyncSendToServer = async (worldAction: WorldAction): Promise<void> => {
-    await new Promise(resolve => setTimeout(() => resolve(), 1500))
+    await new Promise(resolve => setTimeout(() => resolve(), 120))
     this.server.handleAction(this.playerId, worldAction)
   }
 
@@ -167,7 +167,7 @@ export class GameScene extends Phaser.Scene {
         this.handleUnitMovedWorldEvent(event, oldWorldState)
         break
       case 'combat':
-        this.handleCombatWorldEvent(event)
+        this.handleCombatWorldEvent(event, oldWorldState)
         break
       case 'playerEndedTurn':
       case 'newTurn':
@@ -224,13 +224,13 @@ export class GameScene extends Phaser.Scene {
     return newSelectedHex
   }
 
-  private handleCombatWorldEvent = (event: CombatWorldEvent) => {
+  private handleCombatWorldEvent = (event: CombatWorldEvent, oldWorldState: WorldState) => {
     const { attacker, defender } = event
     this.sound.play(AudioKeys.ATTACK)
     if (attacker.killed || defender.killed) {
       this.sound.play(AudioKeys.DEATH)
     }
-    this.updateSelectionAfterCombat(attacker, defender)
+    this.updateSelectionAfterCombat(attacker, defender, oldWorldState)
     this.syncScene()
 
     const attackerDisplayObject = this.getUnitDisplayObject(attacker.unitId)
@@ -246,8 +246,9 @@ export class GameScene extends Phaser.Scene {
     }
   }
 
-  private updateSelectionAfterCombat = (attacker: CombatParticipantInfo, defender: CombatParticipantInfo) => {
-    if (attacker.playerId == this.playerId) {
+  private updateSelectionAfterCombat = (attacker: CombatParticipantInfo, defender: CombatParticipantInfo, oldWorldState: WorldState) => {
+    const previouslySelectedUnitId = new CombinedState(oldWorldState, this.localGameState).findSelectedUnit()?.id
+    if (previouslySelectedUnitId == attacker.unitId && attacker.playerId == this.playerId) {
       const newSelectedHex = this.calculateNewSelectedUnitAfterMoveOrAttack(attacker.unitId, attacker.location)
       this.localGameState = this.localGameState.copy({
         mode: { type: 'selectHex' },
@@ -255,8 +256,7 @@ export class GameScene extends Phaser.Scene {
       })
     } else {
       // deselect unit killed by another player
-      const selectedUnitId = this.combinedState.findSelectedUnit()?.id
-      if (defender.killed && defender.unitId == selectedUnitId) {
+      if (defender.killed && defender.unitId == previouslySelectedUnitId && defender.playerId == this.playerId) {
         this.localGameState = this.localGameState.copy({
           mode: { type: 'selectHex' },
           selectedHex: nothing,
