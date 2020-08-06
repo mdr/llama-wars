@@ -1,11 +1,11 @@
 import { LocalGameState } from './local-game-state'
 import { Player, PlayerId, WorldState } from '../world/world-state'
 import { Option } from '../util/types'
-import { Unit } from '../world/unit'
-import { Mode } from './mode'
+import { Unit, UnitId } from '../world/unit'
 import { Hex } from '../world/hex'
+import * as R from 'ramda'
 
-export class CombinedStateMethods {
+export class CombinedState {
 
   protected readonly worldState: WorldState
   protected readonly localGameState: LocalGameState
@@ -16,10 +16,6 @@ export class CombinedStateMethods {
   }
 
   public findSelectedUnit = (): Option<Unit> => this.selectedHex ? this.findUnitInLocation(this.selectedHex) : undefined
-
-  public get mode(): Mode {
-    return this.localGameState.mode
-  }
 
   public get selectedHex(): Option<Hex> {
     return this.localGameState.selectedHex
@@ -37,19 +33,35 @@ export class CombinedStateMethods {
   public unitCouldPotentiallyAttack = (unit: Unit): boolean =>
     unit.playerId == this.playerId && unit.actionPoints.current > 0 && !this.getCurrentPlayer().endedTurn
 
+  public unitCanMoveToHex = (unit: Unit, hex: Hex): boolean =>
+    this.unitCouldPotentiallyMove(unit)
+    && hex.isAdjacentTo(unit.location)
+    && this.worldState.map.isInBounds(hex)
+    && !this.findUnitInLocation(hex)
+
+  public unitCanAttackHex = (unit: Unit, location: Hex): boolean => {
+    const targetUnit = this.findUnitInLocation(location)
+    return this.unitCouldPotentiallyAttack(unit)
+      && targetUnit != undefined
+      && targetUnit.playerId != this.localGameState.playerId
+      && unit.location.isAdjacentTo(location)
+  }
+
+  public findFirstUnitWithActionPoints = (): Option<Unit> => {
+    const candidateUnits = R.sortBy(unit => unit.id, this.worldState.units.filter(unit => unit.playerId == this.playerId && unit.actionPoints.current > 0))
+    return R.head(candidateUnits)
+  }
+
+  public findNextUnitWithActionPoints = (unitId: UnitId): Option<Unit> => {
+    const candidateUnits = R.sortBy(unit => unit.id, this.worldState.units.filter(unit => unit.playerId == this.playerId && unit.actionPoints.current > 0))
+    return R.head(candidateUnits.filter(unit => unit.id > unitId)) ?? R.head(candidateUnits.filter(unit => unit.id < unitId))
+  }
+
   public getCurrentPlayer = (): Player => {
     const player = this.worldState.findPlayer(this.playerId)
     if (!player)
       throw `Could not find player with id ${this.playerId}`
     return player
-  }
-
-  public getUnitById = (unitId: number): Unit => {
-    const unit = this.worldState.findUnitById(unitId)
-    if (!unit) {
-      throw `No unit found with ID ${unitId}`
-    }
-    return unit
   }
 
 }

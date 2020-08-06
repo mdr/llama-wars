@@ -1,4 +1,4 @@
-import { Player, PlayerId, WorldState } from '../world/world-state'
+import { WorldState } from '../world/world-state'
 import { LocalGameState } from './local-game-state'
 import { hexWidth, mapHeight } from './hex-geometry'
 import { ACTION_TEXT_COLOUR, HOVER_ACTION_TEXT_COLOUR } from './colours'
@@ -6,9 +6,7 @@ import { DRAWING_OFFSET, HEX_SIZE } from './game-scene'
 import { UnreachableCaseError } from '../util/unreachable-case-error'
 import { Point } from './point'
 import { Unit, UnitId } from '../world/unit'
-import { Mode } from './mode'
-import { Option } from '../util/types'
-import { Hex } from '../world/hex'
+import { CombinedState } from './combined-state-methods'
 
 type LocalActionDispatcher = (LocalAction) => void
 
@@ -17,6 +15,7 @@ export class TextsDisplayObject {
   private readonly scene: Phaser.Scene
   private worldState: WorldState
   private localGameState: LocalGameState
+  private combinedState: CombinedState
   private readonly localActionDispatcher: LocalActionDispatcher
 
   private readonly selectionText: Phaser.GameObjects.Text
@@ -29,6 +28,7 @@ export class TextsDisplayObject {
     this.scene = scene
     this.worldState = worldState
     this.localGameState = localGameState
+    this.combinedState = new CombinedState(worldState, localGameState)
     this.localActionDispatcher = localActionDispatcher
     const map = this.worldState.map
     this.selectionText = this.scene.add.text(DRAWING_OFFSET.x - hexWidth(HEX_SIZE) / 2, mapHeight(map) * HEX_SIZE + DRAWING_OFFSET.y, '')
@@ -78,25 +78,27 @@ export class TextsDisplayObject {
   public syncScene = (worldState: WorldState, localGameState: LocalGameState): void => {
     this.worldState = worldState
     this.localGameState = localGameState
+    this.combinedState = new CombinedState(worldState, localGameState)
 
-    this.playerText.setText(`Player ${this.playerId}`)
+    this.playerText.setText(`Player ${this.localGameState.playerId}`)
     this.selectionText.setText('')
     this.actionText.setText('')
     this.actionText2.setText('')
-    switch (this.mode.type) {
+    const mode = this.localGameState.mode
+    switch (mode.type) {
       case 'selectHex':
         this.syncSelectHexModeText()
         break
       case 'moveUnit':
-        this.syncMoveUnitModeText(this.mode.unitId)
+        this.syncMoveUnitModeText(mode.unitId)
         break
       case 'attack':
-        this.syncAttackModeText(this.mode.unitId)
+        this.syncAttackModeText(mode.unitId)
         break
       default:
-        throw new UnreachableCaseError(this.mode)
+        throw new UnreachableCaseError(mode)
     }
-    if (this.getCurrentPlayer().endedTurn) {
+    if (this.combinedState.getCurrentPlayer().endedTurn) {
       this.endTurnText.setText('Waiting for next turn...')
     } else {
       this.endTurnText.setText('End Turn (Shift + Enter)')
@@ -104,65 +106,29 @@ export class TextsDisplayObject {
   }
 
   private syncAttackModeText = (unitId: UnitId): void => {
-    const unit = this.getUnitById(unitId)
+    const unit = this.worldState.getUnitById(unitId)
     this.selectionText.setText(this.describeUnit(unit))
     this.actionText.setText('Click unit to attack (or ESC to cancel)')
   }
 
   private syncMoveUnitModeText = (unitId: UnitId): void => {
-    const unit = this.getUnitById(unitId)
+    const unit = this.worldState.getUnitById(unitId)
     this.selectionText.setText(this.describeUnit(unit))
     this.actionText.setText('Click tile to move to (or ESC to cancel)')
   }
 
   private syncSelectHexModeText = (): void => {
-    const selectedUnit = this.findSelectedUnit()
+    const selectedUnit = this.combinedState.findSelectedUnit()
     if (selectedUnit) {
       this.selectionText.setText(this.describeUnit(selectedUnit))
-      if (this.unitCouldPotentiallyMove(selectedUnit))
+      if (this.combinedState.unitCouldPotentiallyMove(selectedUnit))
         this.actionText.setText('Move (m)')
-      if (this.unitCouldPotentiallyAttack(selectedUnit))
+      if (this.combinedState.unitCouldPotentiallyAttack(selectedUnit))
         this.actionText2.setText('Attack (a)')
     }
   }
 
   private describeUnit = (unit: Unit): string =>
     `${unit.name} - Llama warrior - HP ${unit.hitPoints.current}/${unit.hitPoints.max} - actions ${unit.actionPoints.current}/${unit.actionPoints.max}`
-
-  public getUnitById = (unitId: number): Unit => {
-    const unit = this.worldState.findUnitById(unitId)
-    if (!unit) {
-      throw `No unit found with ID ${unitId}`
-    }
-    return unit
-  }
-  public unitCouldPotentiallyMove = (unit: Unit): boolean =>
-    unit.playerId == this.playerId && unit.actionPoints.current > 0 && !this.getCurrentPlayer().endedTurn
-
-  public unitCouldPotentiallyAttack = (unit: Unit): boolean =>
-    unit.playerId == this.playerId && unit.actionPoints.current > 0 && !this.getCurrentPlayer().endedTurn
-
-  public getCurrentPlayer = (): Player => {
-    const player = this.worldState.findPlayer(this.playerId)
-    if (!player)
-      throw `Could not find player with id ${this.playerId}`
-    return player
-  }
-
-  public get playerId(): PlayerId {
-    return this.localGameState.playerId
-  }
-
-  public get mode(): Mode {
-    return this.localGameState.mode
-  }
-
-  public get selectedHex(): Option<Hex> {
-    return this.localGameState.selectedHex
-  }
-
-  public findSelectedUnit = (): Option<Unit> => this.selectedHex ? this.findUnitInLocation(this.selectedHex) : undefined
-
-  public findUnitInLocation = (hex: Hex): Option<Unit> => this.worldState.findUnitInLocation(hex)
 
 }

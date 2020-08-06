@@ -6,7 +6,7 @@ import { INITIAL_WORLD_STATE, PlayerId, WorldState } from '../world/world-state'
 import { Server } from '../server/server'
 import { CombatWorldEvent, UnitMovedWorldEvent, WorldEvent } from '../world/world-events'
 import { applyEvent } from '../world/world-event-evaluator'
-import { Unit, UnitId } from '../world/unit'
+import { UnitId } from '../world/unit'
 import { UnitDisplayObject } from './unit-display-object'
 import { UnreachableCaseError } from '../util/unreachable-case-error'
 import { MapDisplayObject } from './map-display-object'
@@ -18,6 +18,7 @@ import { LocalAction } from './local-action'
 import { LocalActionProcessor, LocalActionResult } from './local-action-processor'
 import { TextsDisplayObject } from './texts-display-object'
 import Pointer = Phaser.Input.Pointer
+import { CombinedState } from './combined-state-methods'
 
 const sceneConfig: Phaser.Types.Scenes.SettingsConfig = {
   active: false,
@@ -37,23 +38,34 @@ export class GameScene extends Phaser.Scene {
   private unitDisplayObjects: Map<UnitId, UnitDisplayObject> = new Map()
   private textsDisplayObject: TextsDisplayObject
 
+  private get combinedState(): CombinedState {
+    return new CombinedState(this.worldState, this.localGameState)
+  }
+
   constructor() {
     super(sceneConfig)
     this.server.addListener(this.handleWorldEvent)
   }
 
-  private get playerId(): PlayerId {
-    return this.localGameState.playerId
-  }
+  // Create
+  // ------
 
   public create = (): void => {
     ALL_AUDIO_KEYS.forEach(key => this.sound.add(key))
-    this.mapDisplayObject = new MapDisplayObject(this, this.worldState, this.localGameState)
-    this.worldState.units.forEach(this.createUnit)
-    this.textsDisplayObject = new TextsDisplayObject(this, this.worldState, this.localGameState, this.handleLocalAction)
+    this.createDisplayObjects()
     this.setUpInputs()
     this.syncScene()
   }
+
+  private createDisplayObjects() {
+    this.mapDisplayObject = new MapDisplayObject(this, this.worldState, this.localGameState)
+    this.textsDisplayObject = new TextsDisplayObject(this, this.worldState, this.localGameState, this.handleLocalAction)
+    for (const unit of this.worldState.units)
+      this.unitDisplayObjects.set(unit.id, new UnitDisplayObject(this, unit))
+  }
+
+  // Input handlers
+  // --------------
 
   private setUpInputs = (): void => {
     this.input.mouse.disableContextMenu()
@@ -82,109 +94,8 @@ export class GameScene extends Phaser.Scene {
       this.syncScene()
     }
     if (result.worldAction) {
-    this.server.handleAction(this.playerId, result.worldAction)
+      this.server.handleAction(this.playerId, result.worldAction)
     }
-  }
-
-  private createUnit = (unit: Unit) => {
-    const unitDisplayObject = new UnitDisplayObject(this, unit)
-    this.unitDisplayObjects.set(unit.id, unitDisplayObject)
-  }
-
-  private handleWorldEvent = (event: WorldEvent): void => {
-    this.worldState = applyEvent(this.worldState, event)
-    switch (event.type) {
-      case 'unitMoved':
-        this.handleUnitMovedWorldEvent(event)
-        break
-      case 'combat':
-        this.handleCombatWorldEvent(event)
-        break
-      case 'playerEndedTurn':
-      case 'wholeTurnEnded':
-        this.handleTurnEnded()
-        break
-      default:
-        throw new UnreachableCaseError(event)
-    }
-  }
-
-  private handleTurnEnded = (): void => {
-    const player = R.head(R.sortBy(player => player.id, (this.worldState.players.filter(player => !player.endedTurn))))
-    if (!player)
-      throw `Could not find player to take next turn`
-    const unitToSelect = this.worldState.findFirstUnitWithActionPoints(player.id)
-    this.localGameState = this.localGameState.copy({
-      playerId: player.id,
-      mode: { type: 'selectHex' },
-      selectedHex: toMaybe(unitToSelect?.location),
-    })
-    this.sound.play(AudioKeys.NEW_TURN)
-    this.syncScene()
-  }
-
-  private handleUnitMovedWorldEvent = (event: UnitMovedWorldEvent) => {
-    const { unitId, from, to } = event
-    this.sound.play(AudioKeys.WALK)
-    const unit = this.getUnitById(unitId)
-    if (unit.playerId == this.playerId) {
-      const newSelectedHex = this.calculateNewSelectedUnitAfterMoveOrAttack(unitId, to)
-      this.localGameState = this.localGameState.copy({
-        mode: { type: 'selectHex' },
-        selectedHex: toMaybe(newSelectedHex),
-      })
-    }
-    this.syncScene()
-
-    this.getUnitDisplayObject(unitId).move(from, to)
-  }
-
-  private calculateNewSelectedUnitAfterMoveOrAttack = (unitId: UnitId, defaultLocation: Hex): Option<Hex> => {
-    const unit = this.worldState.findUnitById(unitId)
-    // Retain selection if unit still exists and we still have action points, else select next unit (or nothing if there isn't one)
-    let newSelectedHex
-    if (!unit || unit.actionPoints.current == 0) {
-      const nextUnit = this.worldState.findNextUnitWithActionPoints(this.playerId, unitId)
-      newSelectedHex = nextUnit?.location
-    } else {
-      newSelectedHex = defaultLocation
-    }
-    return newSelectedHex
-  }
-
-  private handleCombatWorldEvent = (event: CombatWorldEvent) => {
-    const { attacker, defender } = event
-    this.sound.play(AudioKeys.ATTACK)
-    if (attacker.killed || defender.killed) {
-      this.sound.play(AudioKeys.DEATH)
-    }
-    if (attacker.playerId == this.playerId) {
-      const newSelectedHex = this.calculateNewSelectedUnitAfterMoveOrAttack(attacker.unitId, attacker.location)
-      this.localGameState = this.localGameState.copy({
-        mode: { type: 'selectHex' },
-        selectedHex: toMaybe(newSelectedHex),
-      })
-    }
-    // TODO: deselect unit killed by another player
-    this.syncScene()
-    const attackerDisplayObject = this.getUnitDisplayObject(attacker.unitId)
-    const defenderDisplayObject = this.getUnitDisplayObject(defender.unitId)
-    attackerDisplayObject.attack(attacker.location, defender.location)
-    if (attacker.killed) {
-      attackerDisplayObject.destroy()
-      this.unitDisplayObjects.delete(attacker.unitId)
-    }
-    if (defender.killed) {
-      defenderDisplayObject.destroy()
-      this.unitDisplayObjects.delete(defender.unitId)
-    }
-  }
-
-  private getUnitDisplayObject = (unitId: number): UnitDisplayObject => {
-    const unitDisplayObject = this.unitDisplayObjects.get(unitId)
-    if (!unitDisplayObject)
-      throw `Could not find unit with ID ${unitId}`
-    return unitDisplayObject
   }
 
   private handlePointerMove = (pointer: Pointer): void => {
@@ -222,18 +133,119 @@ export class GameScene extends Phaser.Scene {
     }
   }
 
-  private getUnitById = (unitId: number): Unit => {
-    const unit = this.worldState.findUnitById(unitId)
-    if (!unit) {
-      throw `No unit found with ID ${unitId}`
-    }
-    return unit
-  }
+  // Sync
+  // ----
 
   public syncScene = (): void => {
     this.mapDisplayObject.syncScene(this.worldState, this.localGameState)
     this.textsDisplayObject.syncScene(this.worldState, this.localGameState)
     this.worldState.units.forEach(unit => this.getUnitDisplayObject(unit.id).syncScene(unit))
+  }
+
+  // Handle world events
+  // -------------------
+
+  private handleWorldEvent = (event: WorldEvent): void => {
+    this.worldState = applyEvent(this.worldState, event)
+    switch (event.type) {
+      case 'unitMoved':
+        this.handleUnitMovedWorldEvent(event)
+        break
+      case 'combat':
+        this.handleCombatWorldEvent(event)
+        break
+      case 'playerEndedTurn':
+      case 'wholeTurnEnded':
+        this.handleTurnEnded()
+        break
+      default:
+        throw new UnreachableCaseError(event)
+    }
+  }
+
+  private handleTurnEnded = (): void => {
+    const player = R.head(R.sortBy(player => player.id, (this.worldState.players.filter(player => !player.endedTurn))))
+    if (!player)
+      throw `Could not find player to take next turn`
+    const unitToSelect = this.combinedState.findFirstUnitWithActionPoints()
+    this.localGameState = this.localGameState.copy({
+      playerId: player.id,
+      mode: { type: 'selectHex' },
+      selectedHex: toMaybe(unitToSelect?.location),
+    })
+    this.sound.play(AudioKeys.NEW_TURN)
+    this.syncScene()
+  }
+
+  private handleUnitMovedWorldEvent = (event: UnitMovedWorldEvent) => {
+    const { unitId, from, to } = event
+    this.sound.play(AudioKeys.WALK)
+    const unit = this.worldState.getUnitById(unitId)
+    if (unit.playerId == this.playerId) {
+      const newSelectedHex = this.calculateNewSelectedUnitAfterMoveOrAttack(unitId, to)
+      this.localGameState = this.localGameState.copy({
+        mode: { type: 'selectHex' },
+        selectedHex: toMaybe(newSelectedHex),
+      })
+    }
+    this.syncScene()
+
+    this.getUnitDisplayObject(unitId).move(from, to)
+  }
+
+  private calculateNewSelectedUnitAfterMoveOrAttack = (unitId: UnitId, defaultLocation: Hex): Option<Hex> => {
+    const unit = this.worldState.findUnitById(unitId)
+    // Retain selection if unit still exists and we still have action points, else select next unit (or nothing if there isn't one)
+    let newSelectedHex
+    if (!unit || unit.actionPoints.current == 0) {
+      const nextUnit = this.combinedState.findNextUnitWithActionPoints(unitId)
+      newSelectedHex = nextUnit?.location
+    } else {
+      newSelectedHex = defaultLocation
+    }
+    return newSelectedHex
+  }
+
+  private handleCombatWorldEvent = (event: CombatWorldEvent) => {
+    const { attacker, defender } = event
+    this.sound.play(AudioKeys.ATTACK)
+    if (attacker.killed || defender.killed) {
+      this.sound.play(AudioKeys.DEATH)
+    }
+    if (attacker.playerId == this.playerId) {
+      const newSelectedHex = this.calculateNewSelectedUnitAfterMoveOrAttack(attacker.unitId, attacker.location)
+      this.localGameState = this.localGameState.copy({
+        mode: { type: 'selectHex' },
+        selectedHex: toMaybe(newSelectedHex),
+      })
+    }
+    // TODO: deselect unit killed by another player
+    this.syncScene()
+    const attackerDisplayObject = this.getUnitDisplayObject(attacker.unitId)
+    const defenderDisplayObject = this.getUnitDisplayObject(defender.unitId)
+    attackerDisplayObject.attack(attacker.location, defender.location)
+    if (attacker.killed) {
+      attackerDisplayObject.destroy()
+      this.unitDisplayObjects.delete(attacker.unitId)
+    }
+    if (defender.killed) {
+      defenderDisplayObject.destroy()
+      this.unitDisplayObjects.delete(defender.unitId)
+    }
+  }
+
+  // Util queries
+  // ------------
+
+  private getUnitDisplayObject = (unitId: number): UnitDisplayObject => {
+    const unitDisplayObject = this.unitDisplayObjects.get(unitId)
+    if (!unitDisplayObject)
+      throw `Could not find unit with ID ${unitId}`
+    return unitDisplayObject
+  }
+
+  private get playerId(): PlayerId {
+    return this.localGameState.playerId
   }
 
 }
