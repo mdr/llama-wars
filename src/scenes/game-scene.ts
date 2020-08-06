@@ -108,7 +108,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   private asyncSendToServer = async (worldAction: WorldAction): Promise<void> => {
-    await new Promise(resolve => setTimeout(() => resolve(), 100))
+    await new Promise(resolve => setTimeout(() => resolve(), 1500))
     this.server.handleAction(this.playerId, worldAction)
   }
 
@@ -160,10 +160,11 @@ export class GameScene extends Phaser.Scene {
   // -------------------
 
   private handleWorldEvent = (event: WorldEvent): void => {
-    this.worldState = applyEvent(this.worldState, event)
+    const oldWorldState = this.worldState
+    this.worldState = applyEvent(oldWorldState, event)
     switch (event.type) {
       case 'unitMoved':
-        this.handleUnitMovedWorldEvent(event)
+        this.handleUnitMovedWorldEvent(event, oldWorldState)
         break
       case 'combat':
         this.handleCombatWorldEvent(event)
@@ -193,11 +194,12 @@ export class GameScene extends Phaser.Scene {
     this.syncScene()
   }
 
-  private handleUnitMovedWorldEvent = (event: UnitMovedWorldEvent) => {
+  private handleUnitMovedWorldEvent = (event: UnitMovedWorldEvent, oldWorldState: WorldState): void => {
     const { unitId, from, to } = event
     this.sound.play(AudioKeys.WALK)
     const unit = this.worldState.getUnitById(unitId)
-    if (unit.playerId == this.playerId) {
+    const wasPreviouslySelected = this.localGameState.selectedHex && oldWorldState.findUnitInLocation(this.localGameState.selectedHex)?.id == unitId
+    if (wasPreviouslySelected && unit.playerId == this.playerId) {
       const newSelectedHex = this.calculateNewSelectedUnitAfterMoveOrAttack(unitId, to)
       this.localGameState = this.localGameState.copy({
         mode: { type: 'selectHex' },
