@@ -28,7 +28,9 @@ export class UnitDisplayObject {
 
   private getHealthBarPosition = (point: Point): Point => addPoints(point, HEALTH_BAR_OFFSET)
 
-  public syncScene = () => {
+  public syncScene = (unit: Unit): void => {
+    assert(unit.id == this.unit.id)
+    this.unit = unit
     const unitPoint = hexCenter(this.unit.location)
     this.image.setPosition(unitPoint.x + IMAGE_OFFSET.x, unitPoint.y + IMAGE_OFFSET.y)
     this.syncHealthBar(unitPoint)
@@ -53,11 +55,6 @@ export class UnitDisplayObject {
     const { current, max } = this.unit.hitPoints
     this.healthBarGraphics.fillStyle(HEALTH_FULL_COLOUR)
     this.healthBarGraphics.fillRect(HEALTH_BAR_BORDER_THICKNESS, HEALTH_BAR_BORDER_THICKNESS, innerWidth * current / max, innerHeight)
-  }
-
-  public unitUpdated = (unit: Unit) => {
-    assert(unit.id == this.unit.id)
-    this.unit = unit
   }
 
   public move = (from: Hex, to: Hex) => {

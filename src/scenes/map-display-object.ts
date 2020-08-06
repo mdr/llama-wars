@@ -25,7 +25,7 @@ export class MapDisplayObject {
   private readonly scene: Phaser.Scene
   private worldState: WorldState
   private localGameState: LocalGameState
-  private hexPolygons: Map<String, Phaser.GameObjects.Polygon> = new Map<String, Phaser.GameObjects.Polygon>()
+  private readonly hexPolygons: Map<String, Phaser.GameObjects.Polygon> = new Map<String, Phaser.GameObjects.Polygon>()
   private previousHover?: Hex
 
   constructor(scene: Phaser.Scene, worldState: WorldState, localGameState: LocalGameState) {
@@ -49,12 +49,9 @@ export class MapDisplayObject {
       .setStrokeStyle(3, 0x000000)
   }
 
-  public stateUpdated = (worldState: WorldState, localGameState: LocalGameState): void => {
+  public syncScene = (worldState: WorldState, localGameState: LocalGameState): void => {
     this.worldState = worldState
     this.localGameState = localGameState
-  }
-
-  public syncScene = (): void => {
     for (const hex of this.worldState.map.getMapHexes()) {
       this.getHexPolygon(hex).setFillStyle(this.calculateColour(hex))
     }

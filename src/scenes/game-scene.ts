@@ -1,7 +1,7 @@
 import * as R from 'ramda'
 import { addPoints, multiplyPoint, subtractPoints } from './point'
 import { Hex } from '../world/hex'
-import { centerPoint, fromPoint, hexWidth, mapHeight } from './hex-geometry'
+import { centerPoint, fromPoint } from './hex-geometry'
 import { INITIAL_WORLD_STATE, PlayerId, WorldState } from '../world/world-state'
 import { Server } from '../server/server'
 import { CombatWorldEvent, UnitMovedWorldEvent, WorldEvent } from '../world/world-events'
@@ -9,7 +9,6 @@ import { applyEvent } from '../world/world-event-evaluator'
 import { WorldAction } from '../world/world-actions'
 import { Unit, UnitId } from '../world/unit'
 import { UnitDisplayObject } from './unit-display-object'
-import { ACTION_TEXT_COLOUR, HOVER_ACTION_TEXT_COLOUR } from './colours'
 import { UnreachableCaseError } from '../util/unreachable-case-error'
 import { MapDisplayObject } from './map-display-object'
 import { Option, toMaybe } from '../util/types'
@@ -19,7 +18,7 @@ import { mapToLocalAction } from './keyboard-mapper'
 import { LocalAction } from './local-action'
 import { LocalActionProcessor, LocalActionResult } from './local-action-processor'
 import { Mode } from './mode'
-import { SceneSyncer } from './scene-syncer'
+import { TextsDisplayObject } from './texts-display-object'
 import Pointer = Phaser.Input.Pointer
 
 const sceneConfig: Phaser.Types.Scenes.SettingsConfig = {
@@ -38,11 +37,7 @@ export class GameScene extends Phaser.Scene {
   private localGameState: LocalGameState = INITIAL_LOCAL_GAME_STATE
   private mapDisplayObject: MapDisplayObject
   private unitDisplayObjects: Map<UnitId, UnitDisplayObject> = new Map()
-  private selectionText: Phaser.GameObjects.Text
-  private actionText: Phaser.GameObjects.Text
-  private actionText2: Phaser.GameObjects.Text
-  private endTurnText: Phaser.GameObjects.Text
-  private playerText: Phaser.GameObjects.Text
+  private textsDisplayObject: TextsDisplayObject
 
   constructor() {
     super(sceneConfig)
@@ -61,7 +56,7 @@ export class GameScene extends Phaser.Scene {
     ALL_AUDIO_KEYS.forEach(key => this.sound.add(key))
     this.mapDisplayObject = new MapDisplayObject(this, this.worldState, this.localGameState)
     this.worldState.units.forEach(this.createUnit)
-    this.createTexts()
+    this.textsDisplayObject = new TextsDisplayObject(this, this.worldState, this.localGameState, this.handleLocalAction)
     this.setUpInputs()
     this.syncScene()
   }
@@ -100,24 +95,6 @@ export class GameScene extends Phaser.Scene {
   private createUnit = (unit: Unit) => {
     const unitDisplayObject = new UnitDisplayObject(this, unit)
     this.unitDisplayObjects.set(unit.id, unitDisplayObject)
-  }
-
-  private createTexts = () => {
-    const map = this.worldState.map
-    this.selectionText = this.add.text(DRAWING_OFFSET.x - hexWidth(HEX_SIZE) / 2, mapHeight(map) * HEX_SIZE + DRAWING_OFFSET.y, '')
-    this.actionText = this.add.text(DRAWING_OFFSET.x - hexWidth(HEX_SIZE) / 2, mapHeight(map) * HEX_SIZE + DRAWING_OFFSET.y + 25, '', { fill: ACTION_TEXT_COLOUR }).setInteractive()
-      .on('pointerdown', this.handleActionTextClick)
-      .on('pointerover', () => this.actionText.setFill(HOVER_ACTION_TEXT_COLOUR))
-      .on('pointerout', () => this.actionText.setFill(ACTION_TEXT_COLOUR))
-    this.actionText2 = this.add.text(DRAWING_OFFSET.x - hexWidth(HEX_SIZE) / 2, mapHeight(map) * HEX_SIZE + DRAWING_OFFSET.y + 50, '', { fill: ACTION_TEXT_COLOUR }).setInteractive()
-      .on('pointerdown', this.handleActionText2Click)
-      .on('pointerover', () => this.actionText2.setFill(HOVER_ACTION_TEXT_COLOUR))
-      .on('pointerout', () => this.actionText2.setFill(ACTION_TEXT_COLOUR))
-    this.endTurnText = this.add.text(700, mapHeight(map) * HEX_SIZE + DRAWING_OFFSET.y, '', { fill: ACTION_TEXT_COLOUR }).setInteractive()
-      .on('pointerdown', () => this.handleLocalAction({ type: 'endTurn' }))
-      .on('pointerover', () => this.endTurnText.setFill(HOVER_ACTION_TEXT_COLOUR))
-      .on('pointerout', () => this.endTurnText.setFill(ACTION_TEXT_COLOUR))
-    this.playerText = this.add.text(23, 20, '')
   }
 
   private handleWorldEvent = (event: WorldEvent): void => {
@@ -233,10 +210,9 @@ export class GameScene extends Phaser.Scene {
 
   private handlePointerDown = (pointer: Pointer): void => {
     // Ignore clicks on these as they have their own handlers
-    for (const obj of [this.endTurnText, this.actionText, this.actionText2])
-      if (obj.getBounds().contains(pointer.x, pointer.y))
-        return
     const pressedPoint = { x: pointer.x, y: pointer.y }
+    if (this.textsDisplayObject.hasClickHandlerFor(pressedPoint))
+      return
     const hex = fromPoint(multiplyPoint(subtractPoints(pressedPoint, DRAWING_OFFSET), 1 / HEX_SIZE))
     if (pointer.button == 2) {
       this.handleLocalAction({ type: 'goHex', hex })
@@ -262,26 +238,6 @@ export class GameScene extends Phaser.Scene {
     }
   }
 
-  private handleActionTextClick = (): void => {
-    switch (this.mode.type) {
-      case 'selectHex':
-        this.handleLocalAction({ type: 'enterMoveMode' })
-        break
-      case 'moveUnit':
-      case 'attack':
-        this.handleLocalAction({ type: 'abort' })
-        break
-      default:
-        throw new UnreachableCaseError(this.mode)
-    }
-  }
-
-  private handleActionText2Click = (): void => {
-    if (this.mode.type === 'selectHex') {
-      this.handleLocalAction({ type: 'enterAttackMode' })
-    }
-  }
-
   private getUnitById = (unitId: number): Unit => {
     const unit = this.worldState.findUnitById(unitId)
     if (!unit) {
@@ -293,17 +249,11 @@ export class GameScene extends Phaser.Scene {
   private sendWorldActionToServer = (action: WorldAction): void =>
     this.server.handleAction(this.playerId, action)
 
-  private syncScene = (): void => {
-    const sceneSyncer = new SceneSyncer(this.worldState, this.localGameState,
-      this.mapDisplayObject,
-      this.unitDisplayObjects,
-      this.selectionText,
-      this.actionText,
-      this.actionText2,
-      this.endTurnText,
-      this.playerText,
-    )
-    sceneSyncer.syncScene()
+  public syncScene = (): void => {
+    this.mapDisplayObject.syncScene(this.worldState, this.localGameState)
+    this.textsDisplayObject.syncScene(this.worldState, this.localGameState)
+    this.worldState.units.forEach(unit => this.getUnitDisplayObject(unit.id).syncScene(unit))
   }
+
 }
 
