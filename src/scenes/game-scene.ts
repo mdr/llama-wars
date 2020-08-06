@@ -26,7 +26,7 @@ import { LocalActionProcessor, LocalActionResult } from './local-action-processo
 import { TextsDisplayObject } from './texts-display-object'
 import Pointer = Phaser.Input.Pointer
 import { CombinedState } from './combined-state-methods'
-import { WorldAction, worldActionFromJson, worldActionToJson } from '../world/world-actions'
+import { WorldAction } from '../world/world-actions'
 import { Message } from '../server/messages'
 
 const sceneConfig: Phaser.Types.Scenes.SettingsConfig = {
@@ -40,7 +40,7 @@ export const DRAWING_OFFSET = { x: 60, y: 100 }
 export const hexCenter = (hex: Hex): Point => addPoints(multiplyPoint(centerPoint(hex), HEX_SIZE), DRAWING_OFFSET)
 
 export class GameScene extends Phaser.Scene {
-  private readonly server: Server = new Server()
+  private server: Option<Server> = undefined
   private worldState: WorldState = INITIAL_WORLD_STATE
   private localGameState: LocalGameState = INITIAL_LOCAL_GAME_STATE
   private mapDisplayObject: MapDisplayObject
@@ -54,57 +54,53 @@ export class GameScene extends Phaser.Scene {
 
   constructor() {
     super(sceneConfig)
-    this.server.addListener(this.handleWorldEvent)
   }
 
   // Create
   // ------
 
   public create = (): void => {
+    this.sound.pauseOnBlur = false
     this.channel = new BroadcastChannel<Message>('llama-comms')
     const elector = createLeaderElection(this.channel)
     const clientId = Math.floor(Math.random() * (10000))
-    console.log('I am client ID ' + clientId)
-    let server: Option<Server>
     elector.awaitLeadership().then(() => {
-      server = new Server()
-      server.addListener((event) => {
+      this.server = new Server()
+      this.server.addListener((event) => {
         this.channel.postMessage({ type: 'worldEvent', event: serialiseToJson(event) })
+        this.handleWorldEvent(event)
       })
-      console.log('I am boss')
+      console.log('Elected as leader, hosting game')
     })
-    let nextPlayerId = 1
     this.channel.postMessage({ type: 'join', clientId })
     this.channel.addEventListener('message', (message) => {
-      console.log('Received message')
       console.log(message)
       switch (message.type) {
         case 'join':
-          if (server) {
+          if (this.server) {
             this.channel.postMessage({
               type: 'joined',
               clientId: message.clientId,
-              playerId: nextPlayerId,
-              worldState: server.worldState.toJson(),
+              playerId: 2,
+              worldState: this.server.worldState.toJson(),
             })
           }
-          nextPlayerId++
           break
         case 'joined':
-          if (!server && message.clientId == clientId) {
+          if (!this.server && message.clientId == clientId) {
             this.localGameState = this.localGameState.copy({ playerId: message.playerId })
             this.worldState = WorldState.fromJson(message.worldState)
             this.syncScene()
           }
           break
         case 'worldEvent':
-          if (!server) {
+          if (!this.server) {
             this.handleWorldEvent(deserialiseFromJson(message.event))
           }
           break
         case 'worldAction':
-          if (server) {
-            server.handleAction(message.playerId, worldActionFromJson(message.action))
+          if (this.server) {
+            this.server.handleAction(message.playerId, deserialiseFromJson(message.action))
           }
       }
     })
@@ -165,13 +161,16 @@ export class GameScene extends Phaser.Scene {
   }
 
   private asyncSendToServer = async (action: WorldAction): Promise<void> => {
-    await this.channel.postMessage({
-      type: 'worldAction',
-      action: worldActionToJson(action),
-      playerId: this.localGameState.playerId,
-    })
     // await new Promise(resolve => setTimeout(() => resolve(), 120))
-    // this.server.handleAction(this.playerId, worldAction)
+    if (this.server) {
+      this.server.handleAction(this.playerId, action)
+    } else {
+      await this.channel.postMessage({
+        type: 'worldAction',
+        action: serialiseToJson(action),
+        playerId: this.localGameState.playerId,
+      })
+    }
   }
 
   private handlePointerMove = (pointer: Pointer): void => {
@@ -215,7 +214,22 @@ export class GameScene extends Phaser.Scene {
   public syncScene = (): void => {
     this.mapDisplayObject.syncScene(this.worldState, this.localGameState)
     this.textsDisplayObject.syncScene(this.worldState, this.localGameState)
-    this.worldState.units.forEach(unit => this.getUnitDisplayObject(unit.id).syncScene(unit))
+
+    const surplusUnitIds = R.difference(Array.from(this.unitDisplayObjects.keys()), this.worldState.units.map(unit => unit.id))
+    for (const unitId of surplusUnitIds) {
+      const unitDisplayObject = this.unitDisplayObjects.get(unitId)!
+      unitDisplayObject.destroy()
+      this.unitDisplayObjects.delete(unitId)
+    }
+
+    this.worldState.units.forEach(unit => {
+      let unitDisplayObject = this.unitDisplayObjects.get(unit.id)
+      if (!unitDisplayObject) {
+        unitDisplayObject = new UnitDisplayObject(this, unit)
+        this.unitDisplayObjects.set(unit.id, unitDisplayObject)
+      }
+      unitDisplayObject.syncScene(unit)
+    })
   }
 
   // Handle world events
@@ -247,17 +261,11 @@ export class GameScene extends Phaser.Scene {
   }
 
   private handleNewTurn = (): void => {
-    if (1 * 2 == 4) {
-      const player = R.head(R.sortBy(player => player.id, (this.worldState.players.filter(player => !player.endedTurn))))
-      if (!player)
-        throw `Could not find player to take next turn`
-      this.localGameState = this.localGameState.copy({ playerId: player.id })
-      const unitToSelect = this.combinedState.findNextUnitWithActionPoints()
-      this.localGameState = this.localGameState.copy({
-        mode: { type: 'selectHex' },
-        selectedHex: toMaybe(unitToSelect?.location),
-      })
-    }
+    const unitToSelect = this.combinedState.findNextUnitWithActionPoints()
+    this.localGameState = this.localGameState.copy({
+      mode: { type: 'selectHex' },
+      selectedHex: toMaybe(unitToSelect?.location),
+    })
     this.syncScene()
     this.sound.play(AudioKeys.NEW_TURN)
   }
@@ -301,17 +309,9 @@ export class GameScene extends Phaser.Scene {
     this.updateSelectionAfterCombat(attacker, defender, oldWorldState)
     this.syncScene()
 
-    const attackerDisplayObject = this.getUnitDisplayObject(attacker.unitId)
-    const defenderDisplayObject = this.getUnitDisplayObject(defender.unitId)
-    attackerDisplayObject.attack(attacker.location, defender.location)
-    if (attacker.killed) {
-      attackerDisplayObject.destroy()
-      this.unitDisplayObjects.delete(attacker.unitId)
-    }
-    if (defender.killed) {
-      defenderDisplayObject.destroy()
-      this.unitDisplayObjects.delete(defender.unitId)
-    }
+    const attackerDisplayObject = this.unitDisplayObjects.get(attacker.unitId)
+    if (attackerDisplayObject)
+      attackerDisplayObject.attack(attacker.location, defender.location)
   }
 
   private updateSelectionAfterCombat = (attacker: CombatParticipantInfo, defender: CombatParticipantInfo, oldWorldState: WorldState) => {
