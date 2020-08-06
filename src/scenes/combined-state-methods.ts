@@ -1,10 +1,9 @@
 import { LocalGameState } from './local-game-state'
 import { Player, PlayerId, WorldState } from '../world/world-state'
 import { Option } from '../util/types'
-import { Unit, UnitId } from '../world/unit'
+import { Unit } from '../world/unit'
 import { Mode } from './mode'
 import { Hex } from '../world/hex'
-import * as R from 'ramda'
 
 export class CombinedStateMethods {
 
@@ -31,16 +30,6 @@ export class CombinedStateMethods {
   }
 
   public findUnitInLocation = (hex: Hex): Option<Unit> => this.worldState.findUnitInLocation(hex)
-
-  public findNextUnitWithActionPoints = (unitId: UnitId): Option<Unit> => {
-    const candidateUnits = R.sortBy(unit => unit.id, this.worldState.units.filter(unit => unit.playerId == this.playerId && unit.actionPoints.current > 0))
-    return R.head(candidateUnits.filter(unit => unit.id > unitId)) ?? R.head(candidateUnits.filter(unit => unit.id < unitId))
-  }
-
-  public findFirstUnitWithActionPoints = (): Option<Unit> => {
-    const candidateUnits = R.sortBy(unit => unit.id, this.worldState.units.filter(unit => unit.playerId == this.playerId && unit.actionPoints.current > 0))
-    return R.head(candidateUnits)
-  }
 
   public unitCouldPotentiallyMove = (unit: Unit): boolean =>
     unit.playerId == this.playerId && unit.actionPoints.current > 0 && !this.getCurrentPlayer().endedTurn

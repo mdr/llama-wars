@@ -52,6 +52,16 @@ export class WorldState {
   public replacePlayer = (playerId: PlayerId, player: Player): WorldState =>
     this.copy({ players: R.append(player, R.filter((player) => player.id != playerId, this.players)) })
 
+  public findFirstUnitWithActionPoints = (playerId: PlayerId): Option<Unit> => {
+    const candidateUnits = R.sortBy(unit => unit.id, this.units.filter(unit => unit.playerId == playerId && unit.actionPoints.current > 0))
+    return R.head(candidateUnits)
+  }
+
+  public findNextUnitWithActionPoints = (playerId: PlayerId, unitId: UnitId): Option<Unit> => {
+    const candidateUnits = R.sortBy(unit => unit.id, this.units.filter(unit => unit.playerId == playerId && unit.actionPoints.current > 0))
+    return R.head(candidateUnits.filter(unit => unit.id > unitId)) ?? R.head(candidateUnits.filter(unit => unit.id < unitId))
+  }
+
 }
 
 export const INITIAL_WORLD_STATE: WorldState = new WorldState({

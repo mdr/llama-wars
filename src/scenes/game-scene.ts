@@ -6,7 +6,6 @@ import { INITIAL_WORLD_STATE, PlayerId, WorldState } from '../world/world-state'
 import { Server } from '../server/server'
 import { CombatWorldEvent, UnitMovedWorldEvent, WorldEvent } from '../world/world-events'
 import { applyEvent } from '../world/world-event-evaluator'
-import { WorldAction } from '../world/world-actions'
 import { Unit, UnitId } from '../world/unit'
 import { UnitDisplayObject } from './unit-display-object'
 import { UnreachableCaseError } from '../util/unreachable-case-error'
@@ -17,7 +16,6 @@ import { ALL_AUDIO_KEYS, AudioKeys } from './asset-keys'
 import { mapToLocalAction } from './keyboard-mapper'
 import { LocalAction } from './local-action'
 import { LocalActionProcessor, LocalActionResult } from './local-action-processor'
-import { Mode } from './mode'
 import { TextsDisplayObject } from './texts-display-object'
 import Pointer = Phaser.Input.Pointer
 
@@ -44,15 +42,11 @@ export class GameScene extends Phaser.Scene {
     this.server.addListener(this.handleWorldEvent)
   }
 
-  private get mode(): Mode {
-    return this.localGameState.mode
-  }
-
   private get playerId(): PlayerId {
     return this.localGameState.playerId
   }
 
-  public create(): void {
+  public create = (): void => {
     ALL_AUDIO_KEYS.forEach(key => this.sound.add(key))
     this.mapDisplayObject = new MapDisplayObject(this, this.worldState, this.localGameState)
     this.worldState.units.forEach(this.createUnit)
@@ -69,7 +63,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   private handleKey = (event: KeyboardEvent): void => {
-    const localAction = mapToLocalAction(event, this.mode)
+    const localAction = mapToLocalAction(event, this.localGameState.mode)
     if (localAction)
       this.handleLocalAction(localAction)
   }
@@ -88,7 +82,7 @@ export class GameScene extends Phaser.Scene {
       this.syncScene()
     }
     if (result.worldAction) {
-      this.sendWorldActionToServer(result.worldAction)
+    this.server.handleAction(this.playerId, result.worldAction)
     }
   }
 
@@ -119,24 +113,14 @@ export class GameScene extends Phaser.Scene {
     const player = R.head(R.sortBy(player => player.id, (this.worldState.players.filter(player => !player.endedTurn))))
     if (!player)
       throw `Could not find player to take next turn`
-    this.localGameState = this.localGameState.copy({ playerId: player.id })
-    const unitToSelect = this.findFirstUnitWithActionPoints()
+    const unitToSelect = this.worldState.findFirstUnitWithActionPoints(player.id)
     this.localGameState = this.localGameState.copy({
+      playerId: player.id,
       mode: { type: 'selectHex' },
       selectedHex: toMaybe(unitToSelect?.location),
     })
     this.sound.play(AudioKeys.NEW_TURN)
     this.syncScene()
-  }
-
-  private findNextUnitWithActionPoints = (unitId: UnitId): Option<Unit> => {
-    const candidateUnits = R.sortBy(unit => unit.id, this.worldState.units.filter(unit => unit.playerId == this.playerId && unit.actionPoints.current > 0))
-    return R.head(candidateUnits.filter(unit => unit.id > unitId)) ?? R.head(candidateUnits.filter(unit => unit.id < unitId))
-  }
-
-  private findFirstUnitWithActionPoints = (): Option<Unit> => {
-    const candidateUnits = R.sortBy(unit => unit.id, this.worldState.units.filter(unit => unit.playerId == this.playerId && unit.actionPoints.current > 0))
-    return R.head(candidateUnits)
   }
 
   private handleUnitMovedWorldEvent = (event: UnitMovedWorldEvent) => {
@@ -160,7 +144,7 @@ export class GameScene extends Phaser.Scene {
     // Retain selection if unit still exists and we still have action points, else select next unit (or nothing if there isn't one)
     let newSelectedHex
     if (!unit || unit.actionPoints.current == 0) {
-      const nextUnit = this.findNextUnitWithActionPoints(unitId)
+      const nextUnit = this.worldState.findNextUnitWithActionPoints(this.playerId, unitId)
       newSelectedHex = nextUnit?.location
     } else {
       newSelectedHex = defaultLocation
@@ -222,7 +206,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   private handleLeftClick = (hex: Hex): void => {
-    const mode = this.mode
+    const mode = this.localGameState.mode
     switch (mode.type) {
       case 'selectHex':
         this.handleLocalAction({ type: 'selectHex', hex })
@@ -246,9 +230,6 @@ export class GameScene extends Phaser.Scene {
     return unit
   }
 
-  private sendWorldActionToServer = (action: WorldAction): void =>
-    this.server.handleAction(this.playerId, action)
-
   public syncScene = (): void => {
     this.mapDisplayObject.syncScene(this.worldState, this.localGameState)
     this.textsDisplayObject.syncScene(this.worldState, this.localGameState)
@@ -256,4 +237,3 @@ export class GameScene extends Phaser.Scene {
   }
 
 }
-

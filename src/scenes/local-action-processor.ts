@@ -50,7 +50,9 @@ export class LocalActionProcessor extends CombinedStateMethods {
 
   private handleSelectNextUnit = (): Option<LocalActionResult> => {
     const selectedUnit = this.findSelectedUnit()
-    const unitToSelect = selectedUnit ? this.findNextUnitWithActionPoints(selectedUnit.id) : this.findFirstUnitWithActionPoints()
+    const unitToSelect = selectedUnit ?
+      this.worldState.findNextUnitWithActionPoints(this.playerId, selectedUnit.id) :
+      this.worldState.findFirstUnitWithActionPoints(this.playerId)
     if (unitToSelect) {
       const newLocalGameState = this.localGameState.setSelectedHex(unitToSelect?.location).setMode({ type: 'selectHex' })
       return { newLocalGameState: newLocalGameState }
