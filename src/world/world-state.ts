@@ -18,6 +18,10 @@ export class Player {
     endedTurn,
   })
 
+  public toJson = (): object => ({ id: this.id, endedTurn: this.endedTurn })
+
+  public static fromJson = (json: any): Player => new Player({ id: json.id, endedTurn: json.endedTurn })
+
 }
 
 export class WorldState {
@@ -62,6 +66,20 @@ export class WorldState {
 
   public replacePlayer = (playerId: PlayerId, player: Player): WorldState =>
     this.copy({ players: R.append(player, R.filter((player) => player.id != playerId, this.players)) })
+
+  public toJson = (): object => ({
+    turn: this.turn,
+    map: this.map.toJson(),
+    units: this.units.map(unit => unit.toJson()),
+    players: this.players.map(player => player.toJson()),
+  })
+
+  public static fromJson = (json: any): WorldState => new WorldState({
+    turn: json.turn,
+    map: WorldMap.fromJson(json.map),
+    units: json.units.map(unit => Unit.fromJson(unit)),
+    players: json.players.map(unit => Player.fromJson(unit)),
+  })
 
 }
 

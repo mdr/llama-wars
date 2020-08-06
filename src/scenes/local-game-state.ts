@@ -30,13 +30,6 @@ export class LocalGameState {
 
   public setMode = (mode: Mode): LocalGameState => this.copy({ mode })
 
-  public endTurn = (): LocalGameState =>
-    this.copy({
-      playerId: this.playerId == 1 ? 2 : 1,
-      mode: { type: 'selectHex' },
-      selectedHex: nothing,
-    })
-
 }
 
 export const INITIAL_LOCAL_GAME_STATE = new LocalGameState({

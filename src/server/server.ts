@@ -9,7 +9,7 @@ import { Unit } from '../world/unit'
 export type WorldEventListener = (event: WorldEvent) => void
 
 export class Server {
-  private worldState: WorldState = INITIAL_WORLD_STATE
+  public worldState: WorldState = INITIAL_WORLD_STATE
   private listeners: WorldEventListener[] = []
 
   public addListener = (listener: WorldEventListener) => this.listeners.push(listener)

@@ -48,14 +48,14 @@ const handleCombat = (state: WorldState, event: CombatWorldEvent): WorldState =>
   const attackerUnit = state.findUnitById(attacker.unitId)
   if (!attackerUnit)
     throw `No unit found with ID ${attacker.unitId}`
-  if (attackerUnit.location != attacker.location)
-    throw `Invalid location for attacker`
+  if (!attackerUnit.location.equals(attacker.location))
+    throw `Invalid location for attacker. Attacking unit ${attackerUnit.id} is at location ${attackerUnit.location}, but was expected to be at ${attacker.location}`
 
   const defenderUnit = state.findUnitById(defender.unitId)
   if (!defenderUnit)
     throw `No unit found with ID ${defender.unitId}`
-  if (defenderUnit.location != defender.location)
-    throw `Invalid location for defender`
+  if (!defenderUnit.location.equals(defender.location))
+    throw `Invalid location for defender. Defending unit ${defenderUnit.id} is at location ${defenderUnit.location}, but was expected to be at ${defender.location}`
 
   if (attackerUnit.playerId == defenderUnit.playerId)
     throw `Invalid combat with self`

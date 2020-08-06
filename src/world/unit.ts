@@ -21,6 +21,10 @@ export class ActionPoints {
 
   public refresh = (): ActionPoints => new ActionPoints({ current: this.max, max: this.max })
 
+  public toJson = (): object => ({ current: this.current, max: this.max })
+
+  public static fromJson = (json: any): ActionPoints => new ActionPoints({ current: json.current, max: json.max })
+
 }
 
 export class HitPoints {
@@ -39,6 +43,11 @@ export class HitPoints {
 
   public copy = ({ current = this.current, max = this.max }: { current?: number, max?: number } = {}): HitPoints =>
     new HitPoints({ current, max })
+
+  public toJson = (): object => ({ current: this.current, max: this.max })
+
+  public static fromJson = (json: any): HitPoints => new HitPoints({ current: json.current, max: json.max })
+
 }
 
 export class Unit {
@@ -80,6 +89,25 @@ export class Unit {
 
   public refreshActionPoints = (): Unit =>
     this.copy({ actionPoints: this.actionPoints.refresh() })
+
+  public toJson = (): object => ({
+    id: this.id,
+    playerId: this.playerId,
+    name: this.name,
+    location: this.location.toJson(),
+    hitPoints: this.hitPoints.toJson(),
+    actionPoints: this.actionPoints.toJson(),
+  })
+
+  public static fromJson = (json: any): Unit => new Unit({
+    id: json.id,
+    playerId: json.playerId,
+    name: json.name,
+    location: Hex.fromJson(json.location),
+    hitPoints: HitPoints.fromJson(json.hitPoints),
+    actionPoints: ActionPoints.fromJson(json.actionPoints),
+  })
+
 }
 
 export type UnitId = number
