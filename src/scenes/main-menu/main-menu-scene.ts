@@ -1,14 +1,12 @@
 import { MenuButton } from '../../ui/menu-button'
-import { GameId } from '../main-game/game-scene'
+import { GAME_SCENE_KEY, GameSceneData } from '../main-game/game-scene'
+
+export const MAIN_MENU_SCENE_KEY = 'MainMenu'
 
 const sceneConfig: Phaser.Types.Scenes.SettingsConfig = {
   active: false,
   visible: false,
-  key: 'MainMenu',
-}
-
-export interface GameSceneData {
-  gameId?: GameId
+  key: MAIN_MENU_SCENE_KEY,
 }
 
 export class MainMenuScene extends Phaser.Scene {
@@ -17,15 +15,11 @@ export class MainMenuScene extends Phaser.Scene {
   }
 
   public create(): void {
-    this.add
-      .text(100, 50, 'Llama Wars - Main Menu', {
-        fill: '#FFFFFF',
-      })
-      .setFontSize(24)
+    this.add.text(100, 50, 'Llama Wars', { fill: '#FFFFFF' }).setFontSize(24)
 
     new MenuButton(this, 100, 150, 'Start Game', () => {
       const data: GameSceneData = {}
-      this.scene.start('Game', data)
+      this.scene.start(GAME_SCENE_KEY, data)
     })
   }
 }

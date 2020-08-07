@@ -15,7 +15,6 @@ import { LocalActionProcessor, LocalActionResult } from './local-action-processo
 import { CombinedState } from '../combined-state-methods'
 import { WorldAction } from '../../world/world-actions'
 import { ServerToClientMessage } from '../../server/messages'
-import { GameSceneData } from '../main-menu/main-menu-scene'
 import { deserialiseFromJson } from '../../util/json-serialisation'
 import { INITIAL_WORLD_STATE } from '../../world/initial-world-state'
 import { Client } from '../../server/client'
@@ -23,10 +22,16 @@ import { Server } from '../../server/server'
 import { DisplayObjects } from './display-objects'
 import Pointer = Phaser.Input.Pointer
 
+export const GAME_SCENE_KEY = 'Game'
+
 const sceneConfig: Phaser.Types.Scenes.SettingsConfig = {
   active: false,
   visible: false,
-  key: 'Game',
+  key: GAME_SCENE_KEY,
+}
+
+export interface GameSceneData {
+  gameId?: GameId
 }
 
 export const HEX_SIZE = 48

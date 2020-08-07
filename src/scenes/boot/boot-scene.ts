@@ -1,12 +1,15 @@
 import { getGameWidth, getGameHeight } from '../../helpers'
 import { AudioKeys } from '../asset-keys'
-import { GameSceneData } from '../main-menu/main-menu-scene'
 import FileConfig = Phaser.Types.Loader.FileConfig
+import { GAME_SCENE_KEY, GameSceneData } from '../main-game/game-scene'
+import { MAIN_MENU_SCENE_KEY } from '../main-menu/main-menu-scene'
+
+export const BOOT_SCENE_KEY = 'Boot'
 
 const sceneConfig: Phaser.Types.Scenes.SettingsConfig = {
   active: false,
   visible: false,
-  key: 'Boot',
+  key: BOOT_SCENE_KEY,
 }
 
 export class BootScene extends Phaser.Scene {
@@ -58,13 +61,12 @@ export class BootScene extends Phaser.Scene {
       progressBar.destroy()
       progressBarContainer.destroy()
 
-      // this.scene.start('Game')
       const hash = window.location.hash
       if (hash == '') {
-        this.scene.start('MainMenu')
+        this.scene.start(MAIN_MENU_SCENE_KEY)
       } else {
         const data: GameSceneData = { gameId: window.location.hash.substr(1) }
-        this.scene.start('Game', data)
+        this.scene.start(GAME_SCENE_KEY, data)
       }
     })
 
