@@ -8,8 +8,6 @@ import { Server } from '../server/server'
 import {
   CombatParticipantInfo,
   CombatWorldEvent,
-  deserialiseFromJson,
-  serialiseToJson,
   UnitMovedWorldEvent,
   WorldEvent,
 } from '../world/world-events'
@@ -30,6 +28,7 @@ import { WorldAction } from '../world/world-actions'
 import { Message } from '../server/messages'
 import { GameSceneData } from './main-menu-scene'
 import Pointer = Phaser.Input.Pointer
+import { deserialiseFromJson, serialiseToJson } from '../util/json-serialisation'
 
 const sceneConfig: Phaser.Types.Scenes.SettingsConfig = {
   active: false,
@@ -43,12 +42,14 @@ export const hexCenter = (hex: Hex): Point => addPoints(multiplyPoint(centerPoin
 
 export class GameScene extends Phaser.Scene {
   private server: Option<Server> = undefined
+  private channel: BroadcastChannel<Message>
+
   private worldState: WorldState = INITIAL_WORLD_STATE
   private localGameState: LocalGameState = INITIAL_LOCAL_GAME_STATE
+
   private mapDisplayObject: MapDisplayObject
   private unitDisplayObjects: Map<UnitId, UnitDisplayObject> = new Map()
   private textsDisplayObject: TextsDisplayObject
-  private channel: BroadcastChannel<Message>
 
   private get combinedState(): CombinedState {
     return new CombinedState(this.worldState, this.localGameState)
@@ -80,7 +81,6 @@ export class GameScene extends Phaser.Scene {
     const clientId = Math.floor(Math.random() * 100000)
     this.channel.postMessage({ type: 'join', clientId })
     this.channel.addEventListener('message', (message) => {
-      console.log(message)
       switch (message.type) {
         case 'joined':
           if (message.clientId == clientId) {
@@ -106,7 +106,6 @@ export class GameScene extends Phaser.Scene {
       this.handleWorldEvent(event)
     })
     this.channel.addEventListener('message', (message) => {
-      console.log(message)
       switch (message.type) {
         case 'join':
           this.channel.postMessage({
