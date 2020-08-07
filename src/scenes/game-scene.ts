@@ -1,4 +1,3 @@
-import { BroadcastChannel } from 'broadcast-channel'
 import * as R from 'ramda'
 import { addPoints, multiplyPoint, Point, subtractPoints } from './point'
 import { Hex } from '../world/hex'
@@ -25,7 +24,7 @@ import { LocalActionProcessor, LocalActionResult } from './local-action-processo
 import { TextsDisplayObject } from './texts-display-object'
 import { CombinedState } from './combined-state-methods'
 import { WorldAction } from '../world/world-actions'
-import { Message } from '../server/messages'
+import { ClientToServerMessage, ServerToClientMessage } from '../server/messages'
 import { GameSceneData } from './main-menu-scene'
 import Pointer = Phaser.Input.Pointer
 import { deserialiseFromJson, serialiseToJson } from '../util/json-serialisation'
@@ -40,9 +39,10 @@ export const HEX_SIZE = 48
 export const DRAWING_OFFSET = { x: 60, y: 100 }
 export const hexCenter = (hex: Hex): Point => addPoints(multiplyPoint(centerPoint(hex), HEX_SIZE), DRAWING_OFFSET)
 
+export const PEER_JS_KEY = 'llama-wars-2'
+
 export class GameScene extends Phaser.Scene {
   private server: Option<Server> = undefined
-  private channel: BroadcastChannel<Message>
 
   private worldState: WorldState = INITIAL_WORLD_STATE
   private localGameState: LocalGameState = INITIAL_LOCAL_GAME_STATE
@@ -65,7 +65,6 @@ export class GameScene extends Phaser.Scene {
 
   public create = (gameSceneData: GameSceneData): void => {
     this.sound.pauseOnBlur = false
-    this.channel = new BroadcastChannel<Message>('llama-comms')
     if (gameSceneData.mode == 'start') {
       this.actAsServer()
     } else {
@@ -80,128 +79,58 @@ export class GameScene extends Phaser.Scene {
 
   private actAsClient() {
     const peer = new (window as any).Peer()
-    // const peer = new (window as any).Peer({
-    //   key: 'peerjs',
-    //   host: 'localhost',
-    //   path: 'myapp',
-    //   port: 9000,
-    // })
-    console.log('Acting as client')
     peer.on('open', id => {
-      console.log('Opened ' + id)
-      const connection = peer.connect('llama-wars-1')
+      const connection = peer.connect(PEER_JS_KEY)
       connection.on('open', () => {
-        console.log('connection opened')
         this.connection = connection
-        connection.send({ type: 'join', clientId })
-        connection.on('data', (message) => {
+        connection.send({ type: 'join' })
+        connection.on('data', (message: ServerToClientMessage) => {
           console.log(message)
           switch (message.type) {
             case 'joined':
-              if (message.clientId == clientId) {
-                this.localGameState = this.localGameState.copy({ playerId: message.playerId })
-                this.worldState = WorldState.fromJson(message.worldState)
-                this.syncScene()
-              }
+              this.localGameState = this.localGameState.copy({ playerId: message.playerId })
+              this.worldState = WorldState.fromJson(message.worldState)
+              this.syncScene()
               break
             case 'worldEvent':
-              if (!this.server) {
-                this.handleWorldEvent(deserialiseFromJson(message.event))
-              }
+              this.handleWorldEvent(deserialiseFromJson(message.event))
               break
+            default:
+              throw new UnreachableCaseError(message)
           }
         })
       })
     })
-    peer.on('error', function(err) {
-      alert('' + err)
-    })
-    const clientId = Math.floor(Math.random() * 100000)
-    // this.configureClientUsingBroadcastChannel(clientId)
-  }
-
-  private configureClientUsingBroadcastChannel(clientId: number) {
-    this.channel.postMessage({ type: 'join', clientId })
-    this.channel.addEventListener('message', (message) => {
-      switch (message.type) {
-        case 'joined':
-          if (message.clientId == clientId) {
-            this.localGameState = this.localGameState.copy({ playerId: message.playerId })
-            this.worldState = WorldState.fromJson(message.worldState)
-            this.syncScene()
-          }
-          break
-        case 'worldEvent':
-          if (!this.server) {
-            this.handleWorldEvent(deserialiseFromJson(message.event))
-          }
-          break
-      }
-    })
+    peer.on('error', err => console.log(err))
   }
 
   private actAsServer() {
     const server = new Server()
     this.server = server
-    //
-    // const peer = new (window as any).Peer('llama-wars-1', {
-    //   key: 'peerjs',
-    //   host: 'localhost',
-    //   path: 'myapp',
-    //   port: 9000,
-    // })
-    const peer = new (window as any).Peer('llama-wars-1')
-    peer.on('open', function(id) {
-      console.log('Opened ' + id)
-    })
-    peer.on('error', function(err) {
-      alert('' + err)
-    })
-    console.log('Acting as server')
+    const peer = new (window as any).Peer(PEER_JS_KEY)
+    peer.on('error', err => console.log(err))
     peer.on('connection', (connection) => {
-      console.log('Connection made from ' + connection.peer)
       server.addListener((event) => {
         connection.send({ type: 'worldEvent', event: serialiseToJson(event) })
         this.handleWorldEvent(event)
       })
-      connection.on('data', (message: Message) => {
+      connection.on('data', (message: ClientToServerMessage) => {
         console.log(message)
-        console.log('Received data')
         switch (message.type) {
           case 'join':
             connection.send({
               type: 'joined',
-              clientId: message.clientId,
               playerId: 2,
               worldState: server.worldState.toJson(),
             })
             break
           case 'worldAction':
             server.handleAction(message.playerId, deserialiseFromJson(message.action))
+            break
+          default:
+            throw new UnreachableCaseError(message)
         }
       })
-    })
-    // this.configureServerUsingBroadcastChannel(server)
-  }
-
-  private configureServerUsingBroadcastChannel(server: Server) {
-    server.addListener((event) => {
-      this.channel.postMessage({ type: 'worldEvent', event: serialiseToJson(event) })
-      this.handleWorldEvent(event)
-    })
-    this.channel.addEventListener('message', (message) => {
-      switch (message.type) {
-        case 'join':
-          this.channel.postMessage({
-            type: 'joined',
-            clientId: message.clientId,
-            playerId: 2,
-            worldState: server.worldState.toJson(),
-          })
-          break
-        case 'worldAction':
-          server.handleAction(message.playerId, deserialiseFromJson(message.action))
-      }
     })
   }
 

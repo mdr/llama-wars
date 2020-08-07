@@ -1,15 +1,11 @@
 import { PlayerId } from '../world/world-state'
 
-type ClientId = number
-
-export  interface JoinMessage {
+export interface JoinMessage {
   type: 'join'
-  clientId: ClientId
 }
 
 export interface JoinedMessage {
   type: 'joined'
-  clientId: ClientId
   playerId: PlayerId
   worldState: any
 }
@@ -25,4 +21,5 @@ export interface WorldActionMessage {
   playerId: PlayerId
 }
 
-export type Message = JoinMessage | JoinedMessage | WorldEventMessage | WorldActionMessage
+export type ServerToClientMessage = JoinedMessage | WorldEventMessage
+export type ClientToServerMessage = JoinMessage | WorldActionMessage
