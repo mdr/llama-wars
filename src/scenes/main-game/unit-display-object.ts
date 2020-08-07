@@ -1,8 +1,8 @@
-import { Hex } from '../world/hex'
-import { Unit } from '../world/unit'
+import { Hex } from '../../world/hex'
+import { Unit } from '../../world/unit'
 import { hexCenter } from './game-scene'
-import { HEALTH_BORDER_COLOUR, HEALTH_EMPTY_COLOUR, HEALTH_FULL_COLOUR, PLAYER_1_TINT, PLAYER_2_TINT } from './colours'
-import { addPoints, Point } from './point'
+import { HEALTH_BORDER_COLOUR, HEALTH_EMPTY_COLOUR, HEALTH_FULL_COLOUR, PLAYER_1_TINT, PLAYER_2_TINT } from '../colours'
+import { addPoints, Point } from '../point'
 import assert = require('assert')
 
 const HEALTH_BAR_WIDTH = 50

@@ -1,6 +1,6 @@
-import { getGameWidth, getGameHeight } from '../helpers'
-import { AudioKeys } from './asset-keys'
-import { GameSceneData } from './main-menu-scene'
+import { getGameWidth, getGameHeight } from '../../helpers'
+import { AudioKeys } from '../asset-keys'
+import { GameSceneData } from '../main-menu/main-menu-scene'
 import FileConfig = Phaser.Types.Loader.FileConfig
 
 const sceneConfig: Phaser.Types.Scenes.SettingsConfig = {

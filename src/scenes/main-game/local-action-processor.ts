@@ -1,14 +1,14 @@
-import { LocalGameState } from './local-game-state'
-import { WorldAction } from '../world/world-actions'
-import { WorldState } from '../world/world-state'
+import { LocalGameState } from '../local-game-state'
+import { WorldAction } from '../../world/world-actions'
+import { WorldState } from '../../world/world-state'
 import { LocalAction } from './local-action'
-import { nothing, Option } from '../util/types'
-import { Unit, UnitId } from '../world/unit'
-import { Hex } from '../world/hex'
-import { UnreachableCaseError } from '../util/unreachable-case-error'
-import { HexDirection } from '../world/hex-direction'
+import { nothing, Option } from '../../util/types'
+import { Unit, UnitId } from '../../world/unit'
+import { Hex } from '../../world/hex'
+import { UnreachableCaseError } from '../../util/unreachable-case-error'
+import { HexDirection } from '../../world/hex-direction'
 import { Mode } from './mode'
-import { CombinedState } from './combined-state-methods'
+import { CombinedState } from '../combined-state-methods'
 
 export interface LocalActionResult {
   newLocalGameState?: LocalGameState

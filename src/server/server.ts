@@ -2,7 +2,7 @@ import { WorldEventListener, WorldStateOwner } from './world-state-owner'
 import { WorldEvent } from '../world/world-events'
 import { ClientToServerMessage, ServerToClientMessage } from './messages'
 import { deserialiseFromJson, serialiseToJson } from '../util/json-serialisation'
-import { GameId } from '../scenes/game-scene'
+import { GameId } from '../scenes/main-game/game-scene'
 import Peer = require('peerjs')
 import { newPeer } from './client'
 import { UnreachableCaseError } from '../util/unreachable-case-error'

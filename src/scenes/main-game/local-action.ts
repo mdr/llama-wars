@@ -1,6 +1,6 @@
-import { HexDirection } from '../world/hex-direction'
-import { Hex } from '../world/hex'
-import { UnitId } from '../world/unit'
+import { HexDirection } from '../../world/hex-direction'
+import { Hex } from '../../world/hex'
+import { UnitId } from '../../world/unit'
 
 export interface GoLocalAction {
   type: 'go'

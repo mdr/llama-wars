@@ -1,5 +1,5 @@
-import { MenuButton } from '../ui/menu-button'
-import { GameId } from './game-scene'
+import { MenuButton } from '../../ui/menu-button'
+import { GameId } from '../main-game/game-scene'
 
 const sceneConfig: Phaser.Types.Scenes.SettingsConfig = {
   active: false,

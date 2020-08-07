@@ -1,6 +1,6 @@
-import { Option } from '../util/types'
+import { Option } from '../../util/types'
 import { LocalAction } from './local-action'
-import { HexDirection } from '../world/hex-direction'
+import { HexDirection } from '../../world/hex-direction'
 import { Mode } from './mode'
 
 export const mapToLocalAction = (event: KeyboardEvent, mode: Mode): Option<LocalAction> => {

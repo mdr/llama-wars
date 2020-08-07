@@ -1,5 +1,5 @@
 import { ClientToServerMessage, ServerToClientMessage } from './messages'
-import { GameId } from '../scenes/game-scene'
+import { GameId } from '../scenes/main-game/game-scene'
 import Peer = require('peerjs')
 import { WorldAction } from '../world/world-actions'
 import { serialiseToJson } from '../util/json-serialisation'
