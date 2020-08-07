@@ -64,17 +64,21 @@ export class GameScene extends Phaser.Scene {
   // ------
 
   public create = ({ gameId }: GameSceneData): void => {
-    this.sound.pauseOnBlur = false
+    this.setUpSound()
     if (gameId) {
       this.actAsClient(gameId)
     } else {
       this.actAsServer()
     }
 
-    ALL_AUDIO_KEYS.forEach((key) => this.sound.add(key))
     this.createDisplayObjects()
-    this.setUpInputs()
     this.syncScene()
+    this.setUpInputs()
+  }
+
+  private setUpSound = (): void => {
+    this.sound.pauseOnBlur = false
+    ALL_AUDIO_KEYS.forEach((key) => this.sound.add(key))
   }
 
   private actAsClient = async (gameId: GameId): Promise<void> => {
@@ -104,10 +108,6 @@ export class GameScene extends Phaser.Scene {
   private createDisplayObjects() {
     this.mapDisplayObject = new MapDisplayObject(this, this.worldState, this.localGameState)
     this.textsDisplayObject = new TextsDisplayObject(this, this.worldState, this.localGameState, this.handleLocalAction)
-    for (const unit of this.worldState.units) {
-      const unitDisplayObject = new UnitDisplayObject(this, unit)
-      this.unitDisplayObjects.set(unit.id, unitDisplayObject)
-    }
   }
 
   // Input handlers

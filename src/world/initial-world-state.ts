@@ -12,10 +12,12 @@ export const INITIAL_WORLD_STATE: WorldState = new WorldState({
   players: [
     new Player({
       id: 1,
+      name: 'Player 1',
       endedTurn: false,
     }),
     new Player({
       id: 2,
+      name: 'Player 2',
       endedTurn: false,
     }),
   ],

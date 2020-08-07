@@ -26,6 +26,8 @@ export class WorldState {
   }: { turn?: number; map?: WorldMap; units?: Unit[]; players?: Player[] } = {}): WorldState =>
     new WorldState({ turn, map, units, players })
 
+  public isPlayerDefeated = (playerId: PlayerId): boolean => R.any((unit) => unit.playerId == playerId, this.units)
+
   public findPlayer = (playerId: PlayerId): Option<Player> => R.find((player) => player.id == playerId, this.players)
 
   public findUnitById = (unitId: UnitId): Option<Unit> => R.find((unit) => unit.id == unitId, this.units)

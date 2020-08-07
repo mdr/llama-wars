@@ -102,7 +102,7 @@ export class TextsDisplayObject {
     this.worldState = worldState
     this.localGameState = localGameState
     this.hourglass.setVisible(localGameState.actionOutstandingWithServer)
-    this.playerText.setText(`Player ${this.localGameState.playerId} - Turn ${this.worldState.turn}`)
+    this.playerText.setText(`${this.combinedState.getCurrentPlayer().name} - Turn ${this.worldState.turn}`)
     this.selectionText.setText('')
     this.actionText.setText('')
     this.actionText2.setText('')

@@ -2,20 +2,32 @@ export type PlayerId = number
 
 export class Player {
   readonly id: PlayerId
+  readonly name: string
   readonly endedTurn: boolean
 
-  constructor({ id, endedTurn }: { id: PlayerId; endedTurn: boolean }) {
+  constructor({ id, name, endedTurn }: { id: PlayerId; name: string; endedTurn: boolean }) {
     this.id = id
+    this.name = name
     this.endedTurn = endedTurn
   }
 
-  public copy = ({ id = this.id, endedTurn = this.endedTurn }: { id?: PlayerId; endedTurn?: boolean } = {}): Player =>
+  public copy = ({
+    id = this.id,
+    name = this.name,
+    endedTurn = this.endedTurn,
+  }: { id?: PlayerId; name?: string; endedTurn?: boolean } = {}): Player =>
     new Player({
       id,
+      name,
       endedTurn,
     })
 
-  public toJson = (): object => ({ id: this.id, endedTurn: this.endedTurn })
+  public toJson = (): any => ({ id: this.id, name: this.name, endedTurn: this.endedTurn })
 
-  public static fromJson = (json: any): Player => new Player({ id: json.id, endedTurn: json.endedTurn })
+  public static fromJson = (json: any): Player =>
+    new Player({
+      id: json.id,
+      name: json.name,
+      endedTurn: json.endedTurn,
+    })
 }
