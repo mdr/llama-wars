@@ -1,4 +1,4 @@
-import { BroadcastChannel, createLeaderElection } from 'broadcast-channel'
+import { BroadcastChannel } from 'broadcast-channel'
 import * as R from 'ramda'
 import { addPoints, multiplyPoint, Point, subtractPoints } from './point'
 import { Hex } from '../world/hex'
@@ -7,7 +7,8 @@ import { INITIAL_WORLD_STATE, PlayerId, WorldState } from '../world/world-state'
 import { Server } from '../server/server'
 import {
   CombatParticipantInfo,
-  CombatWorldEvent, deserialiseFromJson,
+  CombatWorldEvent,
+  deserialiseFromJson,
   serialiseToJson,
   UnitMovedWorldEvent,
   WorldEvent,
@@ -24,10 +25,11 @@ import { mapToLocalAction } from './keyboard-mapper'
 import { LocalAction } from './local-action'
 import { LocalActionProcessor, LocalActionResult } from './local-action-processor'
 import { TextsDisplayObject } from './texts-display-object'
-import Pointer = Phaser.Input.Pointer
 import { CombinedState } from './combined-state-methods'
 import { WorldAction } from '../world/world-actions'
 import { Message } from '../server/messages'
+import { GameSceneData } from './main-menu-scene'
+import Pointer = Phaser.Input.Pointer
 
 const sceneConfig: Phaser.Types.Scenes.SettingsConfig = {
   active: false,
@@ -59,35 +61,29 @@ export class GameScene extends Phaser.Scene {
   // Create
   // ------
 
-  public create = (): void => {
+  public create = (gameSceneData: GameSceneData): void => {
     this.sound.pauseOnBlur = false
     this.channel = new BroadcastChannel<Message>('llama-comms')
-    const elector = createLeaderElection(this.channel)
-    const clientId = Math.floor(Math.random() * (10000))
-    elector.awaitLeadership().then(() => {
-      this.server = new Server()
-      this.server.addListener((event) => {
-        this.channel.postMessage({ type: 'worldEvent', event: serialiseToJson(event) })
-        this.handleWorldEvent(event)
-      })
-      console.log('Elected as leader, hosting game')
-    })
+    if (gameSceneData.mode == 'start') {
+      this.actAsServer()
+    } else {
+      this.actAsClient()
+    }
+
+    ALL_AUDIO_KEYS.forEach(key => this.sound.add(key))
+    this.createDisplayObjects()
+    this.setUpInputs()
+    this.syncScene()
+  }
+
+  private actAsClient() {
+    const clientId = Math.floor(Math.random() * 100000)
     this.channel.postMessage({ type: 'join', clientId })
     this.channel.addEventListener('message', (message) => {
       console.log(message)
       switch (message.type) {
-        case 'join':
-          if (this.server) {
-            this.channel.postMessage({
-              type: 'joined',
-              clientId: message.clientId,
-              playerId: 2,
-              worldState: this.server.worldState.toJson(),
-            })
-          }
-          break
         case 'joined':
-          if (!this.server && message.clientId == clientId) {
+          if (message.clientId == clientId) {
             this.localGameState = this.localGameState.copy({ playerId: message.playerId })
             this.worldState = WorldState.fromJson(message.worldState)
             this.syncScene()
@@ -98,17 +94,32 @@ export class GameScene extends Phaser.Scene {
             this.handleWorldEvent(deserialiseFromJson(message.event))
           }
           break
-        case 'worldAction':
-          if (this.server) {
-            this.server.handleAction(message.playerId, deserialiseFromJson(message.action))
-          }
       }
     })
+  }
 
-    ALL_AUDIO_KEYS.forEach(key => this.sound.add(key))
-    this.createDisplayObjects()
-    this.setUpInputs()
-    this.syncScene()
+  private actAsServer() {
+    const server = new Server()
+    this.server = server
+    server.addListener((event) => {
+      this.channel.postMessage({ type: 'worldEvent', event: serialiseToJson(event) })
+      this.handleWorldEvent(event)
+    })
+    this.channel.addEventListener('message', (message) => {
+      console.log(message)
+      switch (message.type) {
+        case 'join':
+          this.channel.postMessage({
+            type: 'joined',
+            clientId: message.clientId,
+            playerId: 2,
+            worldState: server.worldState.toJson(),
+          })
+          break
+        case 'worldAction':
+          server.handleAction(message.playerId, deserialiseFromJson(message.action))
+      }
+    })
   }
 
   private createDisplayObjects() {
@@ -161,7 +172,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   private asyncSendToServer = async (action: WorldAction): Promise<void> => {
-    // await new Promise(resolve => setTimeout(() => resolve(), 120))
+    await new Promise(resolve => setTimeout(() => resolve(), 120))
     if (this.server) {
       this.server.handleAction(this.playerId, action)
     } else {
