@@ -50,6 +50,7 @@ export class GameScene extends Phaser.Scene {
   private mapDisplayObject: MapDisplayObject
   private unitDisplayObjects: Map<UnitId, UnitDisplayObject> = new Map()
   private textsDisplayObject: TextsDisplayObject
+  private connection: any
 
   private get combinedState(): CombinedState {
     return new CombinedState(this.worldState, this.localGameState)
@@ -78,7 +79,48 @@ export class GameScene extends Phaser.Scene {
   }
 
   private actAsClient() {
+    const peer = new (window as any).Peer()
+    // const peer = new (window as any).Peer({
+    //   key: 'peerjs',
+    //   host: 'localhost',
+    //   path: 'myapp',
+    //   port: 9000,
+    // })
+    console.log('Acting as client')
+    peer.on('open', id => {
+      console.log('Opened ' + id)
+      const connection = peer.connect('llama-wars-1')
+      connection.on('open', () => {
+        console.log('connection opened')
+        this.connection = connection
+        connection.send({ type: 'join', clientId })
+        connection.on('data', (message) => {
+          console.log(message)
+          switch (message.type) {
+            case 'joined':
+              if (message.clientId == clientId) {
+                this.localGameState = this.localGameState.copy({ playerId: message.playerId })
+                this.worldState = WorldState.fromJson(message.worldState)
+                this.syncScene()
+              }
+              break
+            case 'worldEvent':
+              if (!this.server) {
+                this.handleWorldEvent(deserialiseFromJson(message.event))
+              }
+              break
+          }
+        })
+      })
+    })
+    peer.on('error', function(err) {
+      alert('' + err)
+    })
     const clientId = Math.floor(Math.random() * 100000)
+    // this.configureClientUsingBroadcastChannel(clientId)
+  }
+
+  private configureClientUsingBroadcastChannel(clientId: number) {
     this.channel.postMessage({ type: 'join', clientId })
     this.channel.addEventListener('message', (message) => {
       switch (message.type) {
@@ -101,6 +143,48 @@ export class GameScene extends Phaser.Scene {
   private actAsServer() {
     const server = new Server()
     this.server = server
+    //
+    // const peer = new (window as any).Peer('llama-wars-1', {
+    //   key: 'peerjs',
+    //   host: 'localhost',
+    //   path: 'myapp',
+    //   port: 9000,
+    // })
+    const peer = new (window as any).Peer('llama-wars-1')
+    peer.on('open', function(id) {
+      console.log('Opened ' + id)
+    })
+    peer.on('error', function(err) {
+      alert('' + err)
+    })
+    console.log('Acting as server')
+    peer.on('connection', (connection) => {
+      console.log('Connection made from ' + connection.peer)
+      server.addListener((event) => {
+        connection.send({ type: 'worldEvent', event: serialiseToJson(event) })
+        this.handleWorldEvent(event)
+      })
+      connection.on('data', (message: Message) => {
+        console.log(message)
+        console.log('Received data')
+        switch (message.type) {
+          case 'join':
+            connection.send({
+              type: 'joined',
+              clientId: message.clientId,
+              playerId: 2,
+              worldState: server.worldState.toJson(),
+            })
+            break
+          case 'worldAction':
+            server.handleAction(message.playerId, deserialiseFromJson(message.action))
+        }
+      })
+    })
+    // this.configureServerUsingBroadcastChannel(server)
+  }
+
+  private configureServerUsingBroadcastChannel(server: Server) {
     server.addListener((event) => {
       this.channel.postMessage({ type: 'worldEvent', event: serialiseToJson(event) })
       this.handleWorldEvent(event)
@@ -175,11 +259,16 @@ export class GameScene extends Phaser.Scene {
     if (this.server) {
       this.server.handleAction(this.playerId, action)
     } else {
-      await this.channel.postMessage({
+      this.connection.send({
         type: 'worldAction',
         action: serialiseToJson(action),
         playerId: this.localGameState.playerId,
       })
+      // await this.channel.postMessage({
+      //   type: 'worldAction',
+      //   action: serialiseToJson(action),
+      //   playerId: this.localGameState.playerId,
+      // })
     }
   }
 
