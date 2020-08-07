@@ -20,7 +20,6 @@ import Polygon = Phaser.GameObjects.Polygon
 type TileState = 'default' | 'selected' | 'targetable'
 
 export class MapDisplayObject {
-
   private readonly scene: Phaser.Scene
   private worldState: WorldState
   private localGameState: LocalGameState
@@ -31,8 +30,7 @@ export class MapDisplayObject {
     this.scene = scene
     this.worldState = worldState
     this.localGameState = localGameState
-    for (const hex of this.worldState.map.getMapHexes())
-      this.createHex(hex)
+    for (const hex of this.worldState.map.getMapHexes()) this.createHex(hex)
   }
 
   private createHex = (hex: Hex): void => {
@@ -43,9 +41,7 @@ export class MapDisplayObject {
 
   private addPolygon(center: Point, size: number): Phaser.GameObjects.Polygon {
     const vertices = [...hexCorners(point(0, 0), size)]
-    return this.scene.add.polygon(center.x, center.y, vertices)
-      .setOrigin(0, 0)
-      .setStrokeStyle(3, 0x000000)
+    return this.scene.add.polygon(center.x, center.y, vertices).setOrigin(0, 0).setStrokeStyle(3, 0x000000)
   }
 
   public syncScene = (worldState: WorldState, localGameState: LocalGameState): void => {
@@ -58,13 +54,12 @@ export class MapDisplayObject {
 
   private getHexPolygon = (hex: Hex): Polygon => {
     const polygon = this.hexPolygons.get(hex.toString())
-    if (!polygon)
-      throw `No polygon found for ${hex}`
+    if (!polygon) throw `No polygon found for ${hex}`
     return polygon
   }
 
   private calculateTileState = (hex: Hex): TileState => {
-    const { playerId,  selectedHex, mode } = this.localGameState
+    const { playerId, selectedHex, mode } = this.localGameState
     if (selectedHex && selectedHex.equals(hex)) {
       return 'selected'
     }
@@ -110,8 +105,7 @@ export class MapDisplayObject {
 
   public handlePointerMove(pointerPoint: Point): void {
     const hex = fromPoint(multiplyPoint(subtractPoints(pointerPoint, DRAWING_OFFSET), 1 / HEX_SIZE))
-    if (this.previousHover && this.previousHover.equals(hex))
-      return
+    if (this.previousHover && this.previousHover.equals(hex)) return
     if (this.previousHover) {
       this.getHexPolygon(this.previousHover).setFillStyle(this.calculateColour(this.previousHover))
       this.previousHover = undefined
@@ -121,5 +115,4 @@ export class MapDisplayObject {
       this.previousHover = hex
     }
   }
-
 }

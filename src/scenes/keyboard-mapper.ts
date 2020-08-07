@@ -22,20 +22,16 @@ export const mapToLocalAction = (event: KeyboardEvent, mode: Mode): Option<Local
     case 'Escape':
       return { type: 'abort' }
     case 'Enter':
-      if (event.shiftKey)
-        return { type: 'endTurn' }
+      if (event.shiftKey) return { type: 'endTurn' }
       break
     case 'n':
-      if (event.ctrlKey)
-        return { type: 'selectNextUnit' }
+      if (event.ctrlKey) return { type: 'selectNextUnit' }
       break
     case 'm':
-      if (mode.type == 'selectHex')
-        return { type: 'enterMoveMode' }
+      if (mode.type == 'selectHex') return { type: 'enterMoveMode' }
       break
     case 'a':
-      if (mode.type == 'selectHex')
-        return { type: 'enterAttackMode' }
+      if (mode.type == 'selectHex') return { type: 'enterAttackMode' }
       break
   }
 }

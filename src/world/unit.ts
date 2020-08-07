@@ -14,8 +14,20 @@ export class Unit {
   readonly actionPoints: ActionPoints
 
   constructor({
-                id, playerId, name, location, hitPoints, actionPoints,
-              }: { id: UnitId, playerId: PlayerId, name: string, location: Hex, hitPoints: HitPoints, actionPoints: ActionPoints }) {
+    id,
+    playerId,
+    name,
+    location,
+    hitPoints,
+    actionPoints,
+  }: {
+    id: UnitId
+    playerId: PlayerId
+    name: string
+    location: Hex
+    hitPoints: HitPoints
+    actionPoints: ActionPoints
+  }) {
     this.id = id
     this.playerId = playerId
     this.name = name
@@ -27,14 +39,20 @@ export class Unit {
   public damage = (points: number): Unit => this.copy({ hitPoints: this.hitPoints.damage(points) })
 
   public copy = ({
-                   id = this.id,
-                   playerId = this.playerId,
-                   name = this.name,
-                   location = this.location,
-                   hitPoints = this.hitPoints,
-                   actionPoints = this.actionPoints,
-                 }: { id?: UnitId, playerId?: PlayerId, name?: string, location?: Hex, hitPoints?: HitPoints, actionPoints?: ActionPoints } = {}): Unit =>
-    new Unit({ id, playerId, name, location, hitPoints, actionPoints })
+    id = this.id,
+    playerId = this.playerId,
+    name = this.name,
+    location = this.location,
+    hitPoints = this.hitPoints,
+    actionPoints = this.actionPoints,
+  }: {
+    id?: UnitId
+    playerId?: PlayerId
+    name?: string
+    location?: Hex
+    hitPoints?: HitPoints
+    actionPoints?: ActionPoints
+  } = {}): Unit => new Unit({ id, playerId, name, location, hitPoints, actionPoints })
 
   public move = (location: Hex, actionPointsConsumed: number): Unit =>
     this.copy({ location, actionPoints: this.actionPoints.reduce(actionPointsConsumed) })
@@ -42,8 +60,7 @@ export class Unit {
   public reduceActionPoints = (actionPointsConsumed: number): Unit =>
     this.copy({ actionPoints: this.actionPoints.reduce(actionPointsConsumed) })
 
-  public refreshActionPoints = (): Unit =>
-    this.copy({ actionPoints: this.actionPoints.refresh() })
+  public refreshActionPoints = (): Unit => this.copy({ actionPoints: this.actionPoints.refresh() })
 
   public toJson = (): object => ({
     id: this.id,
@@ -54,13 +71,13 @@ export class Unit {
     actionPoints: this.actionPoints.toJson(),
   })
 
-  public static fromJson = (json: any): Unit => new Unit({
-    id: json.id,
-    playerId: json.playerId,
-    name: json.name,
-    location: Hex.fromJson(json.location),
-    hitPoints: HitPoints.fromJson(json.hitPoints),
-    actionPoints: ActionPoints.fromJson(json.actionPoints),
-  })
-
+  public static fromJson = (json: any): Unit =>
+    new Unit({
+      id: json.id,
+      playerId: json.playerId,
+      name: json.name,
+      location: Hex.fromJson(json.location),
+      hitPoints: HitPoints.fromJson(json.hitPoints),
+      actionPoints: ActionPoints.fromJson(json.actionPoints),
+    })
 }

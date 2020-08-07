@@ -5,7 +5,7 @@ export class WorldMap {
   readonly width: number
   readonly height: number
 
-  constructor({ width, height }: { width: number, height: number }) {
+  constructor({ width, height }: { width: number; height: number }) {
     assert(width > 0)
     assert(height > 0)
     this.width = width
@@ -17,7 +17,7 @@ export class WorldMap {
     return 0 <= q && q < this.width && 0 <= hex.y && hex.y < this.height
   }
 
-  public* getMapHexes(): IterableIterator<Hex> {
+  public *getMapHexes(): IterableIterator<Hex> {
     for (let row = 0; row < this.height; row++)
       for (let column = 0; column < this.width; column++) {
         const x = -Math.floor(row / 2) + column
@@ -28,5 +28,4 @@ export class WorldMap {
   public toJson = (): object => ({ width: this.width, height: this.height })
 
   public static fromJson = (json: any): WorldMap => new WorldMap({ width: json.width, height: json.height })
-
 }

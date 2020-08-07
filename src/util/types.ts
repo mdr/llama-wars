@@ -11,8 +11,7 @@ export interface Nothing {
 
 export type Maybe<T> = Just<T> | Nothing
 
-export const toMaybe = <T>(option: Option<T>): Maybe<T> =>
-  option == undefined ? nothing : just(option)
+export const toMaybe = <T>(option: Option<T>): Maybe<T> => (option == undefined ? nothing : just(option))
 
 export const toOption = <T>(maybe: Maybe<T>): Option<T> => {
   switch (maybe.type) {

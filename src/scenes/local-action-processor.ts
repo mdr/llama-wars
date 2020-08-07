@@ -59,7 +59,9 @@ export class LocalActionProcessor {
     const selectedUnit = this.combinedState.findSelectedUnit()
     const unitToSelect = this.combinedState.findNextUnitWithActionPoints(selectedUnit?.id)
     if (unitToSelect) {
-      const newLocalGameState = this.localGameState.setSelectedHex(unitToSelect?.location).setMode({ type: 'selectHex' })
+      const newLocalGameState = this.localGameState
+        .setSelectedHex(unitToSelect?.location)
+        .setMode({ type: 'selectHex' })
       return { newLocalGameState: newLocalGameState }
     } else {
       return undefined
@@ -80,8 +82,7 @@ export class LocalActionProcessor {
 
   private handleGo = (direction: HexDirection): Option<LocalActionResult> => {
     const selectedHex = this.localGameState.selectedHex
-    if (selectedHex)
-      return this.moveOrAttackHex(selectedHex.go(direction))
+    if (selectedHex) return this.moveOrAttackHex(selectedHex.go(direction))
   }
 
   private handleGoHex = (hex: Hex): Option<LocalActionResult> => this.moveOrAttackHex(hex)
@@ -89,8 +90,7 @@ export class LocalActionProcessor {
   private moveOrAttackHex = (hex: Hex): Option<LocalActionResult> => {
     const selectedUnit = this.combinedState.findSelectedUnit()
     if (selectedUnit) {
-      if (this.combinedState.unitCanMoveToHex(selectedUnit, hex))
-        return this.moveToHex(selectedUnit, hex)
+      if (this.combinedState.unitCanMoveToHex(selectedUnit, hex)) return this.moveToHex(selectedUnit, hex)
       else if (this.combinedState.unitCanAttackHex(selectedUnit, hex)) {
         return this.attackHex(selectedUnit, hex)
       }
@@ -141,14 +141,12 @@ export class LocalActionProcessor {
 
   private handleCompleteMove = (unitId: UnitId, destination: Hex): Option<LocalActionResult> => {
     const unit = this.worldState.getUnitById(unitId)
-    if (this.combinedState.unitCanMoveToHex(unit, destination))
-      return this.moveToHex(unit, destination)
+    if (this.combinedState.unitCanMoveToHex(unit, destination)) return this.moveToHex(unit, destination)
   }
 
   private handleCompleteAttack = (unitId: UnitId, targetHex: Hex): Option<LocalActionResult> => {
     const attacker = this.worldState.getUnitById(unitId)
-    if (this.combinedState.unitCanAttackHex(attacker, targetHex))
-      return this.attackHex(attacker, targetHex)
+    if (this.combinedState.unitCanAttackHex(attacker, targetHex)) return this.attackHex(attacker, targetHex)
   }
 
   private handleSelectHex = (hex: Hex): Option<LocalActionResult> => {
@@ -165,5 +163,4 @@ export class LocalActionProcessor {
       return { newLocalGameState: this.localGameState.setSelectedHex(hex) }
     }
   }
-
 }

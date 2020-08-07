@@ -11,7 +11,6 @@ import { CombinedState } from './combined-state-methods'
 type LocalActionDispatcher = (LocalAction) => void
 
 export class TextsDisplayObject {
-
   private readonly scene: Phaser.Scene
   private worldState: WorldState
   private localGameState: LocalGameState
@@ -28,7 +27,12 @@ export class TextsDisplayObject {
     return new CombinedState(this.worldState, this.localGameState)
   }
 
-  constructor(scene: Phaser.Scene, worldState: WorldState, localGameState: LocalGameState, localActionDispatcher: LocalActionDispatcher) {
+  constructor(
+    scene: Phaser.Scene,
+    worldState: WorldState,
+    localGameState: LocalGameState,
+    localActionDispatcher: LocalActionDispatcher,
+  ) {
     this.scene = scene
     this.worldState = worldState
     this.localGameState = localGameState
@@ -37,16 +41,30 @@ export class TextsDisplayObject {
     this.playerText = this.scene.add.text(23, 20, '')
     this.hourglass = this.scene.add.image(875, 30, 'hourglass').setVisible(false)
 
-    this.selectionText = this.scene.add.text(DRAWING_OFFSET.x - hexWidth(HEX_SIZE) / 2, mapHeight(map) * HEX_SIZE + DRAWING_OFFSET.y, '')
-    this.actionText = this.scene.add.text(DRAWING_OFFSET.x - hexWidth(HEX_SIZE) / 2, mapHeight(map) * HEX_SIZE + DRAWING_OFFSET.y + 25, '', { fill: ACTION_TEXT_COLOUR }).setInteractive()
+    this.selectionText = this.scene.add.text(
+      DRAWING_OFFSET.x - hexWidth(HEX_SIZE) / 2,
+      mapHeight(map) * HEX_SIZE + DRAWING_OFFSET.y,
+      '',
+    )
+    this.actionText = this.scene.add
+      .text(DRAWING_OFFSET.x - hexWidth(HEX_SIZE) / 2, mapHeight(map) * HEX_SIZE + DRAWING_OFFSET.y + 25, '', {
+        fill: ACTION_TEXT_COLOUR,
+      })
+      .setInteractive()
       .on('pointerdown', this.handleActionTextClick)
       .on('pointerover', () => this.actionText.setFill(HOVER_ACTION_TEXT_COLOUR))
       .on('pointerout', () => this.actionText.setFill(ACTION_TEXT_COLOUR))
-    this.actionText2 = this.scene.add.text(DRAWING_OFFSET.x - hexWidth(HEX_SIZE) / 2, mapHeight(map) * HEX_SIZE + DRAWING_OFFSET.y + 50, '', { fill: ACTION_TEXT_COLOUR }).setInteractive()
+    this.actionText2 = this.scene.add
+      .text(DRAWING_OFFSET.x - hexWidth(HEX_SIZE) / 2, mapHeight(map) * HEX_SIZE + DRAWING_OFFSET.y + 50, '', {
+        fill: ACTION_TEXT_COLOUR,
+      })
+      .setInteractive()
       .on('pointerdown', this.handleActionText2Click)
       .on('pointerover', () => this.actionText2.setFill(HOVER_ACTION_TEXT_COLOUR))
       .on('pointerout', () => this.actionText2.setFill(ACTION_TEXT_COLOUR))
-    this.endTurnText = this.scene.add.text(700, mapHeight(map) * HEX_SIZE + DRAWING_OFFSET.y, '', { fill: ACTION_TEXT_COLOUR }).setInteractive()
+    this.endTurnText = this.scene.add
+      .text(700, mapHeight(map) * HEX_SIZE + DRAWING_OFFSET.y, '', { fill: ACTION_TEXT_COLOUR })
+      .setInteractive()
       .on('pointerdown', () => this.localActionDispatcher({ type: 'endTurn' }))
       .on('pointerover', () => this.endTurnText.setFill(HOVER_ACTION_TEXT_COLOUR))
       .on('pointerout', () => this.endTurnText.setFill(ACTION_TEXT_COLOUR))
@@ -75,8 +93,7 @@ export class TextsDisplayObject {
 
   public hasClickHandlerFor = (point: Point): boolean => {
     for (const obj of [this.endTurnText, this.actionText, this.actionText2])
-      if (obj.getBounds().contains(point.x, point.y))
-        return true
+      if (obj.getBounds().contains(point.x, point.y)) return true
     return false
   }
 
@@ -125,14 +142,11 @@ export class TextsDisplayObject {
     const selectedUnit = this.combinedState.findSelectedUnit()
     if (selectedUnit) {
       this.selectionText.setText(this.describeUnit(selectedUnit))
-      if (this.combinedState.unitCouldPotentiallyMove(selectedUnit))
-        this.actionText.setText('Move (m)')
-      if (this.combinedState.unitCouldPotentiallyAttack(selectedUnit))
-        this.actionText2.setText('Attack (a)')
+      if (this.combinedState.unitCouldPotentiallyMove(selectedUnit)) this.actionText.setText('Move (m)')
+      if (this.combinedState.unitCouldPotentiallyAttack(selectedUnit)) this.actionText2.setText('Attack (a)')
     }
   }
 
   private describeUnit = (unit: Unit): string =>
     `${unit.name} - Llama warrior - HP ${unit.hitPoints.current}/${unit.hitPoints.max} - actions ${unit.actionPoints.current}/${unit.actionPoints.max}`
-
 }

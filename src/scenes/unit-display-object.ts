@@ -20,7 +20,8 @@ export class UnitDisplayObject {
   constructor(scene: Phaser.Scene, unit: Unit) {
     this.scene = scene
     this.unit = unit
-    this.image = scene.add.image(0, 0, 'llama')
+    this.image = scene.add
+      .image(0, 0, 'llama')
       .setScale(0.8)
       .setTint(this.unit.playerId == 1 ? PLAYER_1_TINT : PLAYER_2_TINT)
     this.healthBarGraphics = scene.add.graphics()
@@ -54,7 +55,12 @@ export class UnitDisplayObject {
     // Fill in bar
     const { current, max } = this.unit.hitPoints
     this.healthBarGraphics.fillStyle(HEALTH_FULL_COLOUR)
-    this.healthBarGraphics.fillRect(HEALTH_BAR_BORDER_THICKNESS, HEALTH_BAR_BORDER_THICKNESS, innerWidth * current / max, innerHeight)
+    this.healthBarGraphics.fillRect(
+      HEALTH_BAR_BORDER_THICKNESS,
+      HEALTH_BAR_BORDER_THICKNESS,
+      (innerWidth * current) / max,
+      innerHeight,
+    )
   }
 
   public move = (from: Hex, to: Hex) => {
@@ -101,16 +107,15 @@ export class UnitDisplayObject {
   }
 }
 
-type TweenXY = { x: { from: number, to: number }, y: { from: number, to: number } }
+type TweenXY = { x: { from: number; to: number }; y: { from: number; to: number } }
 
-const calculateTweenXY = (from: Point, to: Point, offset: Point): TweenXY =>
-  ({
-    x: {
-      from: from.x + offset.x,
-      to: to.x + offset.x,
-    },
-    y: {
-      from: from.y + offset.y,
-      to: to.y + offset.y,
-    },
-  })
+const calculateTweenXY = (from: Point, to: Point, offset: Point): TweenXY => ({
+  x: {
+    from: from.x + offset.x,
+    to: to.x + offset.x,
+  },
+  y: {
+    from: from.y + offset.y,
+    to: to.y + offset.y,
+  },
+})

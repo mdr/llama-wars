@@ -14,8 +14,7 @@ export class Server {
   public addListener = (listener: WorldEventListener) => this.listeners.push(listener)
 
   private notifyListeners = (event: WorldEvent): void => {
-    for (const listener of this.listeners)
-      listener(event)
+    for (const listener of this.listeners) listener(event)
   }
 
   public handleAction = (playerId: PlayerId, action: WorldAction): void => {
@@ -23,5 +22,4 @@ export class Server {
     this.worldState = applyEvent(this.worldState, event)
     this.notifyListeners(event)
   }
-
 }

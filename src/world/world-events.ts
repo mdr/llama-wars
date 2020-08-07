@@ -4,9 +4,9 @@ import { UnitId } from './unit'
 
 export interface UnitMovedWorldEvent {
   type: 'unitMoved'
-  playerId: PlayerId,
+  playerId: PlayerId
   unitId: UnitId
-  actionPointsConsumed: number,
+  actionPointsConsumed: number
   from: Hex
   to: Hex
 }
@@ -14,8 +14,8 @@ export interface UnitMovedWorldEvent {
 export interface CombatParticipantInfo {
   playerId: PlayerId
   unitId: UnitId
-  location: Hex,
-  damage: number,
+  location: Hex
+  damage: number
   killed: boolean
 }
 

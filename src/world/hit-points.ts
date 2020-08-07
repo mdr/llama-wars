@@ -4,7 +4,7 @@ export class HitPoints {
   readonly current: number
   readonly max: number
 
-  constructor({ current, max }: { current: number, max: number }) {
+  constructor({ current, max }: { current: number; max: number }) {
     this.current = current
     this.max = max
     assert(max > 0)
@@ -14,11 +14,10 @@ export class HitPoints {
 
   public damage = (points: number): HitPoints => this.copy({ current: this.current - points })
 
-  public copy = ({ current = this.current, max = this.max }: { current?: number, max?: number } = {}): HitPoints =>
+  public copy = ({ current = this.current, max = this.max }: { current?: number; max?: number } = {}): HitPoints =>
     new HitPoints({ current, max })
 
   public toJson = (): object => ({ current: this.current, max: this.max })
 
   public static fromJson = (json: any): HitPoints => new HitPoints({ current: json.current, max: json.max })
-
 }

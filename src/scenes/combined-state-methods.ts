@@ -7,7 +7,6 @@ import * as R from 'ramda'
 import { Player } from '../world/player'
 
 export class CombinedState {
-
   protected readonly worldState: WorldState
   protected readonly localGameState: LocalGameState
 
@@ -16,7 +15,8 @@ export class CombinedState {
     this.localGameState = localGameState
   }
 
-  public findSelectedUnit = (): Option<Unit> => this.selectedHex ? this.findUnitInLocation(this.selectedHex) : undefined
+  public findSelectedUnit = (): Option<Unit> =>
+    this.selectedHex ? this.findUnitInLocation(this.selectedHex) : undefined
 
   public get selectedHex(): Option<Hex> {
     return this.localGameState.selectedHex
@@ -35,32 +35,37 @@ export class CombinedState {
     unit.playerId == this.playerId && unit.actionPoints.current > 0 && !this.getCurrentPlayer().endedTurn
 
   public unitCanMoveToHex = (unit: Unit, hex: Hex): boolean =>
-    this.unitCouldPotentiallyMove(unit)
-    && hex.isAdjacentTo(unit.location)
-    && this.worldState.map.isInBounds(hex)
-    && !this.findUnitInLocation(hex)
+    this.unitCouldPotentiallyMove(unit) &&
+    hex.isAdjacentTo(unit.location) &&
+    this.worldState.map.isInBounds(hex) &&
+    !this.findUnitInLocation(hex)
 
   public unitCanAttackHex = (unit: Unit, location: Hex): boolean => {
     const targetUnit = this.findUnitInLocation(location)
-    return this.unitCouldPotentiallyAttack(unit)
-      && targetUnit != undefined
-      && targetUnit.playerId != this.localGameState.playerId
-      && unit.location.isAdjacentTo(location)
+    return (
+      this.unitCouldPotentiallyAttack(unit) &&
+      targetUnit != undefined &&
+      targetUnit.playerId != this.localGameState.playerId &&
+      unit.location.isAdjacentTo(location)
+    )
   }
 
   public findNextUnitWithActionPoints = (unitId?: UnitId): Option<Unit> => {
-    const candidateUnits = R.sortBy(unit => unit.id, this.worldState.units.filter(unit => unit.playerId == this.playerId && unit.actionPoints.current > 0))
+    const candidateUnits = R.sortBy(
+      (unit) => unit.id,
+      this.worldState.units.filter((unit) => unit.playerId == this.playerId && unit.actionPoints.current > 0),
+    )
     if (unitId)
-      return R.head(candidateUnits.filter(unit => unit.id > unitId)) ?? R.head(candidateUnits.filter(unit => unit.id < unitId))
-    else
-      return R.head(candidateUnits)
+      return (
+        R.head(candidateUnits.filter((unit) => unit.id > unitId)) ??
+        R.head(candidateUnits.filter((unit) => unit.id < unitId))
+      )
+    else return R.head(candidateUnits)
   }
 
   public getCurrentPlayer = (): Player => {
     const player = this.worldState.findPlayer(this.playerId)
-    if (!player)
-      throw `Could not find player with id ${this.playerId}`
+    if (!player) throw `Could not find player with id ${this.playerId}`
     return player
   }
-
 }

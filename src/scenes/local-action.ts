@@ -50,7 +50,7 @@ export interface SelectHexLocalAction {
 }
 
 export type LocalAction =
-  GoLocalAction
+  | GoLocalAction
   | GoHexAction
   | EndTurnLocalAction
   | SelectNextUnitLocalAction

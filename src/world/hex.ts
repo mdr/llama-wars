@@ -38,7 +38,6 @@ export class Hex {
   public toJson = (): object => ({ x: this.x, y: this.y })
 
   public static fromJson = (json: any): Hex => new Hex(json.x, json.y)
-
 }
 
 export type HexVector = Hex

@@ -59,7 +59,7 @@ export class BootScene extends Phaser.Scene {
 
       // this.scene.start('Game')
       const hash = window.location.hash
-      if (hash == "") {
+      if (hash == '') {
         this.scene.start('MainMenu')
       } else {
         const data: GameSceneData = { id: window.location.hash.substr(1) }
