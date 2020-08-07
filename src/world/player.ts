@@ -19,4 +19,3 @@ export class Player {
   public static fromJson = (json: any): Player => new Player({ id: json.id, endedTurn: json.endedTurn })
 
 }
-

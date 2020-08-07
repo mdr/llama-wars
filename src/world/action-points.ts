@@ -24,4 +24,3 @@ export class ActionPoints {
   public static fromJson = (json: any): ActionPoints => new ActionPoints({ current: json.current, max: json.max })
 
 }
-

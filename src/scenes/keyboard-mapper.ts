@@ -39,4 +39,3 @@ export const mapToLocalAction = (event: KeyboardEvent, mode: Mode): Option<Local
       break
   }
 }
-

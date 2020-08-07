@@ -114,4 +114,3 @@ const calculateTweenXY = (from: Point, to: Point, offset: Point): TweenXY =>
       to: to.y + offset.y,
     },
   })
-

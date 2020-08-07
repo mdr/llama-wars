@@ -24,4 +24,3 @@ export interface EndTurnWorldAction {
 }
 
 export type WorldAction = MoveUnitWorldAction | AttackWorldAction | EndTurnWorldAction
-

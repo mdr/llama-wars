@@ -36,4 +36,3 @@ export const INITIAL_LOCAL_GAME_STATE = new LocalGameState({
   playerId: 1,
   mode: { type: 'selectHex' },
 })
-
