@@ -3,7 +3,7 @@ import { addPoints, multiplyPoint, Point, subtractPoints } from './point'
 import { Hex } from '../world/hex'
 import { centerPoint, fromPoint } from './hex-geometry'
 import { PlayerId, WorldState } from '../world/world-state'
-import { Server } from '../server/server'
+import { WorldStateOwner } from '../server/world-state-owner'
 import { CombatParticipantInfo, CombatWorldEvent, UnitMovedWorldEvent, WorldEvent } from '../world/world-events'
 import { applyEvent } from '../world/world-event-evaluator'
 import { UnitId } from '../world/unit'
@@ -25,6 +25,7 @@ import Pointer = Phaser.Input.Pointer
 import { deserialiseFromJson, serialiseToJson } from '../util/json-serialisation'
 import Peer = require('peerjs')
 import { INITIAL_WORLD_STATE } from '../world/initial-world-state'
+import { Client } from '../server/client'
 
 const sceneConfig: Phaser.Types.Scenes.SettingsConfig = {
   active: false,
@@ -40,11 +41,11 @@ export type GameId = string
 
 export class GameScene extends Phaser.Scene {
   // Server-only:
-  private server: Option<Server> = undefined
+  private worldStateOwner: Option<WorldStateOwner> = undefined
   private clientConnections: Peer.DataConnection[] = []
 
   // Client-only:
-  private serverConnection: Peer.DataConnection
+  private client: Option<Client>
 
   private worldState: WorldState = INITIAL_WORLD_STATE
   private localGameState: LocalGameState = INITIAL_LOCAL_GAME_STATE
@@ -64,10 +65,10 @@ export class GameScene extends Phaser.Scene {
   // Create
   // ------
 
-  public create = (gameSceneData: GameSceneData): void => {
+  public create = ({ gameId }: GameSceneData): void => {
     this.sound.pauseOnBlur = false
-    if (gameSceneData.id) {
-      this.actAsClient(gameSceneData.id)
+    if (gameId) {
+      this.actAsClient(gameId)
     } else {
       this.actAsServer()
     }
@@ -78,37 +79,31 @@ export class GameScene extends Phaser.Scene {
     this.syncScene()
   }
 
-  private actAsClient(gameId: GameId) {
-    const peer = this.newPeer()
-    peer.on('open', () => {
-      const connection = peer.connect(gameId)
-      connection.on('open', () => {
-        this.serverConnection = connection
-        connection.send({ type: 'join' })
-        connection.on('data', (message: ServerToClientMessage) => {
-          console.log(message)
-          switch (message.type) {
-            case 'joined':
-              this.localGameState = this.localGameState.copy({ playerId: message.playerId })
-              this.worldState = WorldState.fromJson(message.worldState)
-              this.syncScene()
-              break
-            case 'worldEvent':
-              this.handleWorldEvent(deserialiseFromJson(message.event))
-              break
-            default:
-              throw new UnreachableCaseError(message)
-          }
-        })
-      })
-    })
-    peer.on('error', (err) => console.log(err))
+  private actAsClient = async (gameId: GameId): Promise<void> => {
+    this.client = await Client.connect(gameId)
+    this.client.addListener(this.handleServerToClientMessage)
+    this.client.send({ type: 'join' })
+  }
+
+  private handleServerToClientMessage = (message: ServerToClientMessage): void => {
+    switch (message.type) {
+      case 'joined':
+        this.localGameState = this.localGameState.copy({ playerId: message.playerId })
+        this.worldState = WorldState.fromJson(message.worldState)
+        this.syncScene()
+        break
+      case 'worldEvent':
+        this.handleWorldEvent(deserialiseFromJson(message.event))
+        break
+      default:
+        throw new UnreachableCaseError(message)
+    }
   }
 
   private newPeer = (id?: string, options?: Peer.PeerJSOption) => new (window as any).Peer(id, options) as Peer
 
   private actAsServer() {
-    const server = new Server()
+    const server = new WorldStateOwner()
     server.addListener((event: WorldEvent): void => {
       this.handleWorldEvent(event)
       for (const clientConnection of this.clientConnections) {
@@ -117,7 +112,7 @@ export class GameScene extends Phaser.Scene {
       }
     })
 
-    this.server = server
+    this.worldStateOwner = server
     const peer = this.newPeer()
     peer.on('open', (id: GameId) => (window.location.hash = id))
     peer.on('error', (err) => console.log(err))
@@ -131,17 +126,17 @@ export class GameScene extends Phaser.Scene {
 
   private handleClientToServerMessage(message: ClientToServerMessage, clientConnection: Peer.DataConnection) {
     console.log(message)
-    const server = this.server!
+    const worldStateOwner = this.worldStateOwner!
     switch (message.type) {
       case 'join':
         clientConnection.send({
           type: 'joined',
           playerId: 2,
-          worldState: server.worldState.toJson(),
+          worldState: worldStateOwner.worldState.toJson(),
         })
         break
       case 'worldAction':
-        server.handleAction(message.playerId, deserialiseFromJson(message.action))
+        worldStateOwner.handleAction(message.playerId, deserialiseFromJson(message.action))
         break
       default:
         throw new UnreachableCaseError(message)
@@ -197,20 +192,15 @@ export class GameScene extends Phaser.Scene {
   }
 
   private asyncSendToServer = async (action: WorldAction): Promise<void> => {
-    await new Promise((resolve) => setTimeout(() => resolve(), 120))
-    if (this.server) {
-      this.server.handleAction(this.playerId, action)
-    } else {
-      this.serverConnection.send({
+    if (this.worldStateOwner) {
+      this.worldStateOwner.handleAction(this.playerId, action)
+    }
+    if (this.client) {
+      this.client.send({
         type: 'worldAction',
         action: serialiseToJson(action),
         playerId: this.localGameState.playerId,
       })
-      // await this.channel.postMessage({
-      //   type: 'worldAction',
-      //   action: serialiseToJson(action),
-      //   playerId: this.localGameState.playerId,
-      // })
     }
   }
 

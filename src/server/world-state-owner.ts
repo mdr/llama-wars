@@ -7,7 +7,7 @@ import { WorldActionHandler } from './world-action-handler'
 
 export type WorldEventListener = (event: WorldEvent) => void
 
-export class Server {
+export class WorldStateOwner {
   public worldState: WorldState = INITIAL_WORLD_STATE
   private listeners: WorldEventListener[] = []
 

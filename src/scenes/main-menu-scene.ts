@@ -8,7 +8,7 @@ const sceneConfig: Phaser.Types.Scenes.SettingsConfig = {
 }
 
 export interface GameSceneData {
-  id?: GameId
+  gameId?: GameId
 }
 
 export class MainMenuScene extends Phaser.Scene {
