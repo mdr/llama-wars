@@ -1,6 +1,7 @@
 import { getGameWidth, getGameHeight } from '../helpers'
 import { AudioKeys } from './asset-keys'
 import { GameSceneData } from './main-menu-scene'
+import FileConfig = Phaser.Types.Loader.FileConfig
 
 const sceneConfig: Phaser.Types.Scenes.SettingsConfig = {
   active: false,
@@ -39,14 +40,14 @@ export class BootScene extends Phaser.Scene {
     const percentText = this.add.text(halfWidth - 25, halfHeight, '0%').setFontSize(24)
     const assetText = this.add.text(halfWidth - 25, halfHeight + 100, '').setFontSize(24)
 
-    this.load.on('progress', (value) => {
+    this.load.on('progress', (value: number) => {
       progressBar.width = (progressBarWidth - 30) * value
 
       const percent = value * 100
       percentText.setText(`${percent}%`)
     })
 
-    this.load.on('fileprogress', (file) => {
+    this.load.on('fileprogress', (file: FileConfig) => {
       assetText.setText(file.key)
     })
 

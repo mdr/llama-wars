@@ -13,7 +13,7 @@ export const serialiseToJson = (value: any): any => {
       } else if (value instanceof Hex) {
         return { ...value.toJson(), _llamaClass: 'Hex' }
       } else {
-        const newObject = {}
+        const newObject: any = {}
         for (const [key, val] of Object.entries(value)) {
           newObject[key] = serialiseToJson(val)
         }
@@ -35,7 +35,7 @@ export const deserialiseFromJson = (value: any): any => {
       } else if (value._llamaClass == 'Hex') {
         return Hex.fromJson(value)
       } else {
-        const newObject = {}
+        const newObject: any = {}
         for (const [key, val] of Object.entries(value)) {
           newObject[key] = deserialiseFromJson(val)
         }

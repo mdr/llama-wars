@@ -50,9 +50,9 @@ export class GameScene extends Phaser.Scene {
   private worldState: WorldState = INITIAL_WORLD_STATE
   private localGameState: LocalGameState = INITIAL_LOCAL_GAME_STATE
 
-  private mapDisplayObject: MapDisplayObject
+  private mapDisplayObject?: MapDisplayObject
   private unitDisplayObjects: Map<UnitId, UnitDisplayObject> = new Map()
-  private textsDisplayObject: TextsDisplayObject
+  private textsDisplayObject?: TextsDisplayObject
 
   private get combinedState(): CombinedState {
     return new CombinedState(this.worldState, this.localGameState)
@@ -206,13 +206,13 @@ export class GameScene extends Phaser.Scene {
 
   private handlePointerMove = (pointer: Pointer): void => {
     const pointerPoint = { x: pointer.x, y: pointer.y }
-    this.mapDisplayObject.handlePointerMove(pointerPoint)
+    this.mapDisplayObject?.handlePointerMove(pointerPoint)
   }
 
   private handlePointerDown = (pointer: Pointer): void => {
     // Ignore clicks on these as they have their own handlers
     const pressedPoint = { x: pointer.x, y: pointer.y }
-    if (this.textsDisplayObject.hasClickHandlerFor(pressedPoint)) return
+    if (this.textsDisplayObject?.hasClickHandlerFor(pressedPoint)) return
     const hex = fromPoint(multiplyPoint(subtractPoints(pressedPoint, DRAWING_OFFSET), 1 / HEX_SIZE))
     if (pointer.button == 2) {
       this.handleLocalAction({ type: 'goHex', hex })
@@ -242,8 +242,8 @@ export class GameScene extends Phaser.Scene {
   // ----
 
   public syncScene = (): void => {
-    this.mapDisplayObject.syncScene(this.worldState, this.localGameState)
-    this.textsDisplayObject.syncScene(this.worldState, this.localGameState)
+    this.mapDisplayObject?.syncScene(this.worldState, this.localGameState)
+    this.textsDisplayObject?.syncScene(this.worldState, this.localGameState)
 
     const surplusUnitIds = R.difference(
       Array.from(this.unitDisplayObjects.keys()),

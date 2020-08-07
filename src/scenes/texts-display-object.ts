@@ -7,8 +7,9 @@ import { UnreachableCaseError } from '../util/unreachable-case-error'
 import { Point } from './point'
 import { Unit, UnitId } from '../world/unit'
 import { CombinedState } from './combined-state-methods'
+import { LocalAction } from './local-action'
 
-type LocalActionDispatcher = (LocalAction) => void
+type LocalActionDispatcher = (action: LocalAction) => void
 
 export class TextsDisplayObject {
   private readonly scene: Phaser.Scene

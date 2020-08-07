@@ -70,8 +70,8 @@ export class WorldState {
     new WorldState({
       turn: json.turn,
       map: WorldMap.fromJson(json.map),
-      units: json.units.map((unit) => Unit.fromJson(unit)),
-      players: json.players.map((unit) => Player.fromJson(unit)),
+      units: json.units.map((unit: any) => Unit.fromJson(unit)),
+      players: json.players.map((unit: any) => Player.fromJson(unit)),
     })
 }
 
