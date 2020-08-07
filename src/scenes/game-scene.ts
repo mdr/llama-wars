@@ -2,7 +2,7 @@ import * as R from 'ramda'
 import { addPoints, multiplyPoint, Point, subtractPoints } from './point'
 import { Hex } from '../world/hex'
 import { centerPoint, fromPoint } from './hex-geometry'
-import { INITIAL_WORLD_STATE, PlayerId, WorldState } from '../world/world-state'
+import { PlayerId, WorldState } from '../world/world-state'
 import { Server } from '../server/server'
 import {
   CombatParticipantInfo,
@@ -29,6 +29,7 @@ import { GameSceneData } from './main-menu-scene'
 import Pointer = Phaser.Input.Pointer
 import { deserialiseFromJson, serialiseToJson } from '../util/json-serialisation'
 import Peer = require('peerjs')
+import { INITIAL_WORLD_STATE } from '../world/initial-world-state'
 
 const sceneConfig: Phaser.Types.Scenes.SettingsConfig = {
   active: false,

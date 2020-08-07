@@ -18,13 +18,11 @@ export class WorldMap {
   }
 
   public* getMapHexes(): IterableIterator<Hex> {
-    for (let r = 0; r < this.height; r++) {
-      for (let c = 0; c < this.width; c++) {
-        const x = -Math.floor(r / 2) + c
-        const hex = new Hex(x, r)
-        yield hex
+    for (let row = 0; row < this.height; row++)
+      for (let column = 0; column < this.width; column++) {
+        const x = -Math.floor(row / 2) + column
+        yield new Hex(x, row)
       }
-    }
   }
 
   public toJson = (): object => ({ width: this.width, height: this.height })

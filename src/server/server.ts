@@ -1,10 +1,11 @@
-import { INITIAL_WORLD_STATE, PlayerId, WorldState } from '../world/world-state'
+import { PlayerId, WorldState } from '../world/world-state'
 import { AttackWorldAction, MoveUnitWorldAction, WorldAction } from '../world/world-actions'
 import { applyEvent } from '../world/world-event-evaluator'
 import { CombatWorldEvent, UnitMovedWorldEvent, WorldEvent } from '../world/world-events'
 import * as R from 'ramda'
 import { UnreachableCaseError } from '../util/unreachable-case-error'
 import { Unit } from '../world/unit'
+import { INITIAL_WORLD_STATE } from '../world/initial-world-state'
 
 export type WorldEventListener = (event: WorldEvent) => void
 
