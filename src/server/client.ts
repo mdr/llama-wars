@@ -1,6 +1,9 @@
 import { ClientToServerMessage, ServerToClientMessage } from './messages'
 import { GameId } from '../scenes/game-scene'
 import Peer = require('peerjs')
+import { WorldAction } from '../world/world-actions'
+import { serialiseToJson } from '../util/json-serialisation'
+import { PlayerId } from '../world/player'
 
 type ServerToClientMessageListener = (message: ServerToClientMessage) => void
 
@@ -23,7 +26,9 @@ export class Client {
 
   public static connect = async (gameId: GameId): Promise<Client> => {
     const serverConnection = await Client.doConnect(gameId)
-    return new Client(serverConnection)
+    const client = new Client(serverConnection)
+    client.send({ type: 'join' })
+    return client
   }
 
   public send = (message: ClientToServerMessage): void => this.serverConnection.send(message)
@@ -38,6 +43,13 @@ export class Client {
           resolve(connection)
         })
       })
+    })
+
+  public sendAction = (playerId: PlayerId, action: WorldAction): void =>
+    this.send({
+      type: 'worldAction',
+      action: serialiseToJson(action),
+      playerId: playerId,
     })
 }
 
