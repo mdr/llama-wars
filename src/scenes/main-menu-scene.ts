@@ -1,4 +1,5 @@
 import { MenuButton } from '../ui/menu-button'
+import { GameId } from './game-scene'
 
 const sceneConfig: Phaser.Types.Scenes.SettingsConfig = {
   active: false,
@@ -7,7 +8,7 @@ const sceneConfig: Phaser.Types.Scenes.SettingsConfig = {
 }
 
 export interface GameSceneData {
-  mode: 'start' | 'join'
+  id?: GameId
 }
 
 export class MainMenuScene extends Phaser.Scene {
@@ -23,15 +24,10 @@ export class MainMenuScene extends Phaser.Scene {
       .setFontSize(24)
 
     new MenuButton(this, 100, 150, 'Start Game', () => {
-        const data: GameSceneData = { mode: 'start' }
+        const data: GameSceneData = {  }
         this.scene.start('Game', data)
       },
     )
-
-    new MenuButton(this, 100, 250, 'Join Game', () => {
-      const data: GameSceneData = { mode: 'join' }
-      this.scene.start('Game', data)
-    })
 
   }
 }

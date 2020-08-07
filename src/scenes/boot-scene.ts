@@ -1,5 +1,6 @@
 import { getGameWidth, getGameHeight } from '../helpers'
 import { AudioKeys } from './asset-keys'
+import { GameSceneData } from './main-menu-scene'
 
 const sceneConfig: Phaser.Types.Scenes.SettingsConfig = {
   active: false,
@@ -57,7 +58,13 @@ export class BootScene extends Phaser.Scene {
       progressBarContainer.destroy()
 
       // this.scene.start('Game')
-      this.scene.start('MainMenu')
+      const hash = window.location.hash
+      if (hash == "") {
+        this.scene.start('MainMenu')
+      } else {
+        const data: GameSceneData = { id: window.location.hash.substr(1) }
+        this.scene.start('Game', data)
+      }
     })
 
     this.loadAssets()
