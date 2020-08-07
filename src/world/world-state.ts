@@ -4,9 +4,10 @@ import { WorldMap } from './world-map'
 import { Unit, UnitId } from './unit'
 import { Option } from '../util/types'
 import { Player } from './player'
+import assert = require('assert')
 
 export class WorldState {
-  readonly turn: number
+  readonly turn: number /* turn = 0 before the game has started */
   readonly map: WorldMap
   readonly units: Unit[]
   readonly players: Player[]
@@ -16,6 +17,7 @@ export class WorldState {
     this.map = map
     this.units = units
     this.players = players
+    assert(turn >= 0)
   }
 
   public copy = ({
@@ -25,6 +27,10 @@ export class WorldState {
     players = this.players,
   }: { turn?: number; map?: WorldMap; units?: Unit[]; players?: Player[] } = {}): WorldState =>
     new WorldState({ turn, map, units, players })
+
+  public get gameHasStarted() {
+    return this.turn > 0
+  }
 
   public isPlayerDefeated = (playerId: PlayerId): boolean => R.any((unit) => unit.playerId == playerId, this.units)
 

@@ -1,4 +1,3 @@
-import * as R from 'ramda'
 import { addPoints, multiplyPoint, Point, subtractPoints } from '../point'
 import { Hex } from '../../world/hex'
 import { centerPoint, fromPoint } from '../hex-geometry'
@@ -6,16 +5,13 @@ import { PlayerId, WorldState } from '../../world/world-state'
 import { CombatParticipantInfo, CombatWorldEvent, UnitMovedWorldEvent, WorldEvent } from '../../world/world-events'
 import { applyEvent } from '../../world/world-event-evaluator'
 import { UnitId } from '../../world/unit'
-import { UnitDisplayObject } from './unit-display-object'
 import { UnreachableCaseError } from '../../util/unreachable-case-error'
-import { MapDisplayObject } from './map-display-object'
 import { nothing, Option, toMaybe } from '../../util/types'
 import { INITIAL_LOCAL_GAME_STATE, LocalGameState } from '../local-game-state'
 import { ALL_AUDIO_KEYS, AudioKeys } from '../asset-keys'
 import { mapToLocalAction } from './keyboard-mapper'
 import { LocalAction } from './local-action'
 import { LocalActionProcessor, LocalActionResult } from './local-action-processor'
-import { TextsDisplayObject } from './texts-display-object'
 import { CombinedState } from '../combined-state-methods'
 import { WorldAction } from '../../world/world-actions'
 import { ServerToClientMessage } from '../../server/messages'
@@ -24,6 +20,7 @@ import { deserialiseFromJson } from '../../util/json-serialisation'
 import { INITIAL_WORLD_STATE } from '../../world/initial-world-state'
 import { Client } from '../../server/client'
 import { Server } from '../../server/server'
+import { DisplayObjects } from './display-objects'
 import Pointer = Phaser.Input.Pointer
 
 const sceneConfig: Phaser.Types.Scenes.SettingsConfig = {
@@ -41,14 +38,10 @@ export type GameId = string
 export class GameScene extends Phaser.Scene {
   private serverOrClient?: Server | Client
 
-  private client: Option<Client>
-
   private worldState: WorldState = INITIAL_WORLD_STATE
   private localGameState: LocalGameState = INITIAL_LOCAL_GAME_STATE
 
-  private mapDisplayObject?: MapDisplayObject
-  private unitDisplayObjects: Map<UnitId, UnitDisplayObject> = new Map()
-  private textsDisplayObject?: TextsDisplayObject
+  private displayObjects?: DisplayObjects
 
   private get combinedState(): CombinedState {
     return new CombinedState(this.worldState, this.localGameState)
@@ -69,7 +62,7 @@ export class GameScene extends Phaser.Scene {
       this.actAsServer()
     }
 
-    this.createDisplayObjects()
+    this.displayObjects = new DisplayObjects(this, this.worldState, this.localGameState, this.handleLocalAction)
     this.syncScene()
     this.setUpInputs()
   }
@@ -79,12 +72,18 @@ export class GameScene extends Phaser.Scene {
     ALL_AUDIO_KEYS.forEach((key) => this.sound.add(key))
   }
 
+  public syncScene = (): void => this.displayObjects?.syncScene(this.worldState, this.localGameState)
+
+  // Networking
+  // ----------
+
   private actAsClient = async (gameId: GameId): Promise<void> => {
-    this.client = await Client.connect(gameId)
-    this.client.addListener(this.handleServerToClientMessage)
+    this.serverOrClient = await Client.connect(gameId)
+    this.serverOrClient.addListener(this.handleServerToClientMessage)
   }
 
   private handleServerToClientMessage = (message: ServerToClientMessage): void => {
+    console.log(message)
     switch (message.type) {
       case 'joined':
         this.localGameState = this.localGameState.copy({ playerId: message.playerId })
@@ -101,11 +100,6 @@ export class GameScene extends Phaser.Scene {
 
   private actAsServer() {
     this.serverOrClient = new Server(this.handleWorldEvent)
-  }
-
-  private createDisplayObjects() {
-    this.mapDisplayObject = new MapDisplayObject(this, this.worldState, this.localGameState)
-    this.textsDisplayObject = new TextsDisplayObject(this, this.worldState, this.localGameState, this.handleLocalAction)
   }
 
   // Input handlers
@@ -151,19 +145,21 @@ export class GameScene extends Phaser.Scene {
     if (this.serverOrClient instanceof Server) {
       this.serverOrClient.handleAction(this.playerId, action)
     } else if (this.serverOrClient instanceof Client) {
-      this.client?.sendAction(this.playerId, action)
+      this.serverOrClient.sendAction(this.playerId, action)
     }
   }
 
   private handlePointerMove = (pointer: Pointer): void => {
     const pointerPoint = { x: pointer.x, y: pointer.y }
-    this.mapDisplayObject?.handlePointerMove(pointerPoint)
+    this.displayObjects?.handlePointerMove(pointerPoint)
   }
 
   private handlePointerDown = (pointer: Pointer): void => {
     // Ignore clicks on these as they have their own handlers
     const pressedPoint = { x: pointer.x, y: pointer.y }
-    if (this.textsDisplayObject?.hasClickHandlerFor(pressedPoint)) return
+    if (this.displayObjects?.hasClickHandlerFor(pressedPoint)) {
+      return
+    }
     const hex = fromPoint(multiplyPoint(subtractPoints(pressedPoint, DRAWING_OFFSET), 1 / HEX_SIZE))
     if (pointer.button == 2) {
       this.handleLocalAction({ type: 'goHex', hex })
@@ -191,32 +187,6 @@ export class GameScene extends Phaser.Scene {
 
   // Sync
   // ----
-
-  public syncScene = (): void => {
-    this.mapDisplayObject?.syncScene(this.worldState, this.localGameState)
-    this.textsDisplayObject?.syncScene(this.worldState, this.localGameState)
-    this.removeUnitDisplayObjectsNoLongerNeeded()
-
-    this.worldState.units.forEach((unit) => {
-      let unitDisplayObject = this.unitDisplayObjects.get(unit.id)
-      if (!unitDisplayObject) {
-        unitDisplayObject = new UnitDisplayObject(this, unit)
-        this.unitDisplayObjects.set(unit.id, unitDisplayObject)
-      }
-      unitDisplayObject.syncScene(unit)
-    })
-  }
-
-  private removeUnitDisplayObjectsNoLongerNeeded = (): void => {
-    const surplusUnitIds = R.difference(
-      Array.from(this.unitDisplayObjects.keys()),
-      this.worldState.units.map((unit) => unit.id),
-    )
-    for (const unitId of surplusUnitIds) {
-      this.unitDisplayObjects.get(unitId)?.destroy()
-      this.unitDisplayObjects.delete(unitId)
-    }
-  }
 
   // Handle world events
   // -------------------
@@ -270,8 +240,7 @@ export class GameScene extends Phaser.Scene {
       })
     }
     this.syncScene()
-
-    this.getUnitDisplayObject(unitId).move(from, to)
+    this.displayObjects?.runMoveAnimation(unitId, from, to)
   }
 
   private calculateNewSelectedUnitAfterMoveOrAttack = (unitId: UnitId, defaultLocation: Hex): Option<Hex> => {
@@ -296,8 +265,7 @@ export class GameScene extends Phaser.Scene {
     this.updateSelectionAfterCombat(attacker, defender, oldWorldState)
     this.syncScene()
 
-    const attackerDisplayObject = this.unitDisplayObjects.get(attacker.unitId)
-    if (attackerDisplayObject) attackerDisplayObject.attack(attacker.location, defender.location)
+    this.displayObjects?.runAttackAnimation(attacker.unitId, attacker.location, defender.location)
   }
 
   private updateSelectionAfterCombat = (
@@ -325,12 +293,6 @@ export class GameScene extends Phaser.Scene {
 
   // Util queries
   // ------------
-
-  private getUnitDisplayObject = (unitId: number): UnitDisplayObject => {
-    const unitDisplayObject = this.unitDisplayObjects.get(unitId)
-    if (!unitDisplayObject) throw `Could not find unit with ID ${unitId}`
-    return unitDisplayObject
-  }
 
   private get playerId(): PlayerId {
     return this.localGameState.playerId

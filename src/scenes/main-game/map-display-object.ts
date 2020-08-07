@@ -23,7 +23,7 @@ export class MapDisplayObject {
   private readonly scene: Phaser.Scene
   private worldState: WorldState
   private localGameState: LocalGameState
-  private readonly hexPolygons: Map<String, Phaser.GameObjects.Polygon> = new Map<String, Phaser.GameObjects.Polygon>()
+  private readonly hexPolygons: Map<string, Phaser.GameObjects.Polygon> = new Map<string, Phaser.GameObjects.Polygon>()
   private previousHover?: Hex
 
   constructor(scene: Phaser.Scene, worldState: WorldState, localGameState: LocalGameState) {

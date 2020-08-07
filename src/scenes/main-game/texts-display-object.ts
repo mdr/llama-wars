@@ -9,7 +9,7 @@ import { Unit, UnitId } from '../../world/unit'
 import { CombinedState } from '../combined-state-methods'
 import { LocalAction } from './local-action'
 
-type LocalActionDispatcher = (action: LocalAction) => void
+export type LocalActionDispatcher = (action: LocalAction) => void
 
 export class TextsDisplayObject {
   private readonly scene: Phaser.Scene

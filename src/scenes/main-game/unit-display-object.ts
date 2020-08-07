@@ -63,7 +63,7 @@ export class UnitDisplayObject {
     )
   }
 
-  public move = (from: Hex, to: Hex): void => {
+  public runMoveAnimation = (from: Hex, to: Hex): void => {
     const beforeCoords = hexCenter(from)
     const afterCoords = hexCenter(to)
     this.image.setFlipX(afterCoords.x < beforeCoords.x)
@@ -81,7 +81,7 @@ export class UnitDisplayObject {
     })
   }
 
-  public attack = (from: Hex, to: Hex): void => {
+  public runAttackAnimation = (from: Hex, to: Hex): void => {
     const beforeCoords = hexCenter(from)
     const afterCoords = hexCenter(to)
     this.image.setFlipX(afterCoords.x < beforeCoords.x)
