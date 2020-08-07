@@ -59,7 +59,7 @@ export class WorldState {
       ),
     })
 
-  public toJson = (): object => ({
+  public toJson = (): any => ({
     turn: this.turn,
     map: this.map.toJson(),
     units: this.units.map((unit) => unit.toJson()),

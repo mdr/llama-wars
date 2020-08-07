@@ -11,7 +11,9 @@ export class WorldStateOwner {
   public worldState: WorldState = INITIAL_WORLD_STATE
   private listeners: WorldEventListener[] = []
 
-  public addListener = (listener: WorldEventListener) => this.listeners.push(listener)
+  public addListener = (listener: WorldEventListener): void => {
+    this.listeners.push(listener)
+  }
 
   private notifyListeners = (event: WorldEvent): void => {
     for (const listener of this.listeners) listener(event)

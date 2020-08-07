@@ -25,7 +25,7 @@ export class WorldMap {
       }
   }
 
-  public toJson = (): object => ({ width: this.width, height: this.height })
+  public toJson = (): any => ({ width: this.width, height: this.height })
 
   public static fromJson = (json: any): WorldMap => new WorldMap({ width: json.width, height: json.height })
 }

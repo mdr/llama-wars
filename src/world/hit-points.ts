@@ -17,7 +17,7 @@ export class HitPoints {
   public copy = ({ current = this.current, max = this.max }: { current?: number; max?: number } = {}): HitPoints =>
     new HitPoints({ current, max })
 
-  public toJson = (): object => ({ current: this.current, max: this.max })
+  public toJson = (): any => ({ current: this.current, max: this.max })
 
   public static fromJson = (json: any): HitPoints => new HitPoints({ current: json.current, max: json.max })
 }

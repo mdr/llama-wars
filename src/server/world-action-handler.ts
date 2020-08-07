@@ -93,10 +93,10 @@ export class WorldActionHandler {
     const player = this.worldState.findPlayer(this.playerId)
     if (!player) throw `No player with ID ${this.playerId}`
     if (player.endedTurn) throw `Player has already ended their turn`
-    let playersYetToEndTheirTurn = this.worldState.players
+    const playersYetToEndTheirTurn = this.worldState.players
       .filter((player) => !player.endedTurn)
       .map((player) => player.id)
-    let wholeTurnEnded = R.equals(playersYetToEndTheirTurn, [this.playerId])
+    const wholeTurnEnded = R.equals(playersYetToEndTheirTurn, [this.playerId])
     return wholeTurnEnded ? { type: 'newTurn' } : { type: 'playerEndedTurn', playerId: this.playerId }
   }
 }

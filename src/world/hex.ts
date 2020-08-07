@@ -14,7 +14,7 @@ export class Hex {
     return -this.x - this.y
   }
 
-  public plus = (that: Hex) => new Hex(this.x + that.x, this.y + that.y)
+  public plus = (that: Hex): Hex => new Hex(this.x + that.x, this.y + that.y)
 
   public neighbours = (): Hex[] => Hex.NEIGHBOURS.map(this.plus)
 
@@ -35,7 +35,7 @@ export class Hex {
 
   public go = (direction: HexDirection): Hex => this.plus(getUnitVector(direction))
 
-  public toJson = (): object => ({ x: this.x, y: this.y })
+  public toJson = (): any => ({ x: this.x, y: this.y })
 
   public static fromJson = (json: any): Hex => new Hex(json.x, json.y)
 }

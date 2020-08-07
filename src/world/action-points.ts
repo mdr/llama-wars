@@ -19,7 +19,7 @@ export class ActionPoints {
 
   public refresh = (): ActionPoints => new ActionPoints({ current: this.max, max: this.max })
 
-  public toJson = (): object => ({ current: this.current, max: this.max })
+  public toJson = (): any => ({ current: this.current, max: this.max })
 
   public static fromJson = (json: any): ActionPoints => new ActionPoints({ current: json.current, max: json.max })
 }

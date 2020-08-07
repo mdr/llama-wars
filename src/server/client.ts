@@ -8,7 +8,9 @@ export class Client {
   private serverConnection: Peer.DataConnection
   private listeners: ServerToClientMessageListener[] = []
 
-  public addListener = (listener: ServerToClientMessageListener) => this.listeners.push(listener)
+  public addListener = (listener: ServerToClientMessageListener): void => {
+    this.listeners.push(listener)
+  }
 
   private notifyListeners = (message: ServerToClientMessage): void => {
     for (const listener of this.listeners) listener(message)
@@ -24,7 +26,7 @@ export class Client {
     return new Client(serverConnection)
   }
 
-  public send = (message: ClientToServerMessage) => this.serverConnection.send(message)
+  public send = (message: ClientToServerMessage): void => this.serverConnection.send(message)
 
   private static doConnect = (gameId: GameId): Promise<Peer.DataConnection> =>
     new Promise<Peer.DataConnection>((resolve) => {
@@ -39,4 +41,4 @@ export class Client {
     })
 }
 
-export const newPeer = (id?: string, options?: Peer.PeerJSOption) => new (window as any).Peer(id, options) as Peer
+export const newPeer = (id?: string, options?: Peer.PeerJSOption): Peer => new (window as any).Peer(id, options) as Peer
