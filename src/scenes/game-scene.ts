@@ -39,10 +39,8 @@ export const hexCenter = (hex: Hex): Point => addPoints(multiplyPoint(centerPoin
 export type GameId = string
 
 export class GameScene extends Phaser.Scene {
-  // Server-only:
-  private server: Option<Server>
+  private serverOrClient?: Server | Client
 
-  // Client-only:
   private client: Option<Client>
 
   private worldState: WorldState = INITIAL_WORLD_STATE
@@ -102,7 +100,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   private actAsServer() {
-    this.server = new Server(this.handleWorldEvent)
+    this.serverOrClient = new Server(this.handleWorldEvent)
   }
 
   private createDisplayObjects() {
@@ -150,8 +148,11 @@ export class GameScene extends Phaser.Scene {
   }
 
   private asyncSendToServer = async (action: WorldAction): Promise<void> => {
-    this.server?.handleAction(this.playerId, action)
-    this.client?.sendAction(this.playerId, action)
+    if (this.serverOrClient instanceof Server) {
+      this.serverOrClient.handleAction(this.playerId, action)
+    } else if (this.serverOrClient instanceof Client) {
+      this.client?.sendAction(this.playerId, action)
+    }
   }
 
   private handlePointerMove = (pointer: Pointer): void => {
