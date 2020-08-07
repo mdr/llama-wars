@@ -195,16 +195,7 @@ export class GameScene extends Phaser.Scene {
   public syncScene = (): void => {
     this.mapDisplayObject?.syncScene(this.worldState, this.localGameState)
     this.textsDisplayObject?.syncScene(this.worldState, this.localGameState)
-
-    const surplusUnitIds = R.difference(
-      Array.from(this.unitDisplayObjects.keys()),
-      this.worldState.units.map((unit) => unit.id),
-    )
-    for (const unitId of surplusUnitIds) {
-      const unitDisplayObject = this.unitDisplayObjects.get(unitId)
-      unitDisplayObject?.destroy()
-      this.unitDisplayObjects.delete(unitId)
-    }
+    this.removeUnitDisplayObjectsNoLongerNeeded()
 
     this.worldState.units.forEach((unit) => {
       let unitDisplayObject = this.unitDisplayObjects.get(unit.id)
@@ -214,6 +205,17 @@ export class GameScene extends Phaser.Scene {
       }
       unitDisplayObject.syncScene(unit)
     })
+  }
+
+  private removeUnitDisplayObjectsNoLongerNeeded = (): void => {
+    const surplusUnitIds = R.difference(
+      Array.from(this.unitDisplayObjects.keys()),
+      this.worldState.units.map((unit) => unit.id),
+    )
+    for (const unitId of surplusUnitIds) {
+      this.unitDisplayObjects.get(unitId)?.destroy()
+      this.unitDisplayObjects.delete(unitId)
+    }
   }
 
   // Handle world events
