@@ -103,8 +103,16 @@ export class GameScene extends Phaser.Scene {
     }
   }
 
-  private actAsServer() {
+  private actAsServer = (): void => {
     this.serverOrClient = new Server(this.handleWorldEvent)
+  }
+
+  private asyncSendToServer = async (action: WorldAction): Promise<void> => {
+    if (this.serverOrClient instanceof Server) {
+      this.serverOrClient.handleAction(this.playerId, action)
+    } else if (this.serverOrClient instanceof Client) {
+      this.serverOrClient.sendAction(this.playerId, action)
+    }
   }
 
   // Input handlers
@@ -143,14 +151,6 @@ export class GameScene extends Phaser.Scene {
         this.localGameState = this.localGameState.copy({ actionOutstandingWithServer: false })
         this.syncScene()
       })
-    }
-  }
-
-  private asyncSendToServer = async (action: WorldAction): Promise<void> => {
-    if (this.serverOrClient instanceof Server) {
-      this.serverOrClient.handleAction(this.playerId, action)
-    } else if (this.serverOrClient instanceof Client) {
-      this.serverOrClient.sendAction(this.playerId, action)
     }
   }
 

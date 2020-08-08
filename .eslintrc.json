@@ -9,5 +9,9 @@
     "prettier/@typescript-eslint" // Uses eslint-config-prettier to disable ESLint rules from @typescript-eslint/eslint-plugin that would conflict with prettier
   ],
   "rules": {
+    "@typescript-eslint/no-explicit-any": "off",
+    "@typescript-eslint/explicit-module-boundary-types": ["warn", {
+      "allowArgumentsExplicitlyTypedAsAny": true
+    }]
   }
 }

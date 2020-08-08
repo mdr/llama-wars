@@ -28,7 +28,7 @@ export class WorldState {
   }: { turn?: number; map?: WorldMap; units?: Unit[]; players?: Player[] } = {}): WorldState =>
     new WorldState({ turn, map, units, players })
 
-  public get gameHasStarted() {
+  public get gameHasStarted(): boolean {
     return this.turn > 0
   }
 
