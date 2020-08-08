@@ -3,6 +3,9 @@ import { AudioKeys } from '../asset-keys'
 import FileConfig = Phaser.Types.Loader.FileConfig
 import { GAME_SCENE_KEY, GameSceneData } from '../main-game/game-scene'
 import { MAIN_MENU_SCENE_KEY } from '../main-menu/main-menu-scene'
+import { Option } from '../../util/types'
+import { openWorldEventDb } from '../../db/world-event-db'
+import { Server } from '../../server/server'
 
 export const BOOT_SCENE_KEY = 'Boot'
 
@@ -60,18 +63,28 @@ export class BootScene extends Phaser.Scene {
       assetText.destroy()
       progressBar.destroy()
       progressBarContainer.destroy()
-
-      const hash = window.location.hash
-      if (hash == '') {
-        this.scene.start(MAIN_MENU_SCENE_KEY)
-      } else {
-        const gameId = window.location.hash.substr(1)
-        const data: GameSceneData = { gameId }
-        this.scene.start(GAME_SCENE_KEY, data)
-      }
+      this.launchGame()
     })
 
     this.loadAssets()
+  }
+
+  private launchGame = async (): Promise<void> => {
+    const gameId = getHash()
+    if (gameId) {
+      const worldEventDb = await openWorldEventDb()
+      const isServer = await worldEventDb.hasEventsForGame(gameId)
+      if (isServer) {
+        const server = await Server.restoreGame(worldEventDb, gameId)
+        const sceneData: GameSceneData = { server, gameId: gameId }
+        this.scene.start(GAME_SCENE_KEY, sceneData)
+      } else {
+        const sceneData: GameSceneData = { gameId }
+        this.scene.start(GAME_SCENE_KEY, sceneData)
+      }
+    } else {
+      this.scene.start(MAIN_MENU_SCENE_KEY)
+    }
   }
 
   private loadAssets() {
@@ -88,5 +101,12 @@ export class BootScene extends Phaser.Scene {
     this.load.audio(AudioKeys.WALK, 'assets/audio/sfx_step_grass_l.mp3')
     // https://opengameart.org/content/ui-sound-effects-pack
     this.load.audio(AudioKeys.NEW_TURN, 'assets/audio/MENU A_Select.wav')
+  }
+}
+
+const getHash = (): Option<string> => {
+  const hash = window.location.hash
+  if (hash != '') {
+    return hash.substr(1)
   }
 }

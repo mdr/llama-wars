@@ -1,11 +1,11 @@
-import Dexie from 'dexie'
+import Dexie, { Collection } from 'dexie'
 import { GameId } from '../scenes/main-game/game-scene'
 import { WorldEvent } from '../world/world-events'
-import { serialiseToJson } from '../util/json-serialisation'
+import { deserialiseFromJson, serialiseToJson } from '../util/json-serialisation'
 
 export interface WorldEventRecord {
   gameId: GameId
-  event: WorldEvent
+  event: any // serialised WorldEvent
 }
 
 export class LlamaDexie extends Dexie {
@@ -17,7 +17,7 @@ export class LlamaDexie extends Dexie {
 export const openWorldEventDb = async (): Promise<WorldEventDb> => {
   const dexie = new Dexie('llama-wars')
   dexie.version(1).stores({
-    worldEvents: 'gameId',
+    worldEvents: '++,gameId',
   })
   await dexie.open()
   return new WorldEventDb(<LlamaDexie>dexie)
@@ -35,5 +35,22 @@ export class WorldEventDb {
       gameId,
       event: serialiseToJson(event),
     })
+  }
+
+  public getEventsForGame = async (gameId: GameId): Promise<WorldEvent[]> => {
+    const records = await this.dexie.worldEvents.where('gameId').equals(gameId).toArray()
+    return records.map((record) => deserialiseFromJson(record.event))
+  }
+
+  public hasEventsForGame = async (gameId: GameId): Promise<boolean> => {
+    const record = await this.queryEventsByGameId(gameId).first()
+    return record != undefined
+  }
+
+  private queryEventsByGameId = (gameId: string): Collection<WorldEventRecord, string> =>
+    this.dexie.worldEvents.where('gameId').equals(gameId)
+
+  public close = () => {
+    this.dexie.close()
   }
 }

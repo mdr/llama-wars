@@ -1,19 +1,39 @@
+import * as R from 'ramda'
+import Peer = require('peerjs')
 import { WorldEventListener, WorldStateOwner } from './world-state-owner'
 import { WorldEvent } from '../world/world-events'
 import { ClientToServerMessage, ServerToClientMessage } from './messages'
 import { deserialiseFromJson, serialiseToJson } from '../util/json-serialisation'
-import { GameId } from '../scenes/main-game/game-scene'
 import { newPeer } from './client'
 import { UnreachableCaseError } from '../util/unreachable-case-error'
 import { PlayerId } from '../world/player'
 import { WorldAction } from '../world/world-actions'
-import Peer = require('peerjs')
+import { WorldEventDb } from '../db/world-event-db'
+import { GameId } from '../scenes/main-game/game-scene'
+import { INITIAL_WORLD_STATE } from '../world/initial-world-state'
+import { applyEvent } from '../world/world-event-evaluator'
+import { WorldState } from '../world/world-state'
 
 export class Server {
-  private readonly worldStateOwner: WorldStateOwner = new WorldStateOwner()
+  private readonly worldStateOwner: WorldStateOwner
   private readonly connections: Peer.DataConnection[] = []
+  private readonly worldEventDb: WorldEventDb
+  private readonly gameId: GameId
 
   private listeners: WorldEventListener[] = []
+
+  public get worldState(): WorldState {
+    return this.worldStateOwner.worldState
+  }
+
+  public static restoreGame = async (worldEventDb: WorldEventDb, gameId: GameId): Promise<Server> => {
+    const events = await worldEventDb.getEventsForGame(gameId)
+    let worldState = INITIAL_WORLD_STATE
+    for (const event of R.sortBy((event) => event.id, events)) {
+      worldState = applyEvent(worldState, event)
+    }
+    return new Server(worldEventDb, gameId, worldState)
+  }
 
   public addListener = (listener: WorldEventListener): void => {
     this.listeners.push(listener)
@@ -23,16 +43,19 @@ export class Server {
     for (const listener of this.listeners) listener(event)
   }
 
-  constructor() {
+  constructor(worldEventDb: WorldEventDb, gameId: GameId, worldState: WorldState) {
+    this.worldEventDb = worldEventDb
+    this.gameId = gameId
+    this.worldStateOwner = new WorldStateOwner(worldState)
     this.worldStateOwner.addListener((event: WorldEvent): void => {
       this.notifyListeners(event)
+      this.worldEventDb.store(this.gameId, event)
       for (const clientConnection of this.connections) {
         const message: ServerToClientMessage = { type: 'worldEvent', event: serialiseToJson(event) }
         clientConnection.send(message)
       }
     })
-    const peer = newPeer()
-    peer.on('open', (id: GameId) => (window.location.hash = id))
+    const peer = newPeer(this.gameId)
     peer.on('error', (err) => console.log(err))
     peer.on('connection', (connection) => {
       this.connections.push(connection)

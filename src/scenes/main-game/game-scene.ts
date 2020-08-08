@@ -31,7 +31,8 @@ const sceneConfig: Phaser.Types.Scenes.SettingsConfig = {
 }
 
 export interface GameSceneData {
-  gameId?: GameId
+  gameId: GameId
+  server?: Server
 }
 
 export const HEX_SIZE = 48
@@ -59,12 +60,12 @@ export class GameScene extends Phaser.Scene {
   // Create
   // ------
 
-  public create = ({ gameId }: GameSceneData): void => {
+  public create = ({ server, gameId }: GameSceneData): void => {
     this.setUpSound()
-    if (gameId) {
-      this.actAsClient(gameId)
+    if (server) {
+      this.actAsServer(server)
     } else {
-      this.actAsServer()
+      this.actAsClient(gameId)
     }
 
     this.displayObjects = new DisplayObjects(this, this.worldState, this.localGameState, this.handleLocalAction)
@@ -103,10 +104,10 @@ export class GameScene extends Phaser.Scene {
     }
   }
 
-  private actAsServer = (): void => {
-    const server = new Server()
+  private actAsServer = (server: Server): void => {
     server.addListener(this.handleWorldEvent)
     this.serverOrClient = server
+    this.worldState = server.worldState
   }
 
   private asyncSendToServer = async (action: WorldAction): Promise<void> => {
