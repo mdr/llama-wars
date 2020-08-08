@@ -2,7 +2,10 @@ import { Hex } from './hex'
 import { PlayerId } from './world-state'
 import { UnitId } from './unit'
 
+type WorldEventId = number
+
 export interface UnitMovedWorldEvent {
+  id: WorldEventId
   type: 'unitMoved'
   playerId: PlayerId
   unitId: UnitId
@@ -20,6 +23,7 @@ export interface CombatParticipantInfo {
 }
 
 export interface CombatWorldEvent {
+  id: WorldEventId
   type: 'combat'
   attacker: CombatParticipantInfo
   defender: CombatParticipantInfo
@@ -27,11 +31,13 @@ export interface CombatWorldEvent {
 }
 
 export interface PlayerEndedTurnWorldEvent {
+  id: WorldEventId
   type: 'playerEndedTurn'
   playerId: PlayerId
 }
 
 export interface NewTurnWorldEvent {
+  id: WorldEventId
   type: 'newTurn'
 }
 

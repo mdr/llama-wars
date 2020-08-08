@@ -104,7 +104,9 @@ export class GameScene extends Phaser.Scene {
   }
 
   private actAsServer = (): void => {
-    this.serverOrClient = new Server(this.handleWorldEvent)
+    const server = new Server()
+    server.addListener(this.handleWorldEvent)
+    this.serverOrClient = server
   }
 
   private asyncSendToServer = async (action: WorldAction): Promise<void> => {

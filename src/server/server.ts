@@ -3,19 +3,29 @@ import { WorldEvent } from '../world/world-events'
 import { ClientToServerMessage, ServerToClientMessage } from './messages'
 import { deserialiseFromJson, serialiseToJson } from '../util/json-serialisation'
 import { GameId } from '../scenes/main-game/game-scene'
-import Peer = require('peerjs')
 import { newPeer } from './client'
 import { UnreachableCaseError } from '../util/unreachable-case-error'
 import { PlayerId } from '../world/player'
 import { WorldAction } from '../world/world-actions'
+import Peer = require('peerjs')
 
 export class Server {
   private readonly worldStateOwner: WorldStateOwner = new WorldStateOwner()
   private readonly connections: Peer.DataConnection[] = []
 
-  constructor(handleWorldEvent: WorldEventListener) {
+  private listeners: WorldEventListener[] = []
+
+  public addListener = (listener: WorldEventListener): void => {
+    this.listeners.push(listener)
+  }
+
+  private notifyListeners = (event: WorldEvent): void => {
+    for (const listener of this.listeners) listener(event)
+  }
+
+  constructor() {
     this.worldStateOwner.addListener((event: WorldEvent): void => {
-      handleWorldEvent(event)
+      this.notifyListeners(event)
       for (const clientConnection of this.connections) {
         const message: ServerToClientMessage = { type: 'worldEvent', event: serialiseToJson(event) }
         clientConnection.send(message)

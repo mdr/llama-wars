@@ -1,5 +1,6 @@
 import { MenuButton } from '../../ui/menu-button'
 import { GAME_SCENE_KEY, GameSceneData } from '../main-game/game-scene'
+import { Server } from '../../server/server'
 
 export const MAIN_MENU_SCENE_KEY = 'MainMenu'
 

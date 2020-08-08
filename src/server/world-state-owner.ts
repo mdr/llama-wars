@@ -9,6 +9,7 @@ export type WorldEventListener = (event: WorldEvent) => void
 
 export class WorldStateOwner {
   public worldState: WorldState = INITIAL_WORLD_STATE
+  private nextWorldEventId = 1
   private listeners: WorldEventListener[] = []
 
   public addListener = (listener: WorldEventListener): void => {
@@ -20,8 +21,10 @@ export class WorldStateOwner {
   }
 
   public handleAction = (playerId: PlayerId, action: WorldAction): void => {
-    const event = new WorldActionHandler(this.worldState, playerId).calculateWorldEvent(action)
+    const worldActionHandler = new WorldActionHandler(this.worldState, playerId, this.nextWorldEventId)
+    const event = worldActionHandler.calculateWorldEvent(action)
     this.worldState = applyEvent(this.worldState, event)
+    this.nextWorldEventId++
     this.notifyListeners(event)
   }
 }

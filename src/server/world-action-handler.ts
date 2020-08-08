@@ -7,10 +7,12 @@ import { Unit } from '../world/unit'
 export class WorldActionHandler {
   private readonly worldState: WorldState
   private readonly playerId: PlayerId
+  private readonly nextWorldEventId: number
 
-  constructor(worldState: WorldState, playerId: PlayerId) {
+  constructor(worldState: WorldState, playerId: PlayerId, nextWorldEventId: number) {
     this.worldState = worldState
     this.playerId = playerId
+    this.nextWorldEventId = nextWorldEventId
   }
 
   public calculateWorldEvent = (action: WorldAction): WorldEvent => {
@@ -52,6 +54,7 @@ export class WorldActionHandler {
     defender: Unit,
     defenderDamage: number,
   ): CombatWorldEvent => ({
+    id: this.nextWorldEventId,
     type: 'combat',
     attacker: {
       playerId: attacker.playerId,
@@ -80,6 +83,7 @@ export class WorldActionHandler {
     if (this.worldState.findUnitInLocation(to)) throw `Invalid unit movement to already-occupied hex`
     if (unit.actionPoints.current < 1) throw `Not enough action points to move`
     return {
+      id: this.nextWorldEventId,
       type: 'unitMoved',
       playerId: this.playerId,
       actionPointsConsumed: 1,
@@ -97,6 +101,10 @@ export class WorldActionHandler {
       .filter((player) => !player.endedTurn)
       .map((player) => player.id)
     const wholeTurnEnded = R.equals(playersYetToEndTheirTurn, [this.playerId])
-    return wholeTurnEnded ? { type: 'newTurn' } : { type: 'playerEndedTurn', playerId: this.playerId }
+    if (wholeTurnEnded) {
+      return { id: this.nextWorldEventId, type: 'newTurn' }
+    } else {
+      return { id: this.nextWorldEventId, type: 'playerEndedTurn', playerId: this.playerId }
+    }
   }
 }
