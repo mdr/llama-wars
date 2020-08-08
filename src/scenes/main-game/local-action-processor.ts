@@ -90,23 +90,23 @@ export class LocalActionProcessor {
   private moveOrAttackHex = (hex: Hex): Option<LocalActionResult> => {
     const selectedUnit = this.combinedState.findSelectedUnit()
     if (selectedUnit) {
-      if (this.combinedState.unitCanMoveToHex(selectedUnit, hex)) return this.moveToHex(selectedUnit, hex)
-      else if (this.combinedState.unitCanAttackHex(selectedUnit, hex)) {
-        return this.attackHex(selectedUnit, hex)
+      if (this.combinedState.unitCanMoveToHex(selectedUnit, hex)) {
+        return this.moveToHex(selectedUnit, hex)
+      }
+      const targetUnit = this.combinedState.unitCanAttackHex(selectedUnit, hex)
+      if (targetUnit) {
+        return this.attackHex(selectedUnit, targetUnit)
       }
     }
   }
 
-  private attackHex = (attacker: Unit, targetHex: Hex): LocalActionResult => {
-    const defender = this.combinedState.findUnitInLocation(targetHex)!
-    return {
-      worldAction: {
-        type: 'attack',
-        attacker: { unitId: attacker.id, location: attacker.location },
-        defender: { unitId: defender.id, location: targetHex },
-      },
-    }
-  }
+  private attackHex = (attacker: Unit, defender: Unit): LocalActionResult => ({
+    worldAction: {
+      type: 'attack',
+      attacker: { unitId: attacker.id, location: attacker.location },
+      defender: { unitId: defender.id, location: defender.location },
+    },
+  })
 
   private moveToHex = (unit: Unit, destination: Hex): LocalActionResult => ({
     worldAction: {
@@ -146,7 +146,8 @@ export class LocalActionProcessor {
 
   private handleCompleteAttack = (unitId: UnitId, targetHex: Hex): Option<LocalActionResult> => {
     const attacker = this.worldState.getUnitById(unitId)
-    if (this.combinedState.unitCanAttackHex(attacker, targetHex)) return this.attackHex(attacker, targetHex)
+    const defender = this.combinedState.unitCanAttackHex(attacker, targetHex)
+    if (defender) return this.attackHex(attacker, defender)
   }
 
   private handleSelectHex = (hex: Hex): Option<LocalActionResult> => {

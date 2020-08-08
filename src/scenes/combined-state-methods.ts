@@ -40,14 +40,18 @@ export class CombinedState {
     this.worldState.map.isInBounds(hex) &&
     !this.findUnitInLocation(hex)
 
-  public unitCanAttackHex = (unit: Unit, location: Hex): boolean => {
+  /**
+   * @return the unit in the hex to attack, if an attack is possible, else undefined.
+   */
+  public unitCanAttackHex = (unit: Unit, location: Hex): Option<Unit> => {
     const targetUnit = this.findUnitInLocation(location)
-    return (
+    if (
       this.unitCouldPotentiallyAttack(unit) &&
       targetUnit != undefined &&
       targetUnit.playerId != this.localGameState.playerId &&
       unit.location.isAdjacentTo(location)
     )
+      return targetUnit
   }
 
   public findNextUnitWithActionPoints = (unitId?: UnitId): Option<Unit> => {

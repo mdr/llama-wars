@@ -64,12 +64,12 @@ export class MapDisplayObject {
       return 'selected'
     }
     if (mode.type == 'moveUnit') {
-      if (hex.isAdjacentTo(selectedHex!) && !this.findUnitInLocation(hex)) {
+      if (selectedHex && hex.isAdjacentTo(selectedHex) && !this.findUnitInLocation(hex)) {
         return 'targetable'
       }
     }
     if (mode.type == 'attack') {
-      if (hex.isAdjacentTo(selectedHex!)) {
+      if (selectedHex && hex.isAdjacentTo(selectedHex)) {
         const unit = this.findUnitInLocation(hex)
         if (unit && unit.playerId != playerId) {
           return 'targetable'
