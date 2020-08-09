@@ -72,6 +72,8 @@ export class DisplayObjects {
   public runAttackAnimation = (unitId: UnitId, from: Hex, to: Hex): void =>
     this.unitDisplayObjects.get(unitId)?.runAttackAnimation(from, to)
 
-  public runMoveAnimation = (unitId: number, from: Hex, to: Hex): void =>
+  public runMoveAnimation = (unitId: UnitId, from: Hex, to: Hex): void =>
     this.unitDisplayObjects.get(unitId)?.runMoveAnimation(from, to)
+
+  public runDeathAnimation = (unitId: UnitId): void => this.unitDisplayObjects.get(unitId)?.runDeathAnimation()
 }

@@ -274,6 +274,12 @@ export class GameScene extends Phaser.Scene {
     this.syncScene()
 
     this.displayObjects?.runAttackAnimation(attacker.unitId, attacker.location, defender.location)
+    if (attacker.killed) {
+      this.displayObjects?.runDeathAnimation(attacker.unitId)
+    }
+    if (defender.killed) {
+      this.displayObjects?.runDeathAnimation(defender.unitId)
+    }
   }
 
   private updateSelectionAfterCombat = (

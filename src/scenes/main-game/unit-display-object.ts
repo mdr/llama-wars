@@ -81,6 +81,16 @@ export class UnitDisplayObject {
     })
   }
 
+  public runDeathAnimation = (): void => {
+    this.scene.tweens.add({
+      targets: [this.image, this.healthBarGraphics],
+      alpha: { from: 1, to: 0 },
+      duration: 1000,
+      ease: 'Cubic',
+      yoyo: true,
+    })
+  }
+
   public runAttackAnimation = (from: Hex, to: Hex): void => {
     const beforeCoords = hexCenter(from)
     const afterCoords = hexCenter(to)
