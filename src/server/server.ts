@@ -1,7 +1,7 @@
 import * as R from 'ramda'
 import Peer = require('peerjs')
 import { WorldEventListener, WorldStateOwner } from './world-state-owner'
-import { WorldEvent } from '../world/world-events'
+import { WorldEvent, WorldEventId } from '../world/world-events'
 import { ClientToServerMessage, ServerToClientMessage } from './messages'
 import { deserialiseFromJson, serialiseToJson } from '../util/json-serialisation'
 import { newPeer } from './client'
@@ -32,7 +32,7 @@ export class Server {
     for (const event of R.sortBy((event) => event.id, events)) {
       worldState = applyEvent(worldState, event)
     }
-    return new Server(worldEventDb, gameId, worldState)
+    return new Server(worldEventDb, gameId, worldState, events.length + 1)
   }
 
   public addListener = (listener: WorldEventListener): void => {
@@ -43,10 +43,10 @@ export class Server {
     for (const listener of this.listeners) listener(event)
   }
 
-  constructor(worldEventDb: WorldEventDb, gameId: GameId, worldState: WorldState) {
+  constructor(worldEventDb: WorldEventDb, gameId: GameId, worldState: WorldState, nextWorldEventId: WorldEventId) {
     this.worldEventDb = worldEventDb
     this.gameId = gameId
-    this.worldStateOwner = new WorldStateOwner(worldState)
+    this.worldStateOwner = new WorldStateOwner(worldState, nextWorldEventId)
     this.worldStateOwner.addListener((event: WorldEvent): void => {
       this.notifyListeners(event)
       this.worldEventDb.store(this.gameId, event)

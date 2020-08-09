@@ -2,7 +2,7 @@ import { Hex } from './hex'
 import { PlayerId } from './world-state'
 import { UnitId } from './unit'
 
-type WorldEventId = number
+export type WorldEventId = number
 
 export interface UnitMovedWorldEvent {
   id: WorldEventId

@@ -1,18 +1,19 @@
 import { PlayerId, WorldState } from '../world/world-state'
 import { WorldAction } from '../world/world-actions'
 import { applyEvent } from '../world/world-event-evaluator'
-import { WorldEvent } from '../world/world-events'
+import { WorldEvent, WorldEventId } from '../world/world-events'
 import { WorldActionHandler } from './world-action-handler'
 
 export type WorldEventListener = (event: WorldEvent) => void
 
 export class WorldStateOwner {
   public worldState: WorldState
-  private nextWorldEventId = 1
-  private listeners: WorldEventListener[] = []
+  private nextWorldEventId: WorldEventId
+  private readonly listeners: WorldEventListener[] = []
 
-  constructor(worldState: WorldState) {
+  constructor(worldState: WorldState, nextWorldEventId: WorldEventId) {
     this.worldState = worldState
+    this.nextWorldEventId = nextWorldEventId
   }
 
   public addListener = (listener: WorldEventListener): void => {
