@@ -4,6 +4,7 @@ import { hexCenter } from './game-scene'
 import { HEALTH_BORDER_COLOUR, HEALTH_EMPTY_COLOUR, HEALTH_FULL_COLOUR, PLAYER_1_TINT, PLAYER_2_TINT } from '../colours'
 import { addPoints, Point } from '../point'
 import assert = require('assert')
+import { playTween } from '../../util/phaser/tween-utils'
 
 const HEALTH_BAR_WIDTH = 50
 const HEALTH_BAR_HEIGHT = 12
@@ -87,7 +88,6 @@ export class UnitDisplayObject {
       alpha: { from: 1, to: 0 },
       duration: 1000,
       ease: 'Cubic',
-      yoyo: true,
     })
   }
 
@@ -95,13 +95,14 @@ export class UnitDisplayObject {
     const beforeCoords = hexCenter(from)
     const afterCoords = hexCenter(to)
     this.image.setFlipX(afterCoords.x < beforeCoords.x)
-    this.scene.tweens.add({
+    const tween: Phaser.Tweens.Tween = this.scene.tweens.create({
       targets: this.image,
       ...calculateTweenXY(beforeCoords, afterCoords, IMAGE_OFFSET),
       duration: 400,
       ease: 'Cubic',
       yoyo: true,
     })
+    tween.play()
     this.scene.tweens.add({
       targets: this.healthBarGraphics,
       ...calculateTweenXY(beforeCoords, afterCoords, HEALTH_BAR_OFFSET),
@@ -112,6 +113,7 @@ export class UnitDisplayObject {
   }
 
   public destroy = (): void => {
+    this.scene.tweens.killTweensOf([this.healthBarGraphics, this.image])
     this.healthBarGraphics.destroy()
     this.image.destroy()
   }
