@@ -20,7 +20,7 @@ export class Server {
   private readonly worldEventDb: WorldEventDb
   private readonly gameId: GameId
 
-  private listeners: WorldEventListener[] = []
+  private readonly listeners: WorldEventListener[] = []
 
   public get worldState(): WorldState {
     return this.worldStateOwner.worldState

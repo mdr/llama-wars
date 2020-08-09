@@ -8,8 +8,8 @@ import { PlayerId } from '../world/player'
 type ServerToClientMessageListener = (message: ServerToClientMessage) => void
 
 export class Client {
-  private serverConnection: Peer.DataConnection
-  private listeners: ServerToClientMessageListener[] = []
+  private readonly serverConnection: Peer.DataConnection
+  private readonly listeners: ServerToClientMessageListener[] = []
 
   public addListener = (listener: ServerToClientMessageListener): void => {
     this.listeners.push(listener)

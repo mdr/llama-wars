@@ -49,8 +49,4 @@ export class WorldEventDb {
 
   private queryEventsByGameId = (gameId: string): Collection<WorldEventRecord, string> =>
     this.dexie.worldEvents.where('gameId').equals(gameId)
-
-  public close = () => {
-    this.dexie.close()
-  }
 }
