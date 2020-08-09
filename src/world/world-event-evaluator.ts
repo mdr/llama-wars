@@ -23,8 +23,12 @@ const handleUnitMoved = (state: WorldState, event: UnitMovedWorldEvent): WorldSt
   if (!state.map.isInBounds(to)) throw `Invalid unit movement to out-of-bounds hex ${to}`
   const unit = state.findUnitById(unitId)
   if (!unit) throw `No unit found with ID ${unitId}`
-  if (state.findUnitInLocation(from)?.id != unitId) throw `Invalid from location for unit movement`
-  if (state.findUnitInLocation(to)) throw `Invalid unit movement to already-occupied hex`
+  const fromUnit = state.findUnitInLocation(from)
+  if (fromUnit?.id != unitId) {
+    throw `Invalid from location for unit movement. Unit at ${from} is ${fromUnit?.id}, but was expected to be ${unitId}`
+  }
+  const toUnit = state.findUnitInLocation(to)
+  if (toUnit) throw `Invalid unit movement to already-occupied hex`
   if (unit.playerId != playerId) throw `Invalid attempt to move unit of another player`
   if (unit.actionPoints.current < event.actionPointsConsumed) throw `Invalid action point usage`
   return state.replaceUnit(unit.id, unit.move(to, event.actionPointsConsumed))

@@ -65,19 +65,20 @@ export class UnitDisplayObject {
   }
 
   public runMoveAnimation = async (from: Hex, to: Hex): Promise<void> => {
+    const MOVE_ANIMATION_DURATION = 500
     const beforeCoords = hexCenter(from)
     const afterCoords = hexCenter(to)
     this.image.setFlipX(afterCoords.x < beforeCoords.x)
     const tween1 = this.scene.tweens.create({
       targets: this.image,
       ...calculateTweenXY(beforeCoords, afterCoords, IMAGE_OFFSET),
-      duration: 500,
+      duration: MOVE_ANIMATION_DURATION,
       ease: 'Cubic',
     })
     const tween2 = this.scene.tweens.create({
       targets: this.healthBarGraphics,
       ...calculateTweenXY(beforeCoords, afterCoords, HEALTH_BAR_OFFSET),
-      duration: 500,
+      duration: MOVE_ANIMATION_DURATION,
       ease: 'Cubic',
     })
     await Promise.all([playTween(tween1), playTween(tween2)])

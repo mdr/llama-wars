@@ -81,7 +81,7 @@ export class DisplayObjects {
 
     if (animation) {
       this.animations = R.append(animation)(this.animations)
-      this.getUnitsInvolvedInAnimation(animation).forEach(this.manageUnitAsBeingAnimated)
+      this.getUnitIdsInvolvedInAnimation(animation).forEach(this.manageUnitAsBeingAnimated)
       this.triggerAnimations()
     }
 
@@ -120,14 +120,39 @@ export class DisplayObjects {
     }
   }
 
+  private sequenceAnimations = (): {
+    animationsToPerformNow: AnimationSpec[]
+    animationsToPerformLater: AnimationSpec[]
+  } => {
+    const unitIdsInvolvedInEarlierAnimations = new Set<UnitId>()
+    const animationsToPerformNow = []
+    const animationsToPerformLater = []
+    for (const animation of this.animations) {
+      const unitIdsInvolvedInAnimation = this.getUnitIdsInvolvedInAnimation(animation)
+      const affectedByEarlierAnimations = R.any(
+        (unitId) => unitIdsInvolvedInEarlierAnimations.has(unitId),
+        unitIdsInvolvedInAnimation,
+      )
+      if (affectedByEarlierAnimations) {
+        animationsToPerformLater.push(animation)
+      } else {
+        animationsToPerformNow.push(animation)
+      }
+      for (const unitId of unitIdsInvolvedInAnimation) {
+        unitIdsInvolvedInEarlierAnimations.add(unitId)
+      }
+    }
+    return { animationsToPerformNow, animationsToPerformLater }
+  }
+
   private processAnimations = async (): Promise<void> => {
     this.isAnimating = true
     try {
       while (this.animations.length > 0) {
-        const animation = R.head(this.animations)
-        if (animation) {
-          this.animations = R.tail(this.animations)
-          await this.runAnimation(animation)
+        const { animationsToPerformNow, animationsToPerformLater } = this.sequenceAnimations()
+        this.animations = animationsToPerformLater
+        await Promise.all(animationsToPerformNow.map(this.runAnimation))
+        for (const animation of animationsToPerformNow) {
           this.releaseUnitsFromBeingAnimatedWhereNoLongerNeeded(animation)
         }
       }
@@ -137,7 +162,7 @@ export class DisplayObjects {
   }
 
   private releaseUnitsFromBeingAnimatedWhereNoLongerNeeded = (animation: AnimationSpec): void => {
-    const unitIdsInAnimation = this.getUnitsInvolvedInAnimation(animation)
+    const unitIdsInAnimation = this.getUnitIdsInvolvedInAnimation(animation)
     const unitIdsInRemainingAnimations = this.getUnitsInvolvedInAnimations()
     const unitIdsToRelease = R.difference(unitIdsInAnimation, unitIdsInRemainingAnimations)
     unitIdsToRelease.forEach(this.releaseUnitFromBeingAnimated)
@@ -164,9 +189,9 @@ export class DisplayObjects {
     }
   }
 
-  private getUnitsInvolvedInAnimations = (): UnitId[] => R.chain(this.getUnitsInvolvedInAnimation, this.animations)
+  private getUnitsInvolvedInAnimations = (): UnitId[] => R.chain(this.getUnitIdsInvolvedInAnimation, this.animations)
 
-  private getUnitsInvolvedInAnimation = (animation: AnimationSpec): UnitId[] => {
+  private getUnitIdsInvolvedInAnimation = (animation: AnimationSpec): UnitId[] => {
     switch (animation.type) {
       case 'move':
         return [animation.unitId]
@@ -178,33 +203,41 @@ export class DisplayObjects {
   private runAnimation = async (animation: AnimationSpec): Promise<void> => {
     switch (animation.type) {
       case 'move':
-        const displayObject = this.animatedUnitDisplayObjects.get(animation.unitId)
-        if (!displayObject) throw `Unexpected missing display object for unit ${animation.unitId}`
-        this.scene.sound.play(AudioKeys.WALK)
-        await displayObject.runMoveAnimation(animation.from, animation.to)
+        await this.runMoveAnimation(animation)
         break
       case 'combat':
-        const { attacker, defender } = animation
-        const attackerDisplayObject = this.animatedUnitDisplayObjects.get(attacker.unitId)
-        if (!attackerDisplayObject) throw `Unexpected missing display object for unit ${attacker.unitId}`
-        const defenderDisplayObject = this.animatedUnitDisplayObjects.get(defender.unitId)
-        if (!defenderDisplayObject) throw `Unexpected missing display object for unit ${defender.unitId}`
-        this.scene.sound.play(AudioKeys.ATTACK)
-        if (attacker.killed || defender.killed) {
-          this.scene.sound.play(AudioKeys.DEATH)
-        }
-        const simultaneousAnimations = []
-        simultaneousAnimations.push(attackerDisplayObject.runAttackAnimation(attacker.location, defender.location))
-        if (attacker.killed) {
-          simultaneousAnimations.push(attackerDisplayObject.runDeathAnimation())
-        }
-        if (defender.killed) {
-          simultaneousAnimations.push(defenderDisplayObject.runDeathAnimation())
-        }
-        await Promise.all(simultaneousAnimations)
+        await this.runCombatAnimation(animation)
         break
       default:
         throw new UnreachableCaseError(animation)
     }
+  }
+
+  private runMoveAnimation = async (animation: MoveAnimationSpec): Promise<void> => {
+    const displayObject = this.animatedUnitDisplayObjects.get(animation.unitId)
+    if (!displayObject) throw `Unexpected missing display object for unit ${animation.unitId}`
+    this.scene.sound.play(AudioKeys.WALK)
+    await displayObject.runMoveAnimation(animation.from, animation.to)
+  }
+
+  private runCombatAnimation = async (animation: CombatAnimationSpec): Promise<void> => {
+    const { attacker, defender } = animation
+    const attackerDisplayObject = this.animatedUnitDisplayObjects.get(attacker.unitId)
+    if (!attackerDisplayObject) throw `Unexpected missing display object for unit ${attacker.unitId}`
+    const defenderDisplayObject = this.animatedUnitDisplayObjects.get(defender.unitId)
+    if (!defenderDisplayObject) throw `Unexpected missing display object for unit ${defender.unitId}`
+    this.scene.sound.play(AudioKeys.ATTACK)
+    if (attacker.killed || defender.killed) {
+      this.scene.sound.play(AudioKeys.DEATH)
+    }
+    const simultaneousAnimations = []
+    simultaneousAnimations.push(attackerDisplayObject.runAttackAnimation(attacker.location, defender.location))
+    if (attacker.killed) {
+      simultaneousAnimations.push(attackerDisplayObject.runDeathAnimation())
+    }
+    if (defender.killed) {
+      simultaneousAnimations.push(defenderDisplayObject.runDeathAnimation())
+    }
+    await Promise.all(simultaneousAnimations)
   }
 }
