@@ -23,11 +23,13 @@ export interface CombatAnimationSpec {
   attacker: {
     unitId: UnitId
     location: Hex
+    damage: number
     killed: boolean
   }
   defender: {
     unitId: UnitId
     location: Hex
+    damage: number
     killed: boolean
   }
 }
@@ -239,5 +241,7 @@ export class DisplayObjects {
       simultaneousAnimations.push(defenderDisplayObject.runDeathAnimation())
     }
     await Promise.all(simultaneousAnimations)
+    attackerDisplayObject.runDamageAnimation(attacker.location, attacker.damage)
+    defenderDisplayObject.runDamageAnimation(defender.location, defender.damage)
   }
 }

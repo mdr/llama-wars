@@ -1,7 +1,14 @@
 import { Hex } from '../../world/hex'
 import { Unit } from '../../world/unit'
 import { hexCenter } from './game-scene'
-import { HEALTH_BORDER_COLOUR, HEALTH_EMPTY_COLOUR, HEALTH_FULL_COLOUR, PLAYER_1_TINT, PLAYER_2_TINT } from '../colours'
+import {
+  ACTION_TEXT_COLOUR,
+  HEALTH_BORDER_COLOUR,
+  HEALTH_EMPTY_COLOUR,
+  HEALTH_FULL_COLOUR,
+  PLAYER_1_TINT,
+  PLAYER_2_TINT,
+} from '../colours'
 import { addPoints, Point } from '../point'
 import assert = require('assert')
 import { playTween } from '../../util/phaser/tween-utils'
@@ -92,6 +99,35 @@ export class UnitDisplayObject {
       ease: 'Cubic',
     })
     await playTween(tween)
+  }
+
+  public runDamageAnimation = async (location: Hex, damage: number): Promise<void> => {
+    const locationPoint = hexCenter(location)
+    const text = this.scene.add
+      .text(locationPoint.x, locationPoint.y, damage.toString(), {
+        color: '#ff8888',
+        stroke: '#000000',
+        strokeThickness: 2,
+      })
+      .setFontSize(26)
+      .setOrigin(0.5)
+    const tween1 = this.scene.tweens.create({
+      targets: text,
+      y: {
+        from: locationPoint.y - 50,
+        to: locationPoint.y - 75,
+      },
+      duration: 2000,
+      ease: 'Linear',
+    })
+    const tween2 = this.scene.tweens.create({
+      targets: text,
+      alpha: { from: 1, to: 0 },
+      duration: 2000,
+      ease: 'Cubic.in',
+    })
+    await Promise.all([playTween(tween1), playTween(tween2)])
+    text.destroy()
   }
 
   public runAttackAnimation = async (from: Hex, to: Hex): Promise<void> => {
