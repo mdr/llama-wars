@@ -28,7 +28,7 @@ export const INITIAL_WORLD_STATE: WorldState = new WorldState({
       name: 'Walter',
       location: new Hex(1, 1),
       hitPoints: new HitPoints({ current: 100, max: 100 }),
-      actionPoints: new ActionPoints({ current: 2, max: 2 }),
+      actionPoints: new ActionPoints({ current: 20, max: 20 }),
     }),
     new Unit({
       id: 2,

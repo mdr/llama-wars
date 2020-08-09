@@ -19,7 +19,7 @@ import { deserialiseFromJson } from '../../util/json-serialisation'
 import { INITIAL_WORLD_STATE } from '../../world/initial-world-state'
 import { Client } from '../../server/client'
 import { Server } from '../../server/server'
-import { DisplayObjects } from './display-objects'
+import { AnimationSpec, DisplayObjects } from './display-objects'
 import Pointer = Phaser.Input.Pointer
 
 export const GAME_SCENE_KEY = 'Game'
@@ -78,7 +78,8 @@ export class GameScene extends Phaser.Scene {
     ALL_AUDIO_KEYS.forEach((key) => this.sound.add(key))
   }
 
-  public syncScene = (): void => this.displayObjects?.syncScene(this.worldState, this.localGameState)
+  public syncScene = (animation?: AnimationSpec): void =>
+    this.displayObjects?.syncScene(this.worldState, this.localGameState, animation)
 
   // Networking
   // ----------
@@ -236,7 +237,6 @@ export class GameScene extends Phaser.Scene {
 
   private handleUnitMovedWorldEvent = (event: UnitMovedWorldEvent, oldWorldState: WorldState): void => {
     const { unitId, from, to } = event
-    this.sound.play(AudioKeys.WALK)
     const unit = this.worldState.getUnitById(unitId)
     const wasPreviouslySelected =
       this.localGameState.selectedHex && oldWorldState.findUnitInLocation(this.localGameState.selectedHex)?.id == unitId
@@ -247,8 +247,7 @@ export class GameScene extends Phaser.Scene {
         selectedHex: toMaybe(newSelectedHex),
       })
     }
-    this.syncScene()
-    this.displayObjects?.runMoveAnimation(unitId, from, to)
+    this.syncScene({ type: 'move', unitId, from, to })
   }
 
   private calculateNewSelectedUnitAfterMoveOrAttack = (unitId: UnitId, defaultLocation: Hex): Option<Hex> => {
@@ -266,20 +265,12 @@ export class GameScene extends Phaser.Scene {
 
   private handleCombatWorldEvent = (event: CombatWorldEvent, oldWorldState: WorldState) => {
     const { attacker, defender } = event
-    this.sound.play(AudioKeys.ATTACK)
-    if (attacker.killed || defender.killed) {
-      this.sound.play(AudioKeys.DEATH)
-    }
     this.updateSelectionAfterCombat(attacker, defender, oldWorldState)
-    this.syncScene()
-
-    this.displayObjects?.runAttackAnimation(attacker.unitId, attacker.location, defender.location)
-    if (attacker.killed) {
-      this.displayObjects?.runDeathAnimation(attacker.unitId)
-    }
-    if (defender.killed) {
-      this.displayObjects?.runDeathAnimation(defender.unitId)
-    }
+    this.syncScene({
+      type: 'combat',
+      attacker: { unitId: attacker.unitId, location: attacker.location, killed: attacker.killed },
+      defender: { unitId: defender.unitId, location: defender.location, killed: defender.killed },
+    })
   }
 
   private updateSelectionAfterCombat = (

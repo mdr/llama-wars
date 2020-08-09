@@ -64,52 +64,54 @@ export class UnitDisplayObject {
     )
   }
 
-  public runMoveAnimation = (from: Hex, to: Hex): void => {
+  public runMoveAnimation = async (from: Hex, to: Hex): Promise<void> => {
     const beforeCoords = hexCenter(from)
     const afterCoords = hexCenter(to)
     this.image.setFlipX(afterCoords.x < beforeCoords.x)
-    this.scene.tweens.add({
+    const tween1 = this.scene.tweens.create({
       targets: this.image,
       ...calculateTweenXY(beforeCoords, afterCoords, IMAGE_OFFSET),
       duration: 500,
       ease: 'Cubic',
     })
-    this.scene.tweens.add({
+    const tween2 = this.scene.tweens.create({
       targets: this.healthBarGraphics,
       ...calculateTweenXY(beforeCoords, afterCoords, HEALTH_BAR_OFFSET),
       duration: 500,
       ease: 'Cubic',
     })
+    await Promise.all([playTween(tween1), playTween(tween2)])
   }
 
-  public runDeathAnimation = (): void => {
-    this.scene.tweens.add({
+  public runDeathAnimation = async (): Promise<void> => {
+    const tween = this.scene.tweens.create({
       targets: [this.image, this.healthBarGraphics],
       alpha: { from: 1, to: 0 },
       duration: 1000,
       ease: 'Cubic',
     })
+    await playTween(tween)
   }
 
-  public runAttackAnimation = (from: Hex, to: Hex): void => {
+  public runAttackAnimation = async (from: Hex, to: Hex): Promise<void> => {
     const beforeCoords = hexCenter(from)
     const afterCoords = hexCenter(to)
     this.image.setFlipX(afterCoords.x < beforeCoords.x)
-    const tween: Phaser.Tweens.Tween = this.scene.tweens.create({
+    const tween1 = this.scene.tweens.create({
       targets: this.image,
       ...calculateTweenXY(beforeCoords, afterCoords, IMAGE_OFFSET),
       duration: 400,
       ease: 'Cubic',
       yoyo: true,
     })
-    tween.play()
-    this.scene.tweens.add({
+    const tween2 = this.scene.tweens.create({
       targets: this.healthBarGraphics,
       ...calculateTweenXY(beforeCoords, afterCoords, HEALTH_BAR_OFFSET),
       duration: 400,
       ease: 'Cubic',
       yoyo: true,
     })
+    await Promise.all([playTween(tween1), playTween(tween2)])
   }
 
   public destroy = (): void => {
