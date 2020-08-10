@@ -4,10 +4,12 @@ import FileConfig = Phaser.Types.Loader.FileConfig
 import { GAME_SCENE_KEY, GameId, GameSceneData } from '../main-game/game-scene'
 import { MAIN_MENU_SCENE_KEY } from '../main-menu/main-menu-scene'
 import { Option } from '../../util/types'
-import { openWorldEventDb } from '../../db/world-event-db'
+import { openWorldEventDb, WorldEventDb } from '../../db/world-event-db'
 import { Server } from '../../server/server'
 import { PlayerId } from '../../world/player'
-import { Client } from '../../server/client'
+import { Client, ServerToClientMessageListener } from '../../server/client'
+import { WorldState } from '../../world/world-state'
+import { ServerToClientMessage } from '../../server/messages'
 
 export const BOOT_SCENE_KEY = 'Boot'
 
@@ -18,6 +20,7 @@ const sceneConfig: Phaser.Types.Scenes.SettingsConfig = {
 }
 
 export class BootScene extends Phaser.Scene {
+  private joinedListener: Option<ServerToClientMessageListener>
   constructor() {
     super(sceneConfig)
   }
@@ -74,21 +77,46 @@ export class BootScene extends Phaser.Scene {
   private launchGame = async (): Promise<void> => {
     const urlInfo = getUrlInfo()
     if (urlInfo) {
-      const worldEventDb = await openWorldEventDb()
-      const gameId = urlInfo.gameId
-      const isServer = await worldEventDb.hasEventsForGame(gameId)
-      if (isServer) {
-        const server = await Server.restoreGame(worldEventDb, gameId)
-        const sceneData: GameSceneData = { server }
-        this.scene.start(GAME_SCENE_KEY, sceneData)
-      } else {
-        const client = await Client.connect(gameId)
-        const sceneData: GameSceneData = { client }
-        this.scene.start(GAME_SCENE_KEY, sceneData)
-      }
+      await this.restoreGame(urlInfo)
     } else {
       this.scene.start(MAIN_MENU_SCENE_KEY)
     }
+  }
+
+  private restoreGame = async (urlInfo: UrlInfo): Promise<void> => {
+    const worldEventDb = await openWorldEventDb()
+    const gameId = urlInfo.gameId
+    const isServer = await worldEventDb.hasEventsForGame(gameId)
+    if (isServer) {
+      await this.restoreServer(gameId, worldEventDb)
+    } else {
+      await this.restoreClient(gameId)
+    }
+  }
+
+  private restoreClient = async (gameId: GameId): Promise<void> => {
+    const client = await Client.connect(gameId)
+    client.send({ type: 'join' })
+    this.joinedListener = (message: ServerToClientMessage) => {
+      if (message.type == 'joined') {
+        const playerId = message.playerId
+        setUrlInfo({ gameId, playerId })
+        const worldState = WorldState.fromJson(message.worldState)
+        const sceneData: GameSceneData = { client, playerId, worldState }
+        this.scene.start(GAME_SCENE_KEY, sceneData)
+        if (this.joinedListener) {
+          client.removeListener(this.joinedListener)
+          this.joinedListener = undefined
+        }
+      }
+    }
+    client.addListener(this.joinedListener)
+  }
+
+  private restoreServer = async (gameId: GameId, worldEventDb: WorldEventDb): Promise<void> => {
+    const server = await Server.restoreGame(worldEventDb, gameId)
+    const sceneData: GameSceneData = { server, worldState: server.worldState, playerId: 1 }
+    this.scene.start(GAME_SCENE_KEY, sceneData)
   }
 
   private loadAssets() {
@@ -110,10 +138,10 @@ export class BootScene extends Phaser.Scene {
 
 interface UrlInfo {
   gameId: GameId
-  playerId: Option<PlayerId>
+  playerId?: PlayerId
 }
 
-const getUrlInfo = (): Option<UrlInfo> => {
+export const getUrlInfo = (): Option<UrlInfo> => {
   const hash = window.location.hash
   if (hash == '') {
     return
@@ -123,4 +151,12 @@ const getUrlInfo = (): Option<UrlInfo> => {
   const gameId = segments[0]
   const playerId = segments.length > 1 ? Number.parseInt(segments[1]) : undefined
   return { gameId, playerId }
+}
+
+export const setUrlInfo = (urlInfo: UrlInfo): void => {
+  let hash = urlInfo.gameId
+  if (urlInfo.playerId != undefined) {
+    hash += '/' + urlInfo.playerId
+  }
+  window.location.hash = hash
 }

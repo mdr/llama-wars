@@ -1,11 +1,11 @@
 import { ClientToServerMessage, ServerToClientMessage } from './messages'
 import { GameId } from '../scenes/main-game/game-scene'
-import Peer = require('peerjs')
 import { WorldAction } from '../world/world-actions'
 import { serialiseToJson } from '../util/json-serialisation'
 import { PlayerId } from '../world/player'
+import Peer = require('peerjs')
 
-type ServerToClientMessageListener = (message: ServerToClientMessage) => void
+export type ServerToClientMessageListener = (message: ServerToClientMessage) => void
 
 export class Client {
   private readonly serverConnection: Peer.DataConnection
@@ -13,6 +13,13 @@ export class Client {
 
   public addListener = (listener: ServerToClientMessageListener): void => {
     this.listeners.push(listener)
+  }
+
+  public removeListener = (listener: ServerToClientMessageListener): void => {
+    const index = this.listeners.indexOf(listener)
+    if (index > -1) {
+      this.listeners.splice(index, 1)
+    }
   }
 
   private notifyListeners = (message: ServerToClientMessage): void => {
@@ -26,9 +33,7 @@ export class Client {
 
   public static connect = async (gameId: GameId): Promise<Client> => {
     const serverConnection = await Client.doConnect(gameId)
-    const client = new Client(serverConnection)
-    client.send({ type: 'join' })
-    return client
+    return new Client(serverConnection)
   }
 
   public send = (message: ClientToServerMessage): void => this.serverConnection.send(message)
@@ -38,7 +43,7 @@ export class Client {
       const peer = newPeer()
       peer.on('error', (err) => console.log(err))
       peer.on('open', () => {
-        const connection = peer.connect(gameId)
+        const connection = peer.connect(gameId, { reliable: true })
         connection.on('open', () => {
           resolve(connection)
         })

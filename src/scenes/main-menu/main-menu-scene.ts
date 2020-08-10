@@ -4,6 +4,7 @@ import { GAME_SCENE_KEY, GameId, GameSceneData } from '../main-game/game-scene'
 import { Server } from '../../server/server'
 import { openWorldEventDb } from '../../db/world-event-db'
 import { INITIAL_WORLD_STATE } from '../../world/initial-world-state'
+import { setUrlInfo } from '../boot/boot-scene'
 
 export const MAIN_MENU_SCENE_KEY = 'MainMenu'
 
@@ -28,8 +29,8 @@ export class MainMenuScene extends Phaser.Scene {
     const worldEventDb = await openWorldEventDb()
     const gameId: GameId = uuid()
     const server = new Server(worldEventDb, gameId, INITIAL_WORLD_STATE, 1)
-    window.location.hash = gameId
-    const sceneData: GameSceneData = { server }
+    setUrlInfo({ gameId })
+    const sceneData: GameSceneData = { server, worldState: server.worldState, playerId: 1 }
     this.scene.start(GAME_SCENE_KEY, sceneData)
   }
 }
