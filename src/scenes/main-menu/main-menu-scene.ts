@@ -29,7 +29,7 @@ export class MainMenuScene extends Phaser.Scene {
     const gameId: GameId = uuid()
     const server = new Server(worldEventDb, gameId, INITIAL_WORLD_STATE, 1)
     window.location.hash = gameId
-    const sceneData: GameSceneData = { server, gameId }
+    const sceneData: GameSceneData = { server }
     this.scene.start(GAME_SCENE_KEY, sceneData)
   }
 }

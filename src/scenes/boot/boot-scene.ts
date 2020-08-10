@@ -7,6 +7,7 @@ import { Option } from '../../util/types'
 import { openWorldEventDb } from '../../db/world-event-db'
 import { Server } from '../../server/server'
 import { PlayerId } from '../../world/player'
+import { Client } from '../../server/client'
 
 export const BOOT_SCENE_KEY = 'Boot'
 
@@ -71,16 +72,18 @@ export class BootScene extends Phaser.Scene {
   }
 
   private launchGame = async (): Promise<void> => {
-    const gameId = getHash()
-    if (gameId) {
+    const urlInfo = getUrlInfo()
+    if (urlInfo) {
       const worldEventDb = await openWorldEventDb()
+      const gameId = urlInfo.gameId
       const isServer = await worldEventDb.hasEventsForGame(gameId)
       if (isServer) {
         const server = await Server.restoreGame(worldEventDb, gameId)
-        const sceneData: GameSceneData = { server, gameId: gameId }
+        const sceneData: GameSceneData = { server }
         this.scene.start(GAME_SCENE_KEY, sceneData)
       } else {
-        const sceneData: GameSceneData = { gameId }
+        const client = await Client.connect(gameId)
+        const sceneData: GameSceneData = { client }
         this.scene.start(GAME_SCENE_KEY, sceneData)
       }
     } else {
@@ -110,9 +113,14 @@ interface UrlInfo {
   playerId: Option<PlayerId>
 }
 
-const getHash = (): Option<string> => {
+const getUrlInfo = (): Option<UrlInfo> => {
   const hash = window.location.hash
-  if (hash != '') {
-    return hash.substr(1)
+  if (hash == '') {
+    return
   }
+  const path = hash.substr(1)
+  const segments = path.split('/')
+  const gameId = segments[0]
+  const playerId = segments.length > 1 ? Number.parseInt(segments[1]) : undefined
+  return { gameId, playerId }
 }

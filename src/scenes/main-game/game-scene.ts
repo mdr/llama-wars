@@ -32,7 +32,7 @@ const sceneConfig: Phaser.Types.Scenes.SettingsConfig = {
 }
 
 export interface GameSceneData {
-  gameId: GameId
+  client?: Client
   server?: Server
 }
 
@@ -61,12 +61,12 @@ export class GameScene extends Phaser.Scene {
   // Create
   // ------
 
-  public create = ({ server, gameId }: GameSceneData): void => {
+  public create = ({ server, client }: GameSceneData): void => {
     this.setUpSound()
     if (server) {
       this.actAsServer(server)
-    } else {
-      this.actAsClient(gameId)
+    } else if (client) {
+      this.actAsClient(client)
     }
 
     this.displayObjects = new DisplayObjects(this, this.worldState, this.localGameState, this.handleLocalAction)
@@ -85,9 +85,9 @@ export class GameScene extends Phaser.Scene {
   // Networking
   // ----------
 
-  private actAsClient = async (gameId: GameId): Promise<void> => {
-    this.serverOrClient = await Client.connect(gameId)
-    this.serverOrClient.addListener(this.handleServerToClientMessage)
+  private actAsClient = (client: Client): void => {
+    this.serverOrClient = client
+    client.addListener(this.handleServerToClientMessage)
   }
 
   private handleServerToClientMessage = (message: ServerToClientMessage): void => {
