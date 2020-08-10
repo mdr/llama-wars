@@ -35,20 +35,28 @@ export class MapDisplayObject {
 
   private createHex = (hex: Hex): void => {
     const polygonCenter = hexCenter(hex)
+    this.scene.add.image(polygonCenter.x, polygonCenter.y, 'grass').setScale(0.41).setDepth(-2)
     const polygon = this.addPolygon(polygonCenter, HEX_SIZE)
     this.hexPolygons.set(hex.toString(), polygon)
   }
 
   private addPolygon(center: Point, size: number): Phaser.GameObjects.Polygon {
     const vertices = [...hexCorners(point(0, 0), size)]
-    return this.scene.add.polygon(center.x, center.y, vertices).setOrigin(0, 0).setStrokeStyle(3, 0x000000)
+    return this.scene.add
+      .polygon(center.x, center.y, vertices)
+      .setOrigin(0, 0)
+      .setStrokeStyle(3, 0x000000)
+      .setFillStyle(0x00000, 0)
   }
 
   public syncScene = (worldState: WorldState, localGameState: LocalGameState): void => {
     this.worldState = worldState
     this.localGameState = localGameState
     for (const hex of this.worldState.map.getMapHexes()) {
-      this.getHexPolygon(hex).setFillStyle(this.calculateColour(hex))
+      this.getHexPolygon(hex)
+        .setStrokeStyle(3, this.calculateColour(hex))
+        .setAlpha(this.calculateTileState(hex) === 'default' ? 0 : 1)
+        .setDepth(this.calculateTileState(hex) === 'selected' ? 0 : -1)
     }
   }
 
@@ -107,11 +115,18 @@ export class MapDisplayObject {
     const hex = fromPoint(multiplyPoint(subtractPoints(pointerPoint, DRAWING_OFFSET), 1 / HEX_SIZE))
     if (this.previousHover && this.previousHover.equals(hex)) return
     if (this.previousHover) {
-      this.getHexPolygon(this.previousHover).setFillStyle(this.calculateColour(this.previousHover))
+      // this.getHexPolygon(this.previousHover).setStrokeStyle(3, this.calculateColour(this.previousHover))
+      this.getHexPolygon(this.previousHover).setAlpha(this.calculateTileState(this.previousHover) === 'default' ? 0 : 1)
+      this.getHexPolygon(this.previousHover).setStrokeStyle(3, this.calculateColour(this.previousHover))
       this.previousHover = undefined
     }
     if (this.worldState.map.isInBounds(hex)) {
-      this.getHexPolygon(hex).setFillStyle(this.calculateHoverColour(hex))
+      // this.getHexPolygon(hex).setStrokeStyle(3, this.calculateHoverColour(hex))
+      this.getHexPolygon(hex).setAlpha(1)
+      this.getHexPolygon(hex).setStrokeStyle(
+        this.calculateTileState(hex) === 'default' ? 2 : 5,
+        this.calculateColour(hex),
+      )
       this.previousHover = hex
     }
   }
