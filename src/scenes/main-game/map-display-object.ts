@@ -124,7 +124,7 @@ export class MapDisplayObject {
       // this.getHexPolygon(hex).setStrokeStyle(3, this.calculateHoverColour(hex))
       this.getHexPolygon(hex).setAlpha(1)
       this.getHexPolygon(hex).setStrokeStyle(
-        this.calculateTileState(hex) === 'default' ? 2 : 5,
+        this.calculateTileState(hex) === 'default' ? 2 : 4,
         this.calculateColour(hex),
       )
       this.previousHover = hex
