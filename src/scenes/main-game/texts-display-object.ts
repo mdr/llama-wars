@@ -1,7 +1,7 @@
 import { WorldState } from '../../world/world-state'
 import { LocalGameState } from '../local-game-state'
 import { hexWidth, mapHeight } from '../hex-geometry'
-import { ACTION_TEXT_COLOUR, HOVER_ACTION_TEXT_COLOUR } from '../colours'
+import { ACTION_TEXT_COLOUR, HOVER_ACTION_TEXT_COLOUR, PLAYER_TINTS } from '../colours'
 import { DRAWING_OFFSET, HEX_SIZE } from './game-scene'
 import { UnreachableCaseError } from '../../util/unreachable-case-error'
 import { Point } from '../point'
@@ -39,7 +39,11 @@ export class TextsDisplayObject {
     this.localGameState = localGameState
     this.localActionDispatcher = localActionDispatcher
     const map = this.worldState.map
-    this.playerText = this.scene.add.text(23, 20, '')
+    this.scene.add
+      .image(36, 32, 'llama')
+      .setScale(0.8)
+      .setTint(PLAYER_TINTS[localGameState.playerId - 1])
+    this.playerText = this.scene.add.text(70, 20, '')
     this.hourglass = this.scene.add.image(875, 30, 'hourglass').setVisible(false)
 
     this.selectionText = this.scene.add.text(

@@ -1,16 +1,10 @@
 import { Hex } from '../../world/hex'
 import { Unit } from '../../world/unit'
 import { hexCenter } from './game-scene'
-import {
-  ACTION_TEXT_COLOUR,
-  HEALTH_BORDER_COLOUR,
-  HEALTH_EMPTY_COLOUR,
-  HEALTH_FULL_COLOUR,
-  PLAYER_TINTS,
-} from '../colours'
+import { HEALTH_BORDER_COLOUR, HEALTH_EMPTY_COLOUR, HEALTH_FULL_COLOUR, PLAYER_TINTS } from '../colours'
 import { addPoints, Point } from '../point'
-import assert = require('assert')
 import { playTween } from '../../util/phaser/tween-utils'
+import assert = require('assert')
 
 const HEALTH_BAR_WIDTH = 50
 const HEALTH_BAR_HEIGHT = 12
