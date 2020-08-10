@@ -2,7 +2,7 @@ import * as R from 'ramda'
 import Peer = require('peerjs')
 import { WorldEventListener, WorldStateOwner } from './world-state-owner'
 import { PlayerAddedWorldEvent, WorldEvent, WorldEventId } from '../world/world-events'
-import { ClientToServerMessage, ServerToClientMessage } from './messages'
+import { ClientToServerMessage, RejoinMessage, ServerToClientMessage } from './messages'
 import { deserialiseFromJson, serialiseToJson } from '../util/json-serialisation'
 import { newPeer } from './client'
 import { UnreachableCaseError } from '../util/unreachable-case-error'
@@ -63,32 +63,40 @@ export class Server {
     })
   }
 
-  private handleClientToServerMessage(message: ClientToServerMessage, connection: Peer.DataConnection) {
+  private handleClientJoin = (connection: Peer.DataConnection): void => {
+    if (this.worldState.gameHasStarted) {
+      // TODO: tell the client "bad luck"
+    } else {
+      const addPlayerAction: AddPlayerWorldAction = { type: 'addPlayer' }
+      const playerAddedEvent = <PlayerAddedWorldEvent>this.handleAction(1, addPlayerAction)
+      connection.send({
+        type: 'joined',
+        playerId: playerAddedEvent.playerId,
+        worldState: this.worldState.toJson(),
+      })
+    }
+  }
+
+  private handleClientRejoin = (message: RejoinMessage, connection: Peer.DataConnection): void => {
+    const worldState = this.worldState
+    if (worldState.isValidPlayerId(message.playerId))
+      connection.send({
+        type: 'rejoined',
+        worldState: worldState.toJson(),
+      })
+    else {
+      // TODO: tell the client no
+    }
+  }
+
+  private handleClientToServerMessage = (message: ClientToServerMessage, connection: Peer.DataConnection): void => {
     console.log(message)
-    const worldState = this.worldStateOwner.worldState
     switch (message.type) {
       case 'join':
-        if (worldState.gameHasStarted) {
-          // TODO: tell the client "bad luck"
-        } else {
-          const addPlayerAction: AddPlayerWorldAction = { type: 'addPlayer' }
-          const playerAddedEvent = <PlayerAddedWorldEvent>this.handleAction(1, addPlayerAction)
-          connection.send({
-            type: 'joined',
-            playerId: playerAddedEvent.playerId,
-            worldState: worldState.toJson(),
-          })
-        }
+        this.handleClientJoin(connection)
         break
       case 'rejoin':
-        if (worldState.isValidPlayerId(message.playerId))
-          connection.send({
-            type: 'rejoined',
-            worldState: worldState.toJson(),
-          })
-        else {
-          // TODO: tell the client no
-        }
+        this.handleClientRejoin(message, connection)
         break
       case 'worldAction':
         this.worldStateOwner.handleAction(message.playerId, deserialiseFromJson(message.action))

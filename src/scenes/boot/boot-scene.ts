@@ -21,7 +21,7 @@ const sceneConfig: Phaser.Types.Scenes.SettingsConfig = {
 }
 
 export class BootScene extends Phaser.Scene {
-  private joinedListener: Option<ServerToClientMessageListener>
+  private rejoinedListener: Option<ServerToClientMessageListener>
   constructor() {
     super(sceneConfig)
   }
@@ -106,13 +106,12 @@ export class BootScene extends Phaser.Scene {
   }
 
   private joinAsClient = (client: Client, gameId: GameId): void => {
-    client.send({ type: 'join' })
-    this.joinedListener = (message: ServerToClientMessage) => {
-      if (this.joinedListener) {
-        client.removeListener(this.joinedListener)
-        this.joinedListener = undefined
-      }
+    this.rejoinedListener = (message: ServerToClientMessage) => {
       if (message.type == 'joined') {
+        if (this.rejoinedListener) {
+          client.removeListener(this.rejoinedListener)
+          this.rejoinedListener = undefined
+        }
         const playerId = message.playerId
         setUrlInfo({ gameId, playerId })
         const worldState = WorldState.fromJson(message.worldState)
@@ -125,16 +124,16 @@ export class BootScene extends Phaser.Scene {
         }
       }
     }
-    client.addListener(this.joinedListener)
+    client.addListener(this.rejoinedListener)
+    client.send({ type: 'join' })
   }
 
   private rejoinAsClient = (client: Client, gameId: GameId, playerId: PlayerId): void => {
-    client.send({ type: 'rejoin', playerId })
-    this.joinedListener = (message: ServerToClientMessage) => {
+    this.rejoinedListener = (message: ServerToClientMessage) => {
       if (message.type == 'rejoined') {
-        if (this.joinedListener) {
-          client.removeListener(this.joinedListener)
-          this.joinedListener = undefined
+        if (this.rejoinedListener) {
+          client.removeListener(this.rejoinedListener)
+          this.rejoinedListener = undefined
         }
         const worldState = WorldState.fromJson(message.worldState)
         if (worldState.gameHasStarted) {
@@ -146,7 +145,8 @@ export class BootScene extends Phaser.Scene {
         }
       }
     }
-    client.addListener(this.joinedListener)
+    client.addListener(this.rejoinedListener)
+    client.send({ type: 'rejoin', playerId })
   }
 
   private restoreGameAsServer = async (gameId: GameId, worldEventDb: WorldEventDb): Promise<void> => {

@@ -7,6 +7,7 @@ import { WorldState } from '../../world/world-state'
 import { MenuButton } from '../../ui/menu-button'
 import { GAME_SCENE_KEY, GameSceneData } from '../main-game/game-scene'
 import { applyEvent } from '../../world/world-event-evaluator'
+import { ServerToClientMessage } from '../../server/messages'
 
 export const LOBBY_SCENE_KEY = 'Lobby'
 
@@ -78,35 +79,52 @@ export class LobbyScene extends Phaser.Scene {
 
   public create = (sceneData: LobbySceneData): void => {
     const { serverOrClient, playerId, worldState } = sceneData
-    if (serverOrClient instanceof Client) {
-      const client: Client = serverOrClient
-      client.addListener((message) => {
-        if (message.type == 'worldEvent') {
-          const event = message.event
-          const oldWorldState = this.worldState
-          this.worldState = applyEvent(oldWorldState, event)
-          if (event.type == 'gameStarted') {
-            const sceneData: GameSceneData = {
-              serverOrClient: client,
-              worldState: this.worldState,
-              playerId: playerId,
-            }
-            this.scene.start(GAME_SCENE_KEY, sceneData)
-          }
-        }
-        this.sync()
-      })
-    }
     this.serverOrClient = serverOrClient
     this.playerId = playerId
     this.worldState = worldState
+
+    if (serverOrClient instanceof Client) {
+      this.actAsClient(serverOrClient, playerId)
+    } else {
+      this.actAServer(serverOrClient)
+    }
+    this.createConstantGameObjects()
+    this.sync()
+  }
+
+  private actAServer = (server: Server): void => {
+    server.addListener(() => {
+      this.worldState = server.worldState
+      this.sync()
+    })
+  }
+
+  private createConstantGameObjects = (): void => {
     this.add.text(100, 50, 'Llama Wars', { fill: '#FFFFFF' }).setFontSize(24)
     if (this.playerId == 1) {
       this.startGameButton = new MenuButton(this, 100, 0, 'Start Game', () => this.handleStartGame())
     } else {
       this.waitingForHostText = this.add.text(100, 0, 'Waiting for host to start the game...')
     }
-    this.sync()
+  }
+
+  private actAsClient = (client: Client, playerId: PlayerId): void => {
+    client.addListener((message: ServerToClientMessage) => {
+      if (message.type == 'worldEvent') {
+        const event = message.event
+        const oldWorldState = this.worldState
+        this.worldState = applyEvent(oldWorldState, event)
+        if (event.type == 'gameStarted') {
+          const sceneData: GameSceneData = {
+            serverOrClient: client,
+            worldState: this.worldState,
+            playerId: playerId,
+          }
+          this.scene.start(GAME_SCENE_KEY, sceneData)
+        }
+      }
+      this.sync()
+    })
   }
 
   private handleStartGame = () => {
