@@ -75,7 +75,7 @@ export class GameScene extends Phaser.Scene {
     }
 
     this.displayObjects = new DisplayObjects(this, this.worldState, this.localGameState, this.handleLocalAction)
-    this.syncScene()
+    this.handleNewTurn()
     this.setUpInputs()
   }
 
@@ -239,8 +239,8 @@ export class GameScene extends Phaser.Scene {
       mode: { type: 'selectHex' },
       selectedHex: toMaybe(unitToSelect?.location),
     })
-    this.syncScene()
     this.sound.play(AudioKeys.NEW_TURN)
+    this.syncScene()
   }
 
   private handleUnitMovedWorldEvent = (event: UnitMovedWorldEvent, oldWorldState: WorldState): void => {
