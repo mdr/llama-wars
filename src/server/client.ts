@@ -23,14 +23,16 @@ export class Client {
   }
 
   private notifyListeners = (message: ServerToClientMessage): void => {
-    console.log('Message received from server:')
-    console.log(message)
     for (const listener of this.listeners) listener(message)
   }
 
   constructor(serverConnection: Peer.DataConnection) {
     this.serverConnection = serverConnection
-    serverConnection.on('data', this.notifyListeners)
+    serverConnection.on('data', (message: any) => {
+      console.log('Message received from server:')
+      console.log(message)
+      this.notifyListeners(message)
+    })
   }
 
   public static connect = async (gameId: GameId): Promise<Client> => {

@@ -1,6 +1,6 @@
 import * as R from 'ramda'
 import { INITIAL_WORLD_STATE } from '../../world/initial-world-state'
-import { Client } from '../../server/client'
+import { Client, ServerToClientMessageListener } from '../../server/client'
 import { Server } from '../../server/server'
 import { PlayerId } from '../../world/player'
 import { WorldState } from '../../world/world-state'
@@ -8,6 +8,8 @@ import { MenuButton } from '../../ui/menu-button'
 import { GAME_SCENE_KEY, GameSceneData } from '../main-game/game-scene'
 import { applyEvent } from '../../world/world-event-evaluator'
 import { ServerToClientMessage } from '../../server/messages'
+import { deserialiseFromJson } from '../../util/json-serialisation'
+import { WorldEvent } from '../../world/world-events'
 
 export const LOBBY_SCENE_KEY = 'Lobby'
 
@@ -31,6 +33,7 @@ export class LobbyScene extends Phaser.Scene {
   private playerNameTexts: Map<PlayerId, Phaser.GameObjects.Text> = new Map()
   private startGameButton?: MenuButton
   private waitingForHostText?: Phaser.GameObjects.Text
+  private listener?: ServerToClientMessageListener
 
   constructor() {
     super(sceneConfig)
@@ -109,22 +112,31 @@ export class LobbyScene extends Phaser.Scene {
   }
 
   private actAsClient = (client: Client, playerId: PlayerId): void => {
-    client.addListener((message: ServerToClientMessage) => {
-      if (message.type == 'worldEvent') {
-        const event = message.event
-        const oldWorldState = this.worldState
-        this.worldState = applyEvent(oldWorldState, event)
-        if (event.type == 'gameStarted') {
-          const sceneData: GameSceneData = {
-            serverOrClient: client,
-            worldState: this.worldState,
-            playerId: playerId,
-          }
-          this.scene.start(GAME_SCENE_KEY, sceneData)
+    this.listener = (message: ServerToClientMessage) => {
+      this.handleServerToClientMessage(message, client, playerId)
+    }
+    client.addListener(this.listener)
+  }
+
+  private handleServerToClientMessage = (message: ServerToClientMessage, client: Client, playerId: PlayerId): void => {
+    if (message.type == 'worldEvent') {
+      const event: WorldEvent = deserialiseFromJson(message.event)
+      const oldWorldState = this.worldState
+      this.worldState = applyEvent(oldWorldState, event)
+      if (event.type == 'gameStarted') {
+        if (this.listener) {
+          client.removeListener(this.listener)
+          this.listener = undefined
         }
+        const sceneData: GameSceneData = {
+          serverOrClient: client,
+          worldState: this.worldState,
+          playerId: playerId,
+        }
+        this.scene.start(GAME_SCENE_KEY, sceneData)
       }
-      this.sync()
-    })
+    }
+    this.sync()
   }
 
   private handleStartGame = () => {
