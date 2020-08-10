@@ -1,6 +1,6 @@
 import { Hex } from './hex'
-import { PlayerId } from './world-state'
 import { UnitId } from './unit'
+import { PlayerId } from './player'
 
 export type WorldEventId = number
 

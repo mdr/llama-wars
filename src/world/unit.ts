@@ -1,7 +1,7 @@
 import { Hex } from './hex'
-import { PlayerId } from './world-state'
 import { ActionPoints } from './action-points'
 import { HitPoints } from './hit-points'
+import { PlayerId } from './player'
 
 export type UnitId = number
 

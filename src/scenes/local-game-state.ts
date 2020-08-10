@@ -1,7 +1,7 @@
 import { Hex } from '../world/hex'
-import { PlayerId } from '../world/world-state'
 import { Mode } from './main-game/mode'
 import { Maybe, Option, toMaybe, toOption } from '../util/types'
+import { PlayerId } from '../world/player'
 
 export class LocalGameState {
   readonly playerId: PlayerId

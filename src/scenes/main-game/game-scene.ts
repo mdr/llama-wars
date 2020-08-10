@@ -1,7 +1,7 @@
 import { addPoints, multiplyPoint, Point, subtractPoints } from '../point'
 import { Hex } from '../../world/hex'
 import { centerPoint, fromPoint } from '../hex-geometry'
-import { PlayerId, WorldState } from '../../world/world-state'
+import { WorldState } from '../../world/world-state'
 import { CombatParticipantInfo, CombatWorldEvent, UnitMovedWorldEvent, WorldEvent } from '../../world/world-events'
 import { applyEvent } from '../../world/world-event-evaluator'
 import { UnitId } from '../../world/unit'
@@ -21,6 +21,7 @@ import { Client } from '../../server/client'
 import { Server } from '../../server/server'
 import { AnimationSpec, DisplayObjects } from './display-objects'
 import Pointer = Phaser.Input.Pointer
+import { PlayerId } from '../../world/player'
 
 export const GAME_SCENE_KEY = 'Game'
 

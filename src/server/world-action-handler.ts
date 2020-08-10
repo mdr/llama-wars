@@ -1,8 +1,9 @@
-import { PlayerId, WorldState } from '../world/world-state'
+import { WorldState } from '../world/world-state'
 import { AttackWorldAction, MoveUnitWorldAction, WorldAction } from '../world/world-actions'
 import { CombatWorldEvent, UnitMovedWorldEvent, WorldEvent } from '../world/world-events'
 import * as R from 'ramda'
 import { Unit } from '../world/unit'
+import { PlayerId } from '../world/player'
 
 export class WorldActionHandler {
   private readonly worldState: WorldState

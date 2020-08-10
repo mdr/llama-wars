@@ -3,7 +3,7 @@ import * as R from 'ramda'
 import { WorldMap } from './world-map'
 import { Unit, UnitId } from './unit'
 import { Option } from '../util/types'
-import { Player } from './player'
+import { Player, PlayerId } from './player'
 import assert = require('assert')
 
 export class WorldState {
@@ -82,5 +82,3 @@ export class WorldState {
       players: json.players.map((unit: any) => Player.fromJson(unit)),
     })
 }
-
-export type PlayerId = number

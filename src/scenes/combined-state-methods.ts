@@ -1,10 +1,10 @@
 import { LocalGameState } from './local-game-state'
-import { PlayerId, WorldState } from '../world/world-state'
+import { WorldState } from '../world/world-state'
 import { Option } from '../util/types'
 import { Unit, UnitId } from '../world/unit'
 import { Hex } from '../world/hex'
 import * as R from 'ramda'
-import { Player } from '../world/player'
+import { Player, PlayerId } from '../world/player'
 
 export class CombinedState {
   protected readonly worldState: WorldState

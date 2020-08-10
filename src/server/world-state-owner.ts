@@ -1,8 +1,9 @@
-import { PlayerId, WorldState } from '../world/world-state'
+import { WorldState } from '../world/world-state'
 import { WorldAction } from '../world/world-actions'
 import { applyEvent } from '../world/world-event-evaluator'
 import { WorldEvent, WorldEventId } from '../world/world-events'
 import { WorldActionHandler } from './world-action-handler'
+import { PlayerId } from '../world/player'
 
 export type WorldEventListener = (event: WorldEvent) => void
 

@@ -1,4 +1,4 @@
-import { PlayerId } from '../world/world-state'
+import { PlayerId } from '../world/player'
 
 export interface JoinMessage {
   type: 'join'

@@ -1,11 +1,12 @@
 import { getGameWidth, getGameHeight } from '../../helpers'
 import { AudioKeys } from '../asset-keys'
 import FileConfig = Phaser.Types.Loader.FileConfig
-import { GAME_SCENE_KEY, GameSceneData } from '../main-game/game-scene'
+import { GAME_SCENE_KEY, GameId, GameSceneData } from '../main-game/game-scene'
 import { MAIN_MENU_SCENE_KEY } from '../main-menu/main-menu-scene'
 import { Option } from '../../util/types'
 import { openWorldEventDb } from '../../db/world-event-db'
 import { Server } from '../../server/server'
+import { PlayerId } from '../../world/player'
 
 export const BOOT_SCENE_KEY = 'Boot'
 
@@ -102,6 +103,11 @@ export class BootScene extends Phaser.Scene {
     // https://opengameart.org/content/ui-sound-effects-pack
     this.load.audio(AudioKeys.NEW_TURN, 'assets/audio/MENU A_Select.wav')
   }
+}
+
+interface UrlInfo {
+  gameId: GameId
+  playerId: Option<PlayerId>
 }
 
 const getHash = (): Option<string> => {
