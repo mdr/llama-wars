@@ -1,5 +1,19 @@
 import { Hex } from './hex'
 import { UnitId } from './unit'
+import { WorldState } from './world-state'
+
+export interface InitialiseWorldAction {
+  type: 'initialise'
+  state: WorldState
+}
+
+export interface AddPlayerWorldAction {
+  type: 'addPlayer'
+}
+
+export interface StartGameWorldAction {
+  type: 'startGame'
+}
 
 export interface MoveUnitWorldAction {
   type: 'moveUnit'
@@ -23,4 +37,10 @@ export interface EndTurnWorldAction {
   type: 'endTurn'
 }
 
-export type WorldAction = MoveUnitWorldAction | AttackWorldAction | EndTurnWorldAction
+export type WorldAction =
+  | InitialiseWorldAction
+  | AddPlayerWorldAction
+  | StartGameWorldAction
+  | MoveUnitWorldAction
+  | AttackWorldAction
+  | EndTurnWorldAction

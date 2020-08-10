@@ -1,10 +1,11 @@
 import { v4 as uuid } from 'uuid'
 import { MenuButton } from '../../ui/menu-button'
-import { GAME_SCENE_KEY, GameId, GameSceneData } from '../main-game/game-scene'
+import { GameId } from '../main-game/game-scene'
 import { Server } from '../../server/server'
 import { openWorldEventDb } from '../../db/world-event-db'
 import { INITIAL_WORLD_STATE } from '../../world/initial-world-state'
 import { setUrlInfo } from '../boot/boot-scene'
+import { LOBBY_SCENE_KEY, LobbySceneData } from '../lobby/lobby-scene'
 
 export const MAIN_MENU_SCENE_KEY = 'MainMenu'
 
@@ -22,15 +23,17 @@ export class MainMenuScene extends Phaser.Scene {
   public create = (): void => {
     this.add.text(100, 50, 'Llama Wars', { fill: '#FFFFFF' }).setFontSize(24)
 
-    new MenuButton(this, 100, 150, 'Start Game', () => this.handleStartGame())
+    new MenuButton(this, 100, 150, 'Host Game', () => this.handleStartGame())
   }
 
   private handleStartGame = async (): Promise<void> => {
     const worldEventDb = await openWorldEventDb()
     const gameId: GameId = uuid()
-    const server = new Server(worldEventDb, gameId, INITIAL_WORLD_STATE, 1)
+    const playerId = 1
+    const server = new Server(worldEventDb, gameId, INITIAL_WORLD_STATE, 0)
+    server.handleAction(playerId, { type: 'initialise', state: INITIAL_WORLD_STATE })
     setUrlInfo({ gameId })
-    const sceneData: GameSceneData = { server, worldState: server.worldState, playerId: 1 }
-    this.scene.start(GAME_SCENE_KEY, sceneData)
+    const sceneData: LobbySceneData = { serverOrClient: server, worldState: server.worldState, playerId: playerId }
+    this.scene.start(LOBBY_SCENE_KEY, sceneData)
   }
 }

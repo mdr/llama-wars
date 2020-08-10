@@ -10,6 +10,7 @@ import { PlayerId } from '../../world/player'
 import { Client, ServerToClientMessageListener } from '../../server/client'
 import { WorldState } from '../../world/world-state'
 import { ServerToClientMessage } from '../../server/messages'
+import { LOBBY_SCENE_KEY, LobbySceneData } from '../lobby/lobby-scene'
 
 export const BOOT_SCENE_KEY = 'Boot'
 
@@ -77,46 +78,87 @@ export class BootScene extends Phaser.Scene {
   private launchGame = async (): Promise<void> => {
     const urlInfo = getUrlInfo()
     if (urlInfo) {
-      await this.restoreGame(urlInfo)
+      await this.joinOrRestoreGame(urlInfo)
     } else {
       this.scene.start(MAIN_MENU_SCENE_KEY)
     }
   }
 
-  private restoreGame = async (urlInfo: UrlInfo): Promise<void> => {
+  private joinOrRestoreGame = async (urlInfo: UrlInfo): Promise<void> => {
     const worldEventDb = await openWorldEventDb()
     const gameId = urlInfo.gameId
+    const playerId = urlInfo.playerId
     const isServer = await worldEventDb.hasEventsForGame(gameId)
     if (isServer) {
-      await this.restoreServer(gameId, worldEventDb)
+      await this.restoreGameAsServer(gameId, worldEventDb)
     } else {
-      await this.restoreClient(gameId)
+      await this.joinOrRestoreClient(gameId, playerId)
     }
   }
 
-  private restoreClient = async (gameId: GameId): Promise<void> => {
+  private joinOrRestoreClient = async (gameId: GameId, playerId: Option<PlayerId>): Promise<void> => {
     const client = await Client.connect(gameId)
+    if (playerId) {
+      this.rejoinAsClient(client, gameId, playerId)
+    } else {
+      this.joinAsClient(client, gameId)
+    }
+  }
+
+  private joinAsClient = (client: Client, gameId: GameId): void => {
     client.send({ type: 'join' })
     this.joinedListener = (message: ServerToClientMessage) => {
+      if (this.joinedListener) {
+        client.removeListener(this.joinedListener)
+        this.joinedListener = undefined
+      }
       if (message.type == 'joined') {
         const playerId = message.playerId
         setUrlInfo({ gameId, playerId })
         const worldState = WorldState.fromJson(message.worldState)
-        const sceneData: GameSceneData = { client, playerId, worldState }
-        this.scene.start(GAME_SCENE_KEY, sceneData)
-        if (this.joinedListener) {
-          client.removeListener(this.joinedListener)
-          this.joinedListener = undefined
+        if (worldState.gameHasStarted) {
+          const sceneData: GameSceneData = { serverOrClient: client, worldState, playerId }
+          this.scene.start(GAME_SCENE_KEY, sceneData)
+        } else {
+          const sceneData: LobbySceneData = { serverOrClient: client, worldState, playerId }
+          this.scene.start(LOBBY_SCENE_KEY, sceneData)
         }
       }
     }
     client.addListener(this.joinedListener)
   }
 
-  private restoreServer = async (gameId: GameId, worldEventDb: WorldEventDb): Promise<void> => {
+  private rejoinAsClient = (client: Client, gameId: GameId, playerId: PlayerId): void => {
+    client.send({ type: 'rejoin', playerId })
+    this.joinedListener = (message: ServerToClientMessage) => {
+      if (message.type == 'rejoined') {
+        if (this.joinedListener) {
+          client.removeListener(this.joinedListener)
+          this.joinedListener = undefined
+        }
+        const worldState = WorldState.fromJson(message.worldState)
+        if (worldState.gameHasStarted) {
+          const sceneData: GameSceneData = { serverOrClient: client, worldState, playerId }
+          this.scene.start(GAME_SCENE_KEY, sceneData)
+        } else {
+          const sceneData: LobbySceneData = { serverOrClient: client, worldState, playerId }
+          this.scene.start(LOBBY_SCENE_KEY, sceneData)
+        }
+      }
+    }
+    client.addListener(this.joinedListener)
+  }
+
+  private restoreGameAsServer = async (gameId: GameId, worldEventDb: WorldEventDb): Promise<void> => {
     const server = await Server.restoreGame(worldEventDb, gameId)
-    const sceneData: GameSceneData = { server, worldState: server.worldState, playerId: 1 }
-    this.scene.start(GAME_SCENE_KEY, sceneData)
+    const worldState = server.worldState
+    if (worldState.gameHasStarted) {
+      const sceneData: GameSceneData = { serverOrClient: server, worldState: worldState, playerId: 1 }
+      this.scene.start(GAME_SCENE_KEY, sceneData)
+    } else {
+      const sceneData: LobbySceneData = { serverOrClient: server, worldState: worldState, playerId: 1 }
+      this.scene.start(LOBBY_SCENE_KEY, sceneData)
+    }
   }
 
   private loadAssets() {

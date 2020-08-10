@@ -21,5 +21,4 @@ export const HOVER_TARGETABLE_TILE_COLOUR = colourNumber('#cef0eb')
 export const ACTION_TEXT_COLOUR = '#cccc00'
 export const HOVER_ACTION_TEXT_COLOUR = '#ffff00'
 
-export const PLAYER_1_TINT = 0xffbbbb
-export const PLAYER_2_TINT = 0xbbbbff
+export const PLAYER_TINTS = ['#ffbbbb', '#bbbbff', '#bbffbb', '#bbffff', '#ffffbb', '#ffbbff'].map(colourNumber)

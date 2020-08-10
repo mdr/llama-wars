@@ -6,8 +6,7 @@ import {
   HEALTH_BORDER_COLOUR,
   HEALTH_EMPTY_COLOUR,
   HEALTH_FULL_COLOUR,
-  PLAYER_1_TINT,
-  PLAYER_2_TINT,
+  PLAYER_TINTS,
 } from '../colours'
 import { addPoints, Point } from '../point'
 import assert = require('assert')
@@ -31,7 +30,7 @@ export class UnitDisplayObject {
     this.image = scene.add
       .image(0, 0, 'llama')
       .setScale(0.8)
-      .setTint(this.unit.playerId == 1 ? PLAYER_1_TINT : PLAYER_2_TINT)
+      .setTint(PLAYER_TINTS[this.unit.playerId - 1])
     this.healthBarGraphics = scene.add.graphics()
   }
 

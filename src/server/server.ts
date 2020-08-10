@@ -1,13 +1,13 @@
 import * as R from 'ramda'
 import Peer = require('peerjs')
 import { WorldEventListener, WorldStateOwner } from './world-state-owner'
-import { WorldEvent, WorldEventId } from '../world/world-events'
+import { PlayerAddedWorldEvent, WorldEvent, WorldEventId } from '../world/world-events'
 import { ClientToServerMessage, ServerToClientMessage } from './messages'
 import { deserialiseFromJson, serialiseToJson } from '../util/json-serialisation'
 import { newPeer } from './client'
 import { UnreachableCaseError } from '../util/unreachable-case-error'
 import { PlayerId } from '../world/player'
-import { WorldAction } from '../world/world-actions'
+import { AddPlayerWorldAction, WorldAction } from '../world/world-actions'
 import { WorldEventDb } from '../db/world-event-db'
 import { GameId } from '../scenes/main-game/game-scene'
 import { INITIAL_WORLD_STATE } from '../world/initial-world-state'
@@ -65,13 +65,30 @@ export class Server {
 
   private handleClientToServerMessage(message: ClientToServerMessage, connection: Peer.DataConnection) {
     console.log(message)
+    const worldState = this.worldStateOwner.worldState
     switch (message.type) {
       case 'join':
-        connection.send({
-          type: 'joined',
-          playerId: 2,
-          worldState: this.worldStateOwner.worldState.toJson(),
-        })
+        if (worldState.gameHasStarted) {
+          // TODO: tell the client "bad luck"
+        } else {
+          const addPlayerAction: AddPlayerWorldAction = { type: 'addPlayer' }
+          const playerAddedEvent = <PlayerAddedWorldEvent>this.handleAction(1, addPlayerAction)
+          connection.send({
+            type: 'joined',
+            playerId: playerAddedEvent.playerId,
+            worldState: worldState.toJson(),
+          })
+        }
+        break
+      case 'rejoin':
+        if (worldState.isValidPlayerId(message.playerId))
+          connection.send({
+            type: 'rejoined',
+            worldState: worldState.toJson(),
+          })
+        else {
+          // TODO: tell the client no
+        }
         break
       case 'worldAction':
         this.worldStateOwner.handleAction(message.playerId, deserialiseFromJson(message.action))
@@ -81,6 +98,6 @@ export class Server {
     }
   }
 
-  public handleAction = (playerId: PlayerId, action: WorldAction): void =>
+  public handleAction = (playerId: PlayerId, action: WorldAction): WorldEvent =>
     this.worldStateOwner.handleAction(playerId, action)
 }

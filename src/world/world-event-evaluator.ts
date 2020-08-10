@@ -1,9 +1,25 @@
+import * as R from 'ramda'
 import { WorldState } from './world-state'
-import { CombatWorldEvent, PlayerEndedTurnWorldEvent, UnitMovedWorldEvent, WorldEvent } from './world-events'
+import {
+  CombatWorldEvent,
+  GameStartedWorldEvent,
+  InitialiseWorldEvent,
+  PlayerAddedWorldEvent,
+  PlayerEndedTurnWorldEvent,
+  UnitMovedWorldEvent,
+  WorldEvent,
+} from './world-events'
 import { UnreachableCaseError } from '../util/unreachable-case-error'
+import { Player } from './player'
 
 export const applyEvent = (state: WorldState, event: WorldEvent): WorldState => {
   switch (event.type) {
+    case 'initialise':
+      return handleInitialise(event)
+    case 'playerAdded':
+      return handlePlayerAdded(state, event)
+    case 'gameStarted':
+      return handleGameStarted(state, event)
     case 'unitMoved':
       return handleUnitMoved(state, event)
     case 'combat':
@@ -15,6 +31,29 @@ export const applyEvent = (state: WorldState, event: WorldEvent): WorldState => 
     default:
       throw new UnreachableCaseError(event)
   }
+}
+
+const handleInitialise = (event: InitialiseWorldEvent): WorldState => {
+  if (event.id > 0) {
+    throw `Initialise must be the first event`
+  }
+  return event.state
+}
+
+const handlePlayerAdded = (state: WorldState, event: PlayerAddedWorldEvent) => {
+  if (R.any((player) => player.id == event.playerId, state.players)) {
+    throw `Player ID already in use`
+  }
+  const { playerId } = event
+  const player = new Player({ id: playerId, name: `Player ${playerId}` })
+  return state.addPlayer(player)
+}
+
+const handleGameStarted = (state: WorldState, event: GameStartedWorldEvent) => {
+  if (state.gameHasStarted) {
+    throw `Game already started`
+  }
+  return state.copy({ turn: 1, units: event.units })
 }
 
 const handleUnitMoved = (state: WorldState, event: UnitMovedWorldEvent): WorldState => {

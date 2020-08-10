@@ -59,13 +59,17 @@ export class WorldState {
   public removeUnit = (unitId: UnitId): WorldState =>
     this.copy({ units: R.filter((unit) => unit.id != unitId, this.units) })
 
-  public replacePlayer = (playerId: PlayerId, player: Player): WorldState =>
-    this.copy({
+  public replacePlayer = (playerId: PlayerId, player: Player): WorldState => {
+    assert(playerId == player.id)
+    return this.copy({
       players: R.append(
         player,
         R.filter((player) => player.id != playerId, this.players),
       ),
     })
+  }
+
+  public addPlayer = (player: Player): WorldState => this.copy({ players: R.append(player, this.players) })
 
   public toJson = (): any => ({
     turn: this.turn,
@@ -81,4 +85,6 @@ export class WorldState {
       units: json.units.map((unit: any) => Unit.fromJson(unit)),
       players: json.players.map((unit: any) => Player.fromJson(unit)),
     })
+
+  public isValidPlayerId = (playerId: PlayerId): boolean => R.any((player) => player.id == playerId, this.players)
 }

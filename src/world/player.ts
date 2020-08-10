@@ -5,7 +5,7 @@ export class Player {
   readonly name: string
   readonly endedTurn: boolean
 
-  constructor({ id, name, endedTurn }: { id: PlayerId; name: string; endedTurn: boolean }) {
+  constructor({ id, name, endedTurn = false }: { id: PlayerId; name: string; endedTurn?: boolean }) {
     this.id = id
     this.name = name
     this.endedTurn = endedTurn

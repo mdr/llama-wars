@@ -32,8 +32,7 @@ const sceneConfig: Phaser.Types.Scenes.SettingsConfig = {
 }
 
 export interface GameSceneData {
-  client?: Client
-  server?: Server
+  serverOrClient: Server | Client
   playerId: PlayerId
   worldState: WorldState
 }
@@ -64,14 +63,15 @@ export class GameScene extends Phaser.Scene {
   // ------
 
   public create = (sceneData: GameSceneData): void => {
-    const { server, client, playerId, worldState } = sceneData
+    const { serverOrClient, playerId, worldState } = sceneData
     this.setUpSound()
     this.worldState = worldState
     this.localGameState = INITIAL_LOCAL_GAME_STATE.copy({ playerId })
-    if (server) {
-      this.actAsServer(server)
-    } else if (client) {
-      this.actAsClient(client)
+    this.serverOrClient = serverOrClient
+    if (serverOrClient instanceof Server) {
+      this.actAsServer(serverOrClient)
+    } else {
+      this.actAsClient(serverOrClient)
     }
 
     this.displayObjects = new DisplayObjects(this, this.worldState, this.localGameState, this.handleLocalAction)
@@ -96,14 +96,10 @@ export class GameScene extends Phaser.Scene {
   }
 
   private handleServerToClientMessage = (message: ServerToClientMessage): void => {
-    console.log(message)
     switch (message.type) {
       case 'joined':
-        const playerId = message.playerId
-        // setUrlInfo({ gameId, playeId})
-        this.localGameState = this.localGameState.copy({ playerId })
-        this.worldState = WorldState.fromJson(message.worldState)
-        this.syncScene()
+      case 'rejoined':
+        console.log('Unexpected message mid-game')
         break
       case 'worldEvent':
         this.handleWorldEvent(deserialiseFromJson(message.event))
@@ -115,14 +111,14 @@ export class GameScene extends Phaser.Scene {
 
   private actAsServer = (server: Server): void => {
     server.addListener(this.handleWorldEvent)
-    this.serverOrClient = server
     this.worldState = server.worldState
   }
 
   private asyncSendToServer = async (action: WorldAction): Promise<void> => {
+    if (!this.serverOrClient) throw `Unexpected missing serverOrClient`
     if (this.serverOrClient instanceof Server) {
       this.serverOrClient.handleAction(this.playerId, action)
-    } else if (this.serverOrClient instanceof Client) {
+    } else {
       this.serverOrClient.sendAction(this.playerId, action)
     }
   }
@@ -212,6 +208,10 @@ export class GameScene extends Phaser.Scene {
     const oldWorldState = this.worldState
     this.worldState = applyEvent(oldWorldState, event)
     switch (event.type) {
+      case 'initialise':
+      case 'gameStarted':
+      case 'playerAdded':
+        break
       case 'unitMoved':
         this.handleUnitMovedWorldEvent(event, oldWorldState)
         break

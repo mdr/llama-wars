@@ -23,6 +23,7 @@ export class Client {
   }
 
   private notifyListeners = (message: ServerToClientMessage): void => {
+    console.log(message)
     for (const listener of this.listeners) listener(message)
   }
 

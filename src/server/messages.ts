@@ -4,15 +4,9 @@ export interface JoinMessage {
   type: 'join'
 }
 
-export interface JoinedMessage {
-  type: 'joined'
+export interface RejoinMessage {
+  type: 'rejoin'
   playerId: PlayerId
-  worldState: any
-}
-
-export interface WorldEventMessage {
-  type: 'worldEvent'
-  event: any
 }
 
 export interface WorldActionMessage {
@@ -21,5 +15,22 @@ export interface WorldActionMessage {
   playerId: PlayerId
 }
 
-export type ServerToClientMessage = JoinedMessage | WorldEventMessage
-export type ClientToServerMessage = JoinMessage | WorldActionMessage
+export type ClientToServerMessage = JoinMessage | RejoinMessage | WorldActionMessage
+
+export interface JoinedMessage {
+  type: 'joined'
+  playerId: PlayerId
+  worldState: any
+}
+
+export interface RejoinedMessage {
+  type: 'rejoined'
+  worldState: any
+}
+
+export interface WorldEventMessage {
+  type: 'worldEvent'
+  event: any
+}
+
+export type ServerToClientMessage = JoinedMessage | RejoinedMessage | WorldEventMessage

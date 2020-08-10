@@ -1,9 +1,15 @@
 import { WorldState } from '../world/world-state'
-import { AttackWorldAction, MoveUnitWorldAction, WorldAction } from '../world/world-actions'
+import { AttackWorldAction, InitialiseWorldAction, MoveUnitWorldAction, WorldAction } from '../world/world-actions'
 import { CombatWorldEvent, UnitMovedWorldEvent, WorldEvent } from '../world/world-events'
 import * as R from 'ramda'
 import { Unit } from '../world/unit'
 import { PlayerId } from '../world/player'
+import { ActionPoints } from '../world/action-points'
+import { HitPoints } from '../world/hit-points'
+import { randomElement } from '../util/random-util'
+import { Hex } from '../world/hex'
+
+const LLAMA_NAMES = ['Walter', 'Dolly', 'Chewpaca', 'Barack O. Llama', 'Como Se']
 
 export class WorldActionHandler {
   private readonly worldState: WorldState
@@ -18,6 +24,12 @@ export class WorldActionHandler {
 
   public calculateWorldEvent = (action: WorldAction): WorldEvent => {
     switch (action.type) {
+      case 'initialise':
+        return this.handleInitialise(action)
+      case 'addPlayer':
+        return this.handleAddPlayer()
+      case 'startGame':
+        return this.handleStartGame()
       case 'attack':
         return this.handleAttack(action)
       case 'moveUnit':
@@ -25,6 +37,45 @@ export class WorldActionHandler {
       case 'endTurn':
         return this.handleEndTurn()
     }
+  }
+
+  private handleInitialise = (action: InitialiseWorldAction): WorldEvent => {
+    if (this.nextWorldEventId > 0) {
+      throw `Can only initialise as the first event`
+    }
+    return { id: this.nextWorldEventId, type: 'initialise', state: action.state }
+  }
+
+  private handleAddPlayer = (): WorldEvent => {
+    const existingPlayerIds = this.worldState.players.map((player) => player.id)
+    const playerId = R.apply(Math.max, existingPlayerIds) + 1
+    return { id: this.nextWorldEventId, type: 'playerAdded', playerId }
+  }
+
+  private handleStartGame = (): WorldEvent => {
+    if (this.worldState.gameHasStarted) {
+      throw `Cannot start an already-started game`
+    }
+    const units: Unit[] = []
+    let remainingHexes: Hex[] = Array.from(this.worldState.map.getMapHexes())
+    for (const player of this.worldState.players) {
+      const generateUnit = () => {
+        const location = randomElement(remainingHexes)
+        remainingHexes = R.without([location], remainingHexes)
+        const unit: Unit = new Unit({
+          id: units.length + 1,
+          playerId: player.id,
+          name: randomElement(LLAMA_NAMES),
+          location: location,
+          actionPoints: new ActionPoints({ current: 2, max: 2 }),
+          hitPoints: new HitPoints({ current: 100, max: 100 }),
+        })
+        units.push(unit)
+      }
+      generateUnit()
+      generateUnit()
+    }
+    return { id: this.nextWorldEventId, type: 'gameStarted', units }
   }
 
   private handleAttack = (action: AttackWorldAction): CombatWorldEvent => {

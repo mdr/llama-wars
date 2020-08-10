@@ -50,4 +50,9 @@ export class MenuButton extends Phaser.GameObjects.Rectangle {
     this.label.setColor('#BBBBBB')
     this.setFillStyle(0x444444)
   }
+
+  public setY(value?: number): this {
+    this.label.setY(value)
+    return super.setY(value)
+  }
 }

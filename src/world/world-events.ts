@@ -1,8 +1,27 @@
 import { Hex } from './hex'
-import { UnitId } from './unit'
+import { Unit, UnitId } from './unit'
 import { PlayerId } from './player'
+import { WorldState } from './world-state'
 
 export type WorldEventId = number
+
+export interface InitialiseWorldEvent {
+  id: WorldEventId
+  type: 'initialise'
+  state: WorldState
+}
+
+export interface PlayerAddedWorldEvent {
+  id: WorldEventId
+  type: 'playerAdded'
+  playerId: PlayerId
+}
+
+export interface GameStartedWorldEvent {
+  id: WorldEventId
+  type: 'gameStarted'
+  units: Unit[]
+}
 
 export interface UnitMovedWorldEvent {
   id: WorldEventId
@@ -41,4 +60,11 @@ export interface NewTurnWorldEvent {
   type: 'newTurn'
 }
 
-export type WorldEvent = UnitMovedWorldEvent | CombatWorldEvent | PlayerEndedTurnWorldEvent | NewTurnWorldEvent
+export type WorldEvent =
+  | InitialiseWorldEvent
+  | PlayerAddedWorldEvent
+  | GameStartedWorldEvent
+  | UnitMovedWorldEvent
+  | CombatWorldEvent
+  | PlayerEndedTurnWorldEvent
+  | NewTurnWorldEvent
