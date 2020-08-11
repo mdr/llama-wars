@@ -62,6 +62,10 @@ export class Unit {
 
   public refreshActionPoints = (): Unit => this.copy({ actionPoints: this.actionPoints.refresh() })
 
+  public get hasUnspentActionPoints() {
+    return this.actionPoints.current > 0
+  }
+
   public toJson = (): any => ({
     id: this.id,
     playerId: this.playerId,

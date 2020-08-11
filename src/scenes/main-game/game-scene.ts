@@ -235,7 +235,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   private handleNewTurn = (): void => {
-    const unitToSelect = this.combinedState.findNextUnitWithActionPoints()
+    const unitToSelect = this.combinedState.findNextUnitWithUnspentActionPoints()
     this.localGameState = this.localGameState.copy({
       mode: { type: 'selectHex' },
       selectedHex: toMaybe(unitToSelect?.location),
@@ -264,7 +264,7 @@ export class GameScene extends Phaser.Scene {
     // Retain selection if unit still exists and we still have action points, else select next unit (or nothing if there isn't one)
     let newSelectedHex
     if (!unit || unit.actionPoints.current == 0) {
-      const nextUnit = this.combinedState.findNextUnitWithActionPoints(unitId)
+      const nextUnit = this.combinedState.findNextUnitWithUnspentActionPoints(unitId)
       newSelectedHex = nextUnit?.location
     } else {
       newSelectedHex = defaultLocation

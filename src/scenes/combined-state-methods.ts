@@ -29,10 +29,10 @@ export class CombinedState {
   public findUnitInLocation = (hex: Hex): Option<Unit> => this.worldState.findUnitInLocation(hex)
 
   public unitCouldPotentiallyMove = (unit: Unit): boolean =>
-    unit.playerId == this.playerId && unit.actionPoints.current > 0 && !this.getCurrentPlayer().endedTurn
+    unit.playerId == this.playerId && unit.hasUnspentActionPoints && !this.getCurrentPlayer().endedTurn
 
   public unitCouldPotentiallyAttack = (unit: Unit): boolean =>
-    unit.playerId == this.playerId && unit.actionPoints.current > 0 && !this.getCurrentPlayer().endedTurn
+    unit.playerId == this.playerId && unit.hasUnspentActionPoints && !this.getCurrentPlayer().endedTurn
 
   public unitCanMoveToHex = (unit: Unit, hex: Hex): boolean =>
     this.unitCouldPotentiallyMove(unit) &&
@@ -54,10 +54,10 @@ export class CombinedState {
       return targetUnit
   }
 
-  public findNextUnitWithActionPoints = (unitId?: UnitId): Option<Unit> => {
+  public findNextUnitWithUnspentActionPoints = (unitId?: UnitId): Option<Unit> => {
     const candidateUnits = R.sortBy(
       (unit) => unit.id,
-      this.worldState.units.filter((unit) => unit.playerId == this.playerId && unit.actionPoints.current > 0),
+      this.worldState.getUnitsForPlayer(this.playerId).filter((unit) => unit.hasUnspentActionPoints),
     )
     if (unitId)
       return (

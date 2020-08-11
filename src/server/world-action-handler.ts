@@ -11,14 +11,17 @@ import {
   CombatWorldEvent,
   GameStartedWorldEvent,
   InitialiseWorldEvent,
+  NewTurnWorldEvent,
   PlayerAddedWorldEvent,
   PlayerChangedNameWorldEvent,
+  PlayerEndedTurnWorldEvent,
   UnitMovedWorldEvent,
   WorldEvent,
 } from '../world/world-events'
 import { Player, PlayerId } from '../world/player'
 import { WorldGenerator } from './world-generator'
 import { AttackWorldActionHandler } from './attack-world-action-handler'
+import { applyEvent } from '../world/world-event-evaluator'
 
 export class WorldActionHandler {
   private readonly worldState: WorldState
@@ -99,19 +102,21 @@ export class WorldActionHandler {
     }
   }
 
-  private handleEndTurn = (): WorldEvent => {
+  private handleEndTurn = (): NewTurnWorldEvent | PlayerEndedTurnWorldEvent => {
     const player = this.getPlayer()
     if (player.endedTurn) {
       throw `Player has already ended their turn`
     }
-    const playersYetToEndTheirTurn = this.worldState.players
-      .filter((player) => !player.endedTurn)
-      .map((player) => player.id)
-    const wholeTurnEnded = R.equals(playersYetToEndTheirTurn, [this.playerId])
-    if (wholeTurnEnded) {
-      return { id: this.nextWorldEventId, type: 'newTurn' }
+    const playerEndedTurnAction: PlayerEndedTurnWorldEvent = {
+      id: this.nextWorldEventId,
+      type: 'playerEndedTurn',
+      playerId: this.playerId,
+    }
+    const newWorldState = applyEvent(this.worldState, playerEndedTurnAction)
+    if (newWorldState.canAnyPlayerAct()) {
+      return playerEndedTurnAction
     } else {
-      return { id: this.nextWorldEventId, type: 'playerEndedTurn', playerId: this.playerId }
+      return { id: this.nextWorldEventId, type: 'newTurn' }
     }
   }
 

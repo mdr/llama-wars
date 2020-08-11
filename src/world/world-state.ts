@@ -32,7 +32,16 @@ export class WorldState {
     return this.turn > 0
   }
 
-  public isPlayerDefeated = (playerId: PlayerId): boolean => R.any((unit) => unit.playerId == playerId, this.units)
+  public isPlayerDefeated = (playerId: PlayerId): boolean => this.getUnitsForPlayer(playerId).length == 0
+
+  public canPlayerAct = (playerId: PlayerId): boolean => {
+    const endedTurn = this.findPlayer(playerId)?.endedTurn
+    return !endedTurn && R.any((unit) => unit.hasUnspentActionPoints, this.getUnitsForPlayer(playerId))
+  }
+
+  public canAnyPlayerAct = (): boolean => R.any((player) => this.canPlayerAct(player.id), this.players)
+
+  public getUnitsForPlayer = (playerId: PlayerId): Unit[] => this.units.filter((unit) => unit.playerId === playerId)
 
   public findPlayer = (playerId: PlayerId): Option<Player> => R.find((player) => player.id == playerId, this.players)
 
