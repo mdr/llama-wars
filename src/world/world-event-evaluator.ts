@@ -54,14 +54,13 @@ const handlePlayerAdded = (state: WorldState, event: PlayerAddedWorldEvent): Wor
 
 const handlePlayerChangedName = (state: WorldState, event: PlayerChangedNameWorldEvent): WorldState => {
   const { playerId, name } = event
-  const player = getPlayer(state, playerId)
-  return state.replacePlayer(playerId, player.copy({ name }))
+  verifyPlayerId(state, playerId)
+  return state.updatePlayer(playerId, (player) => player.copy({ name }))
 }
 
-const getPlayer = (state: WorldState, playerId: PlayerId): Player => {
+const verifyPlayerId = (state: WorldState, playerId: PlayerId): void => {
   const player = state.findPlayer(playerId)
   if (!player) throw `No player found with ID ${playerId}`
-  return player
 }
 
 const handleGameStarted = (state: WorldState, event: GameStartedWorldEvent): WorldState => {
@@ -123,8 +122,8 @@ const handleCombat = (state: WorldState, event: CombatWorldEvent): WorldState =>
 
 const handlePlayerEndedTurn = (state: WorldState, event: PlayerEndedTurnWorldEvent): WorldState => {
   const { playerId } = event
-  const player = getPlayer(state, playerId)
-  return state.replacePlayer(playerId, player.copy({ endedTurn: true }))
+  verifyPlayerId(state, playerId)
+  return state.updatePlayer(playerId, (player) => player.copy({ endedTurn: true }))
 }
 
 const handleNewTurn = (state: WorldState): WorldState =>

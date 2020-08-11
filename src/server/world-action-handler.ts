@@ -18,12 +18,7 @@ import {
 import * as R from 'ramda'
 import { Unit } from '../world/unit'
 import { Player, PlayerId } from '../world/player'
-import { ActionPoints } from '../world/action-points'
-import { HitPoints } from '../world/hit-points'
-import { randomElement } from '../util/random-util'
-import { Hex } from '../world/hex'
-
-const LLAMA_NAMES = ['Walter', 'Dolly', 'Chewpaca', 'Barack O. Llama', 'Como Se']
+import { WorldGenerator } from './world-generator'
 
 export class WorldActionHandler {
   private readonly worldState: WorldState
@@ -77,25 +72,7 @@ export class WorldActionHandler {
     if (this.worldState.gameHasStarted) {
       throw `Cannot start an already-started game`
     }
-    const units: Unit[] = []
-    let remainingHexes: Hex[] = Array.from(this.worldState.map.getMapHexes())
-    for (const player of this.worldState.players) {
-      const generateUnit = () => {
-        const location = randomElement(remainingHexes)
-        remainingHexes = R.without([location], remainingHexes)
-        const unit: Unit = new Unit({
-          id: units.length + 1,
-          playerId: player.id,
-          name: randomElement(LLAMA_NAMES),
-          location: location,
-          actionPoints: new ActionPoints({ current: 2, max: 2 }),
-          hitPoints: new HitPoints({ current: 100, max: 100 }),
-        })
-        units.push(unit)
-      }
-      generateUnit()
-      generateUnit()
-    }
+    const units = new WorldGenerator(this.worldState).generateUnits()
     return { id: this.nextWorldEventId, type: 'gameStarted', units }
   }
 
@@ -168,8 +145,9 @@ export class WorldActionHandler {
 
   private handleEndTurn = (): WorldEvent => {
     const player = this.getPlayer()
-    if (!player) throw `No player with ID ${this.playerId}`
-    if (player.endedTurn) throw `Player has already ended their turn`
+    if (player.endedTurn) {
+      throw `Player has already ended their turn`
+    }
     const playersYetToEndTheirTurn = this.worldState.players
       .filter((player) => !player.endedTurn)
       .map((player) => player.id)
