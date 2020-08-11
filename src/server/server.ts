@@ -68,7 +68,7 @@ export class Server {
       // TODO: tell the client "bad luck"
     } else {
       const addPlayerAction: AddPlayerWorldAction = { type: 'addPlayer' }
-      const playerAddedEvent = <PlayerAddedWorldEvent>this.handleAction(1, addPlayerAction)
+      const playerAddedEvent = <PlayerAddedWorldEvent>this.handleAction(1, addPlayerAction)[0]
       connection.send({
         type: 'joined',
         playerId: playerAddedEvent.playerId,
@@ -106,6 +106,6 @@ export class Server {
     }
   }
 
-  public handleAction = (playerId: PlayerId, action: WorldAction): WorldEvent =>
+  public handleAction = (playerId: PlayerId, action: WorldAction): WorldEvent[] =>
     this.worldStateOwner.handleAction(playerId, action)
 }

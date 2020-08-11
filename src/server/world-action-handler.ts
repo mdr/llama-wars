@@ -34,7 +34,7 @@ export class WorldActionHandler {
     this.nextWorldEventId = nextWorldEventId
   }
 
-  public calculateWorldEvent = (action: WorldAction): WorldEvent => {
+  public calculateWorldEvents = (action: WorldAction): WorldEvent[] => {
     switch (action.type) {
       case 'initialise':
         return this.handleInitialise(action)
@@ -53,36 +53,36 @@ export class WorldActionHandler {
     }
   }
 
-  private handleInitialise = (action: InitialiseWorldAction): InitialiseWorldEvent => {
+  private handleInitialise = (action: InitialiseWorldAction): [InitialiseWorldEvent] => {
     if (this.nextWorldEventId > 0) {
       throw `Can only initialise as the first event`
     }
-    return { id: this.nextWorldEventId, type: 'initialise', state: action.state }
+    return [{ id: this.nextWorldEventId, type: 'initialise', state: action.state }]
   }
 
-  private handleAddPlayer = (): PlayerAddedWorldEvent => {
+  private handleAddPlayer = (): [PlayerAddedWorldEvent] => {
     const existingPlayerIds = this.worldState.players.map((player) => player.id)
     const playerId = R.apply(Math.max, existingPlayerIds) + 1
-    return { id: this.nextWorldEventId, type: 'playerAdded', playerId }
+    return [{ id: this.nextWorldEventId, type: 'playerAdded', playerId }]
   }
 
-  private handleChangePlayerName = (action: ChangePlayerNameWorldAction): PlayerChangedNameWorldEvent => {
+  private handleChangePlayerName = (action: ChangePlayerNameWorldAction): [PlayerChangedNameWorldEvent] => {
     this.getPlayer()
-    return { id: this.nextWorldEventId, type: 'playerChangedName', playerId: this.playerId, name: action.name }
+    return [{ id: this.nextWorldEventId, type: 'playerChangedName', playerId: this.playerId, name: action.name }]
   }
 
-  private handleStartGame = (): GameStartedWorldEvent => {
+  private handleStartGame = (): [GameStartedWorldEvent] => {
     if (this.worldState.gameHasStarted) {
       throw `Cannot start an already-started game`
     }
     const units = new WorldGenerator(this.worldState).generateUnits()
-    return { id: this.nextWorldEventId, type: 'gameStarted', units }
+    return [{ id: this.nextWorldEventId, type: 'gameStarted', units }]
   }
 
-  private handleAttack = (action: AttackWorldAction): CombatWorldEvent =>
+  private handleAttack = (action: AttackWorldAction): [CombatWorldEvent] =>
     new AttackWorldActionHandler(this.worldState, this.playerId, this.nextWorldEventId).handleAttack(action)
 
-  private handleMoveUnit = (action: MoveUnitWorldAction): UnitMovedWorldEvent => {
+  private handleMoveUnit = (action: MoveUnitWorldAction): [UnitMovedWorldEvent] => {
     const { unitId, to } = action
     const unit = this.worldState.findUnitById(unitId)
     if (!unit) throw `No unit found with ID ${unitId}`
@@ -91,18 +91,20 @@ export class WorldActionHandler {
     if (!this.worldState.map.isInBounds(to)) throw `Invalid unit movement to out-of-bounds hex ${to}`
     if (this.worldState.findUnitInLocation(to)) throw `Invalid unit movement to already-occupied hex`
     if (unit.actionPoints.current < 1) throw `Not enough action points to move`
-    return {
-      id: this.nextWorldEventId,
-      type: 'unitMoved',
-      playerId: this.playerId,
-      actionPointsConsumed: 1,
-      unitId,
-      from,
-      to,
-    }
+    return [
+      {
+        id: this.nextWorldEventId,
+        type: 'unitMoved',
+        playerId: this.playerId,
+        actionPointsConsumed: 1,
+        unitId,
+        from,
+        to,
+      },
+    ]
   }
 
-  private handleEndTurn = (): NewTurnWorldEvent | PlayerEndedTurnWorldEvent => {
+  private handleEndTurn = (): WorldEvent[] => {
     const player = this.getPlayer()
     if (player.endedTurn) {
       throw `Player has already ended their turn`
@@ -114,9 +116,9 @@ export class WorldActionHandler {
     }
     const newWorldState = applyEvent(this.worldState, playerEndedTurnAction)
     if (newWorldState.canAnyPlayerAct()) {
-      return playerEndedTurnAction
+      return [playerEndedTurnAction]
     } else {
-      return { id: this.nextWorldEventId, type: 'newTurn' }
+      return [playerEndedTurnAction, { id: this.nextWorldEventId + 1, type: 'newTurn' }]
     }
   }
 

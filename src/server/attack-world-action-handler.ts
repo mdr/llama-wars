@@ -16,11 +16,11 @@ export class AttackWorldActionHandler {
     this.nextWorldEventId = nextWorldEventId
   }
 
-  public handleAttack = (action: AttackWorldAction): CombatWorldEvent => {
+  public handleAttack = (action: AttackWorldAction): [CombatWorldEvent] => {
     const { attacker, defender } = this.validateAttack(action)
     const attackerDamage = Math.min(attacker.hitPoints.current, 10 + randomIntInclusive(-2, 2))
     const defenderDamage = Math.min(defender.hitPoints.current, 20 + randomIntInclusive(-3, 3))
-    return this.makeCombatWorldEvent(attacker, attackerDamage, defender, defenderDamage)
+    return [this.makeCombatWorldEvent(attacker, attackerDamage, defender, defenderDamage)]
   }
 
   private validateAttack = (action: AttackWorldAction): { attacker: Unit; defender: Unit } => {

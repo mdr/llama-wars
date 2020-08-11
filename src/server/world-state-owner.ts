@@ -25,12 +25,14 @@ export class WorldStateOwner {
     for (const listener of this.listeners) listener(event)
   }
 
-  public handleAction = (playerId: PlayerId, action: WorldAction): WorldEvent => {
+  public handleAction = (playerId: PlayerId, action: WorldAction): WorldEvent[] => {
     const worldActionHandler = new WorldActionHandler(this.worldState, playerId, this.nextWorldEventId)
-    const event = worldActionHandler.calculateWorldEvent(action)
-    this.worldState = applyEvent(this.worldState, event)
-    this.nextWorldEventId++
-    this.notifyListeners(event)
-    return event
+    const events = worldActionHandler.calculateWorldEvents(action)
+    for (const event of events) {
+      this.worldState = applyEvent(this.worldState, event)
+      this.notifyListeners(event)
+    }
+    this.nextWorldEventId += events.length
+    return events
   }
 }
