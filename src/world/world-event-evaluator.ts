@@ -6,6 +6,7 @@ import {
   InitialiseWorldEvent,
   PlayerAddedWorldEvent,
   PlayerChangedNameWorldEvent,
+  PlayerDefeatedWorldEvent,
   PlayerEndedTurnWorldEvent,
   UnitMovedWorldEvent,
   WorldEvent,
@@ -29,6 +30,8 @@ export const applyEvent = (state: WorldState, event: WorldEvent): WorldState => 
       return handleCombat(state, event)
     case 'playerEndedTurn':
       return handlePlayerEndedTurn(state, event)
+    case 'playerDefeated':
+      return handlePlayerDefeated(state, event)
     case 'newTurn':
       return handleNewTurn(state)
     default:
@@ -124,6 +127,12 @@ const handlePlayerEndedTurn = (state: WorldState, event: PlayerEndedTurnWorldEve
   const { playerId } = event
   validatePlayerId(state, playerId)
   return state.updatePlayer(playerId, (player) => player.copy({ endedTurn: true }))
+}
+
+const handlePlayerDefeated = (state: WorldState, event: PlayerDefeatedWorldEvent): WorldState => {
+  const { playerId } = event
+  validatePlayerId(state, playerId)
+  return state.updatePlayer(playerId, (player) => player.copy({ defeated: true }))
 }
 
 const handleNewTurn = (state: WorldState): WorldState =>

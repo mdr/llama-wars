@@ -73,6 +73,12 @@ export interface NewTurnWorldEvent {
   type: 'newTurn'
 }
 
+export interface PlayerDefeatedWorldEvent {
+  id: WorldEventId
+  type: 'playerDefeated'
+  playerId: PlayerId
+}
+
 export type WorldEvent =
   | InitialiseWorldEvent
   | PlayerAddedWorldEvent
@@ -81,4 +87,5 @@ export type WorldEvent =
   | UnitMovedWorldEvent
   | CombatWorldEvent
   | PlayerEndedTurnWorldEvent
+  | PlayerDefeatedWorldEvent
   | NewTurnWorldEvent

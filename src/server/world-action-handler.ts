@@ -79,7 +79,7 @@ export class WorldActionHandler {
     return [{ id: this.nextWorldEventId, type: 'gameStarted', units }]
   }
 
-  private handleAttack = (action: AttackWorldAction): [CombatWorldEvent] =>
+  private handleAttack = (action: AttackWorldAction): WorldEvent[] =>
     new AttackWorldActionHandler(this.worldState, this.playerId, this.nextWorldEventId).handleAttack(action)
 
   private handleMoveUnit = (action: MoveUnitWorldAction): [UnitMovedWorldEvent] => {

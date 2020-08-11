@@ -178,6 +178,7 @@ export class BootScene extends Phaser.Scene {
     this.load.audio(AudioKeys.WALK, 'assets/audio/sfx_step_grass_l.mp3')
     // https://opengameart.org/content/ui-sound-effects-pack
     this.load.audio(AudioKeys.NEW_TURN, 'assets/audio/MENU A_Select.wav')
+    this.load.audio(AudioKeys.PLAYER_DEFEATED, 'assets/audio/MESSAGE-B_Decline.wav')
   }
 }
 
