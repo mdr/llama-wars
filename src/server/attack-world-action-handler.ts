@@ -1,10 +1,10 @@
+import * as R from 'ramda'
 import { WorldState } from '../world/world-state'
 import { AttackWorldAction } from '../world/world-actions'
-import { CombatWorldEvent, WorldEvent } from '../world/world-events'
+import { CombatWorldEvent, PlayerDefeatedWorldEvent, WorldEvent, WorldEventId } from '../world/world-events'
 import { Unit } from '../world/unit'
 import { PlayerId } from '../world/player'
 import { randomIntInclusive } from '../util/random-util'
-import { applyEvent } from '../world/world-event-evaluator'
 
 export class AttackWorldActionHandler {
   private readonly worldState: WorldState
@@ -22,17 +22,35 @@ export class AttackWorldActionHandler {
     const attackerDamage = Math.min(attacker.hitPoints.current, 10 + randomIntInclusive(-2, 2))
     const defenderDamage = Math.min(defender.hitPoints.current, 20 + randomIntInclusive(-3, 3))
     const combatWorldEvent = this.makeCombatWorldEvent(attacker, attackerDamage, defender, defenderDamage)
-    const newWorldState = applyEvent(this.worldState, combatWorldEvent)
+
+    let newWorldState = this.worldState.applyEvent(combatWorldEvent)
     const events: WorldEvent[] = [combatWorldEvent]
     let nextWorldEventId = this.nextWorldEventId + 1
     if (newWorldState.isPlayerDefeated(defender.playerId)) {
-      events.push({ id: nextWorldEventId++, type: 'playerDefeated', playerId: defender.playerId })
+      const event = this.playerDefeatedEvent(nextWorldEventId++, defender.playerId)
+      events.push(event)
+      newWorldState = newWorldState.applyEvent(event)
     }
     if (newWorldState.isPlayerDefeated(attacker.playerId)) {
-      events.push({ id: nextWorldEventId++, type: 'playerDefeated', playerId: attacker.playerId })
+      const event = this.playerDefeatedEvent(nextWorldEventId++, attacker.playerId)
+      events.push(event)
+      newWorldState = newWorldState.applyEvent(event)
+    }
+    const undefeatedPlayers = newWorldState.players.filter((player) => !player.defeated)
+    if (R.isEmpty(undefeatedPlayers)) {
+      events.push({ id: nextWorldEventId++, type: 'gameOver' })
+    } else if (undefeatedPlayers.length == 1) {
+      const victor = undefeatedPlayers[0].id
+      events.push({ id: nextWorldEventId++, type: 'gameOver', victor })
     }
     return events
   }
+
+  private playerDefeatedEvent = (id: WorldEventId, playerId: PlayerId): PlayerDefeatedWorldEvent => ({
+    id,
+    type: 'playerDefeated',
+    playerId: playerId,
+  })
 
   private validateAttack = (action: AttackWorldAction): { attacker: Unit; defender: Unit } => {
     const attackerId = action.attacker.unitId

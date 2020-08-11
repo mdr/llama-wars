@@ -26,6 +26,7 @@ export class TextsDisplayObject {
   private readonly defeatText: Phaser.GameObjects.Text
   private readonly defeatTextTweenX: Phaser.Tweens.Tween
   private readonly defeatTextTweenY: Phaser.Tweens.Tween
+  private readonly victoryText: Phaser.GameObjects.Text
 
   private get combinedState(): CombinedState {
     return new CombinedState(this.worldState, this.localGameState)
@@ -103,6 +104,15 @@ export class TextsDisplayObject {
       repeat: -1,
       paused: true,
     })
+    this.victoryText = this.scene.add
+      .text(462, 30, 'Victory!', {
+        stroke: '#000000',
+        strokeThickness: 4,
+      })
+      .setOrigin(0.5)
+      .setFontSize(42)
+      .setVisible(false)
+      .setDepth(100)
   }
 
   private handleActionTextClick = (): void => {
@@ -165,6 +175,7 @@ export class TextsDisplayObject {
       this.defeatTextTweenX.play()
       this.defeatTextTweenY.play()
     }
+    this.victoryText.setVisible(worldState.gameOverInfo?.victor === player.id)
   }
 
   private syncAttackModeText = (unitId: UnitId): void => {

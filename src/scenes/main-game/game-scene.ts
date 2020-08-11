@@ -2,7 +2,13 @@ import { addPoints, multiplyPoint, Point, subtractPoints } from '../point'
 import { Hex } from '../../world/hex'
 import { centerPoint, fromPoint } from '../hex-geometry'
 import { WorldState } from '../../world/world-state'
-import { CombatParticipantInfo, CombatWorldEvent, UnitMovedWorldEvent, WorldEvent } from '../../world/world-events'
+import {
+  CombatParticipantInfo,
+  CombatWorldEvent,
+  GameOverWorldEvent,
+  UnitMovedWorldEvent,
+  WorldEvent,
+} from '../../world/world-events'
 import { applyEvent } from '../../world/world-event-evaluator'
 import { UnitId } from '../../world/unit'
 import { UnreachableCaseError } from '../../util/unreachable-case-error'
@@ -225,12 +231,22 @@ export class GameScene extends Phaser.Scene {
       case 'playerDefeated':
         this.handlePlayerDefeated()
         break
+      case 'gameOver':
+        this.handleGameOver(event)
+        break
       case 'newTurn':
         this.handleNewTurn()
         break
       default:
         throw new UnreachableCaseError(event)
     }
+  }
+
+  private handleGameOver = (event: GameOverWorldEvent): void => {
+    if (event.victor === this.localGameState.playerId) {
+      this.sound.play(AudioKeys.VICTORY_MUSIC)
+    }
+    this.syncScene()
   }
 
   private handlePlayerEndedTurn = (): void => {

@@ -2,21 +2,41 @@ import { Hex } from './hex'
 import * as R from 'ramda'
 import { WorldMap } from './world-map'
 import { Unit, UnitId } from './unit'
-import { Option } from '../util/types'
+import { just, Maybe, Option, toMaybe, toOption } from '../util/types'
 import { Player, PlayerId } from './player'
 import assert = require('assert')
+import { applyEvent } from './world-event-evaluator'
+import { WorldEvent } from './world-events'
+
+interface GameOverInfo {
+  victor: Option<PlayerId>
+}
 
 export class WorldState {
   readonly turn: number /* turn = 0 before the game has started */
   readonly map: WorldMap
   readonly units: Unit[]
   readonly players: Player[]
+  readonly gameOverInfo?: GameOverInfo
 
-  constructor({ turn, map, units, players }: { turn: number; map: WorldMap; units: Unit[]; players: Player[] }) {
+  constructor({
+    turn,
+    map,
+    units,
+    players,
+    gameOverInfo,
+  }: {
+    turn: number
+    map: WorldMap
+    units: Unit[]
+    players: Player[]
+    gameOverInfo?: Option<GameOverInfo>
+  }) {
     this.turn = turn
     this.map = map
     this.units = units
     this.players = players
+    this.gameOverInfo = gameOverInfo
     assert(turn >= 0)
   }
 
@@ -25,8 +45,14 @@ export class WorldState {
     map = this.map,
     units = this.units,
     players = this.players,
-  }: { turn?: number; map?: WorldMap; units?: Unit[]; players?: Player[] } = {}): WorldState =>
-    new WorldState({ turn, map, units, players })
+    gameOverInfo = toMaybe(this.gameOverInfo),
+  }: {
+    turn?: number
+    map?: WorldMap
+    units?: Unit[]
+    players?: Player[]
+    gameOverInfo?: Maybe<GameOverInfo>
+  } = {}): WorldState => new WorldState({ turn, map, units, players, gameOverInfo: toOption(gameOverInfo) })
 
   public get gameHasStarted(): boolean {
     return this.turn > 0
@@ -91,6 +117,7 @@ export class WorldState {
     map: this.map.toJson(),
     units: this.units.map((unit) => unit.toJson()),
     players: this.players.map((player) => player.toJson()),
+    gameOverInfo: this.gameOverInfo,
   })
 
   public static fromJson = (json: any): WorldState =>
@@ -99,7 +126,12 @@ export class WorldState {
       map: WorldMap.fromJson(json.map),
       units: json.units.map((unit: any) => Unit.fromJson(unit)),
       players: json.players.map((unit: any) => Player.fromJson(unit)),
+      gameOverInfo: json.gameOverInfo,
     })
 
   public isValidPlayerId = (playerId: PlayerId): boolean => R.any((player) => player.id == playerId, this.players)
+
+  public gameOver = (victor: Option<number>): WorldState => this.copy({ gameOverInfo: just({ victor }) })
+
+  public applyEvent = (event: WorldEvent): WorldState => applyEvent(this, event)
 }

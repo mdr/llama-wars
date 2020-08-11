@@ -4,6 +4,7 @@ export const AudioKeys = {
   WALK: 'walk',
   NEW_TURN: 'new-turn',
   PLAYER_DEFEATED: 'player-defeated',
+  VICTORY_MUSIC: 'victory-music',
 }
 
 export const ALL_AUDIO_KEYS = [
@@ -12,4 +13,5 @@ export const ALL_AUDIO_KEYS = [
   AudioKeys.WALK,
   AudioKeys.NEW_TURN,
   AudioKeys.PLAYER_DEFEATED,
+  AudioKeys.VICTORY_MUSIC,
 ]

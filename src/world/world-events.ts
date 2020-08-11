@@ -79,6 +79,12 @@ export interface PlayerDefeatedWorldEvent {
   playerId: PlayerId
 }
 
+export interface GameOverWorldEvent {
+  id: WorldEventId
+  type: 'gameOver'
+  victor?: PlayerId
+}
+
 export type WorldEvent =
   | InitialiseWorldEvent
   | PlayerAddedWorldEvent
@@ -89,3 +95,4 @@ export type WorldEvent =
   | PlayerEndedTurnWorldEvent
   | PlayerDefeatedWorldEvent
   | NewTurnWorldEvent
+  | GameOverWorldEvent

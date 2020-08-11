@@ -2,6 +2,7 @@ import * as R from 'ramda'
 import { WorldState } from './world-state'
 import {
   CombatWorldEvent,
+  GameOverWorldEvent,
   GameStartedWorldEvent,
   InitialiseWorldEvent,
   PlayerAddedWorldEvent,
@@ -34,6 +35,8 @@ export const applyEvent = (state: WorldState, event: WorldEvent): WorldState => 
       return handlePlayerDefeated(state, event)
     case 'newTurn':
       return handleNewTurn(state)
+    case 'gameOver':
+      return handleGameOver(state, event)
     default:
       throw new UnreachableCaseError(event)
   }
@@ -141,3 +144,11 @@ const handleNewTurn = (state: WorldState): WorldState =>
     units: state.units.map((unit) => unit.refreshActionPoints()),
     players: state.players.map((player) => player.copy({ endedTurn: false })),
   })
+
+const handleGameOver = (state: WorldState, event: GameOverWorldEvent): WorldState => {
+  const { victor } = event
+  if (victor) {
+    validatePlayerId(state, victor)
+  }
+  return state.gameOver(victor)
+}
