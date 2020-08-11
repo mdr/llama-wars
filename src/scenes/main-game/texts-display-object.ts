@@ -23,6 +23,9 @@ export class TextsDisplayObject {
   private readonly endTurnText: Phaser.GameObjects.Text
   private readonly playerText: Phaser.GameObjects.Text
   private readonly hourglass: Phaser.GameObjects.Image
+  private readonly defeatText: Phaser.GameObjects.Text
+  private readonly defeatTextTweenX: Phaser.Tweens.Tween
+  private readonly defeatTextTweenY: Phaser.Tweens.Tween
 
   private get combinedState(): CombinedState {
     return new CombinedState(this.worldState, this.localGameState)
@@ -73,6 +76,33 @@ export class TextsDisplayObject {
       .on('pointerdown', () => this.localActionDispatcher({ type: 'endTurn' }))
       .on('pointerover', () => this.endTurnText.setFill(HOVER_ACTION_TEXT_COLOUR))
       .on('pointerout', () => this.endTurnText.setFill(ACTION_TEXT_COLOUR))
+    this.defeatText = this.scene.add
+      .text(462, (mapHeight(map) * HEX_SIZE + DRAWING_OFFSET.y) / 2, 'You have been defeated!', {
+        stroke: '#000000',
+        strokeThickness: 4,
+      })
+      .setOrigin(0.5)
+      .setFontSize(42)
+      .setVisible(false)
+      .setDepth(100)
+    this.defeatTextTweenX = this.scene.tweens.add({
+      targets: this.defeatText,
+      x: '+=50',
+      duration: 1900,
+      ease: 'Sine.easeInOut',
+      yoyo: true,
+      repeat: -1,
+      paused: true,
+    })
+    this.defeatTextTweenY = this.scene.tweens.add({
+      targets: this.defeatText,
+      y: '+=50',
+      duration: 2000,
+      ease: 'Sine.easeInOut',
+      yoyo: true,
+      repeat: -1,
+      paused: true,
+    })
   }
 
   private handleActionTextClick = (): void => {
@@ -105,8 +135,9 @@ export class TextsDisplayObject {
   public syncScene = (worldState: WorldState, localGameState: LocalGameState): void => {
     this.worldState = worldState
     this.localGameState = localGameState
+    const player = this.combinedState.getCurrentPlayer()
     this.hourglass.setVisible(localGameState.actionOutstandingWithServer)
-    this.playerText.setText(`${this.combinedState.getCurrentPlayer().name} - Turn ${this.worldState.turn}`)
+    this.playerText.setText(`${player.name} - Turn ${this.worldState.turn}`)
     this.selectionText.setText('')
     this.actionText.setText('')
     this.actionText2.setText('')
@@ -124,10 +155,15 @@ export class TextsDisplayObject {
       default:
         throw new UnreachableCaseError(mode)
     }
-    if (this.combinedState.getCurrentPlayer().endedTurn) {
+    if (player.endedTurn) {
       this.endTurnText.setText('Waiting for next turn...')
     } else {
       this.endTurnText.setText('End Turn (Shift + Enter)')
+    }
+    this.defeatText.setVisible(player.defeated)
+    if (player.defeated) {
+      this.defeatTextTweenX.play()
+      this.defeatTextTweenY.play()
     }
   }
 
