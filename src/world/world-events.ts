@@ -17,6 +17,19 @@ export interface PlayerAddedWorldEvent {
   playerId: PlayerId
 }
 
+export interface PlayerChangedNameWorldEvent {
+  id: WorldEventId
+  type: 'playerChangedName'
+  playerId: PlayerId
+  name: string
+}
+
+export interface PlayerAddedWorldEvent {
+  id: WorldEventId
+  type: 'playerAdded'
+  playerId: PlayerId
+}
+
 export interface GameStartedWorldEvent {
   id: WorldEventId
   type: 'gameStarted'
@@ -63,6 +76,7 @@ export interface NewTurnWorldEvent {
 export type WorldEvent =
   | InitialiseWorldEvent
   | PlayerAddedWorldEvent
+  | PlayerChangedNameWorldEvent
   | GameStartedWorldEvent
   | UnitMovedWorldEvent
   | CombatWorldEvent

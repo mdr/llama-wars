@@ -5,12 +5,13 @@ import {
   GameStartedWorldEvent,
   InitialiseWorldEvent,
   PlayerAddedWorldEvent,
+  PlayerChangedNameWorldEvent,
   PlayerEndedTurnWorldEvent,
   UnitMovedWorldEvent,
   WorldEvent,
 } from './world-events'
 import { UnreachableCaseError } from '../util/unreachable-case-error'
-import { Player } from './player'
+import { Player, PlayerId } from './player'
 
 export const applyEvent = (state: WorldState, event: WorldEvent): WorldState => {
   switch (event.type) {
@@ -18,6 +19,8 @@ export const applyEvent = (state: WorldState, event: WorldEvent): WorldState => 
       return handleInitialise(event)
     case 'playerAdded':
       return handlePlayerAdded(state, event)
+    case 'playerChangedName':
+      return handlePlayerChangedName(state, event)
     case 'gameStarted':
       return handleGameStarted(state, event)
     case 'unitMoved':
@@ -40,7 +43,7 @@ const handleInitialise = (event: InitialiseWorldEvent): WorldState => {
   return event.state
 }
 
-const handlePlayerAdded = (state: WorldState, event: PlayerAddedWorldEvent) => {
+const handlePlayerAdded = (state: WorldState, event: PlayerAddedWorldEvent): WorldState => {
   if (R.any((player) => player.id == event.playerId, state.players)) {
     throw `Player ID already in use`
   }
@@ -49,7 +52,19 @@ const handlePlayerAdded = (state: WorldState, event: PlayerAddedWorldEvent) => {
   return state.addPlayer(player)
 }
 
-const handleGameStarted = (state: WorldState, event: GameStartedWorldEvent) => {
+const handlePlayerChangedName = (state: WorldState, event: PlayerChangedNameWorldEvent): WorldState => {
+  const { playerId, name } = event
+  const player = getPlayer(state, playerId)
+  return state.replacePlayer(playerId, player.copy({ name }))
+}
+
+const getPlayer = (state: WorldState, playerId: PlayerId): Player => {
+  const player = state.findPlayer(playerId)
+  if (!player) throw `No player found with ID ${playerId}`
+  return player
+}
+
+const handleGameStarted = (state: WorldState, event: GameStartedWorldEvent): WorldState => {
   if (state.gameHasStarted) {
     throw `Game already started`
   }
@@ -108,8 +123,7 @@ const handleCombat = (state: WorldState, event: CombatWorldEvent): WorldState =>
 
 const handlePlayerEndedTurn = (state: WorldState, event: PlayerEndedTurnWorldEvent): WorldState => {
   const { playerId } = event
-  const player = state.findPlayer(playerId)
-  if (!player) throw `No player found with ID ${playerId}`
+  const player = getPlayer(state, playerId)
   return state.replacePlayer(playerId, player.copy({ endedTurn: true }))
 }
 

@@ -1,9 +1,23 @@
 import { WorldState } from '../world/world-state'
-import { AttackWorldAction, InitialiseWorldAction, MoveUnitWorldAction, WorldAction } from '../world/world-actions'
-import { CombatWorldEvent, UnitMovedWorldEvent, WorldEvent } from '../world/world-events'
+import {
+  AttackWorldAction,
+  ChangePlayerNameWorldAction,
+  InitialiseWorldAction,
+  MoveUnitWorldAction,
+  WorldAction,
+} from '../world/world-actions'
+import {
+  CombatWorldEvent,
+  GameStartedWorldEvent,
+  InitialiseWorldEvent,
+  PlayerAddedWorldEvent,
+  PlayerChangedNameWorldEvent,
+  UnitMovedWorldEvent,
+  WorldEvent,
+} from '../world/world-events'
 import * as R from 'ramda'
 import { Unit } from '../world/unit'
-import { PlayerId } from '../world/player'
+import { Player, PlayerId } from '../world/player'
 import { ActionPoints } from '../world/action-points'
 import { HitPoints } from '../world/hit-points'
 import { randomElement } from '../util/random-util'
@@ -28,6 +42,8 @@ export class WorldActionHandler {
         return this.handleInitialise(action)
       case 'addPlayer':
         return this.handleAddPlayer()
+      case 'changePlayerName':
+        return this.handleChangePlayerName(action)
       case 'startGame':
         return this.handleStartGame()
       case 'attack':
@@ -39,20 +55,25 @@ export class WorldActionHandler {
     }
   }
 
-  private handleInitialise = (action: InitialiseWorldAction): WorldEvent => {
+  private handleInitialise = (action: InitialiseWorldAction): InitialiseWorldEvent => {
     if (this.nextWorldEventId > 0) {
       throw `Can only initialise as the first event`
     }
     return { id: this.nextWorldEventId, type: 'initialise', state: action.state }
   }
 
-  private handleAddPlayer = (): WorldEvent => {
+  private handleAddPlayer = (): PlayerAddedWorldEvent => {
     const existingPlayerIds = this.worldState.players.map((player) => player.id)
     const playerId = R.apply(Math.max, existingPlayerIds) + 1
     return { id: this.nextWorldEventId, type: 'playerAdded', playerId }
   }
 
-  private handleStartGame = (): WorldEvent => {
+  private handleChangePlayerName = (action: ChangePlayerNameWorldAction): PlayerChangedNameWorldEvent => {
+    this.getPlayer()
+    return { id: this.nextWorldEventId, type: 'playerChangedName', playerId: this.playerId, name: action.name }
+  }
+
+  private handleStartGame = (): GameStartedWorldEvent => {
     if (this.worldState.gameHasStarted) {
       throw `Cannot start an already-started game`
     }
@@ -146,7 +167,7 @@ export class WorldActionHandler {
   }
 
   private handleEndTurn = (): WorldEvent => {
-    const player = this.worldState.findPlayer(this.playerId)
+    const player = this.getPlayer()
     if (!player) throw `No player with ID ${this.playerId}`
     if (player.endedTurn) throw `Player has already ended their turn`
     const playersYetToEndTheirTurn = this.worldState.players
@@ -158,5 +179,11 @@ export class WorldActionHandler {
     } else {
       return { id: this.nextWorldEventId, type: 'playerEndedTurn', playerId: this.playerId }
     }
+  }
+
+  private getPlayer = (): Player => {
+    const player = this.worldState.findPlayer(this.playerId)
+    if (!player) throw `No player with ID ${this.playerId}`
+    return player
   }
 }

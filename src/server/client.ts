@@ -29,7 +29,6 @@ export class Client {
   constructor(serverConnection: Peer.DataConnection) {
     this.serverConnection = serverConnection
     serverConnection.on('data', (message: any) => {
-      console.log('Message received from server:')
       console.log(message)
       this.notifyListeners(message)
     })

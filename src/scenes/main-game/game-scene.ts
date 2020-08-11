@@ -209,8 +209,9 @@ export class GameScene extends Phaser.Scene {
     this.worldState = applyEvent(oldWorldState, event)
     switch (event.type) {
       case 'initialise':
-      case 'gameStarted':
       case 'playerAdded':
+      case 'playerChangedName':
+      case 'gameStarted':
         break
       case 'unitMoved':
         this.handleUnitMovedWorldEvent(event, oldWorldState)

@@ -63,7 +63,13 @@ export class LobbyScene extends Phaser.Scene {
             const plugin = this.plugins.get('rexTextEdit') as any
             plugin.edit(playerText, {
               onClose: () => {
-                return
+                if (this.serverOrClient) {
+                  if (this.serverOrClient instanceof Server) {
+                    this.serverOrClient.handleAction(playerId, { type: 'changePlayerName', name: playerText.text })
+                  } else {
+                    this.serverOrClient.sendAction(playerId, { type: 'changePlayerName', name: playerText.text })
+                  }
+                }
               },
             })
           }
@@ -71,7 +77,8 @@ export class LobbyScene extends Phaser.Scene {
       this.playerNameTexts.set(playerId, playerText)
     }
     let y = 100
-    for (const player of this.worldState.players) {
+    const sortedPlayers = R.sortBy((player) => player.id, this.worldState.players)
+    for (const player of sortedPlayers) {
       const playerText = this.playerNameTexts.get(player.id)!
       playerText.setText(player.name).setY(y)
       y += 50

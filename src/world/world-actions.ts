@@ -11,6 +11,11 @@ export interface AddPlayerWorldAction {
   type: 'addPlayer'
 }
 
+export interface ChangePlayerNameWorldAction {
+  type: 'changePlayerName'
+  name: string
+}
+
 export interface StartGameWorldAction {
   type: 'startGame'
 }
@@ -40,6 +45,7 @@ export interface EndTurnWorldAction {
 export type WorldAction =
   | InitialiseWorldAction
   | AddPlayerWorldAction
+  | ChangePlayerNameWorldAction
   | StartGameWorldAction
   | MoveUnitWorldAction
   | AttackWorldAction
