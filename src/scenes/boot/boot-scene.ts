@@ -167,7 +167,7 @@ export class BootScene extends Phaser.Scene {
     // https://opengameart.org/content/hourglass-icon
     this.load.image('hourglass', 'assets/sprites/Hourglass.png')
     // https://opengameart.org/content/grass-textures-tiles
-    this.load.image('grass', 'assets/sprites/grass.png')
+    this.load.image('grass', 'assets/sprites/grass2.png')
 
     // https://opengameart.org/content/37-hitspunches
     this.load.audio(AudioKeys.ATTACK, 'assets/audio/hit18.mp3.mp3')

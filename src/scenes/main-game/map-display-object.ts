@@ -35,7 +35,7 @@ export class MapDisplayObject {
 
   private createHex = (hex: Hex): void => {
     const polygonCenter = hexCenter(hex)
-    this.scene.add.image(polygonCenter.x, polygonCenter.y, 'grass').setScale(0.41).setDepth(-2)
+    this.scene.add.image(polygonCenter.x, polygonCenter.y, 'grass').setScale(/* 0.41*/ 0.65).setDepth(-2)
     const polygon = this.addPolygon(polygonCenter, HEX_SIZE)
     this.hexPolygons.set(hex.toString(), polygon)
   }
