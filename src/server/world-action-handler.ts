@@ -1,3 +1,4 @@
+import * as R from 'ramda'
 import { WorldState } from '../world/world-state'
 import {
   AttackWorldAction,
@@ -15,10 +16,9 @@ import {
   UnitMovedWorldEvent,
   WorldEvent,
 } from '../world/world-events'
-import * as R from 'ramda'
-import { Unit } from '../world/unit'
 import { Player, PlayerId } from '../world/player'
 import { WorldGenerator } from './world-generator'
+import { AttackWorldActionHandler } from './attack-world-action-handler'
 
 export class WorldActionHandler {
   private readonly worldState: WorldState
@@ -76,52 +76,8 @@ export class WorldActionHandler {
     return { id: this.nextWorldEventId, type: 'gameStarted', units }
   }
 
-  private handleAttack = (action: AttackWorldAction): CombatWorldEvent => {
-    const attackerId = action.attacker.unitId
-    const attacker = this.worldState.findUnitById(attackerId)
-    if (!attacker) throw `No unit found with ID ${attackerId}`
-    if (attacker.playerId != this.playerId) throw `Cannot control another player's unit: ${attacker.id}`
-    if (attacker.actionPoints.current < 1) throw `Not enough action points to attack`
-    if (!attacker.location.equals(action.attacker.location)) throw `Attacker not in expected location`
-
-    const defenderId = action.defender.unitId
-    const defender = this.worldState.findUnitById(defenderId)
-    if (!defender) throw `No unit found with ID ${defenderId}`
-    if (defender.playerId == this.playerId) throw `Cannot attack own unit`
-    if (!defender.location.equals(action.defender.location)) throw `Defender not in expected location`
-
-    if (!attacker.location.isAdjacentTo(defender.location))
-      throw `Invalid unit attack between non-adjacent hexes ${attacker.location} to ${defender.location}`
-
-    const attackerDamage = Math.min(attacker.hitPoints.current, 10)
-    const defenderDamage = Math.min(defender.hitPoints.current, 20)
-    return this.makeCombatWorldEvent(attacker, attackerDamage, defender, defenderDamage)
-  }
-
-  private makeCombatWorldEvent = (
-    attacker: Unit,
-    attackerDamage: number,
-    defender: Unit,
-    defenderDamage: number,
-  ): CombatWorldEvent => ({
-    id: this.nextWorldEventId,
-    type: 'combat',
-    attacker: {
-      playerId: attacker.playerId,
-      unitId: attacker.id,
-      location: attacker.location,
-      damage: attackerDamage,
-      killed: attacker.hitPoints.current == attackerDamage,
-    },
-    defender: {
-      playerId: defender.playerId,
-      unitId: defender.id,
-      location: defender.location,
-      damage: defenderDamage,
-      killed: defender.hitPoints.current == defenderDamage,
-    },
-    actionPointsConsumed: 1,
-  })
+  private handleAttack = (action: AttackWorldAction): CombatWorldEvent =>
+    new AttackWorldActionHandler(this.worldState, this.playerId, this.nextWorldEventId).handleAttack(action)
 
   private handleMoveUnit = (action: MoveUnitWorldAction): UnitMovedWorldEvent => {
     const { unitId, to } = action
