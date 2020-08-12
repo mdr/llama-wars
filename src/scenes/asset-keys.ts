@@ -8,6 +8,7 @@ export const AudioKeys = {
   PLAYER_DEFEATED: 'player-defeated',
   VICTORY_MUSIC: 'victory-music',
   CLICK: 'click',
+  SPIT: 'spit',
 }
 
 export const ALL_AUDIO_KEYS = [
@@ -20,4 +21,5 @@ export const ALL_AUDIO_KEYS = [
   AudioKeys.PLAYER_DEFEATED,
   AudioKeys.VICTORY_MUSIC,
   AudioKeys.CLICK,
+  AudioKeys.SPIT,
 ]

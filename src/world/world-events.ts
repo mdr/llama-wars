@@ -2,6 +2,7 @@ import { Hex } from './hex'
 import { Unit, UnitId } from './unit'
 import { PlayerId } from './player'
 import { WorldState } from './world-state'
+import { AttackType } from './world-actions'
 
 export type WorldEventId = number
 
@@ -57,6 +58,7 @@ export interface CombatParticipantInfo {
 export interface CombatWorldEvent {
   id: WorldEventId
   type: 'combat'
+  attackType: AttackType
   attacker: CombatParticipantInfo
   defender: CombatParticipantInfo
   actionPointsConsumed: number

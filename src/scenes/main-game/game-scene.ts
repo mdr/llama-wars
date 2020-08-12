@@ -298,6 +298,7 @@ export class GameScene extends Phaser.Scene {
     this.updateSelectionAfterCombat(attacker, defender, oldWorldState)
     this.syncScene({
       type: 'combat',
+      attackType: event.attackType,
       attacker,
       defender,
     })

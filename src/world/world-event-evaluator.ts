@@ -14,6 +14,7 @@ import {
 } from './world-events'
 import { UnreachableCaseError } from '../util/unreachable-case-error'
 import { Player, PlayerId } from './player'
+import { canAttackOccur } from '../server/attack-world-action-handler'
 
 export const applyEvent = (state: WorldState, event: WorldEvent): WorldState => {
   switch (event.type) {
@@ -107,8 +108,8 @@ const handleCombat = (state: WorldState, event: CombatWorldEvent): WorldState =>
     throw `Invalid location for defender. Defending unit ${defenderUnit.id} is at location ${defenderUnit.location}, but was expected to be at ${defender.location}`
 
   if (attackerUnit.playerId == defenderUnit.playerId) throw `Invalid combat with self`
-  if (!attacker.location.isAdjacentTo(defender.location))
-    throw `Invalid combat between non-adjacent hexes ${attacker.location} to ${defender.location}`
+  if (!canAttackOccur(event.attackType, attacker.location, defender.location))
+    throw `Invalid combat of type ${event.attackType} between hexes ${attacker.location} to ${defender.location}`
   if (attackerUnit.actionPoints.current < event.actionPointsConsumed) throw `Invalid action point usage`
 
   let newState = state

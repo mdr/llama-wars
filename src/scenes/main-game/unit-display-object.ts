@@ -94,6 +94,27 @@ export class UnitDisplayObject {
     await playTween(tween)
   }
 
+  public runSpitAnimation = async (from: Hex, to: Hex): Promise<void> => {
+    const fromPoint = hexCenter(from)
+    const toPoint = hexCenter(to)
+    const image = this.scene.add.image(fromPoint.x, fromPoint.y, 'spit')
+    const tween = this.scene.tweens.create({
+      targets: image,
+      x: {
+        from: fromPoint.x,
+        to: toPoint.x,
+      },
+      y: {
+        from: fromPoint.y,
+        to: toPoint.y,
+      },
+      duration: 300,
+      ease: 'Linear',
+    })
+    await playTween(tween)
+    image.destroy()
+  }
+
   public runDamageAnimation = async (location: Hex, damage: number): Promise<void> => {
     const locationPoint = hexCenter(location)
     const text = this.scene.add

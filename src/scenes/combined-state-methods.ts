@@ -6,6 +6,7 @@ import { Hex } from '../world/hex'
 import * as R from 'ramda'
 import { Player, PlayerId } from '../world/player'
 import { AttackType } from '../world/world-actions'
+import { canAttackOccur } from '../server/attack-world-action-handler'
 
 export class CombinedState {
   protected readonly worldState: WorldState
@@ -50,9 +51,7 @@ export class CombinedState {
       this.unitCouldPotentiallyAttack(unit) &&
       targetUnit != undefined &&
       targetUnit.playerId != this.localGameState.playerId &&
-      attackType == 'melee'
-        ? unit.location.isAdjacentTo(location)
-        : unit.location.distanceTo(location) <= 2
+      canAttackOccur(attackType, unit.location, location)
     )
       return targetUnit
   }

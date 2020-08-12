@@ -169,6 +169,8 @@ export class BootScene extends Phaser.Scene {
     // https://opengameart.org/content/grass-textures-tiles
     // https://opengameart.org/content/grass-texture
     this.load.image('grass', 'assets/sprites/grass2.png')
+    // https://opengameart.org/content/puddle-corpses
+    this.load.image('spit', 'assets/sprites/puddle_green.png')
 
     // https://opengameart.org/content/37-hitspunches
     this.load.audio(AudioKeys.ATTACK_1, 'assets/audio/hit14.mp3.mp3')
@@ -187,6 +189,8 @@ export class BootScene extends Phaser.Scene {
 
     // https://opengameart.org/content/gui-sound-effects
     this.load.audio(AudioKeys.CLICK, 'assets/audio/click.wav')
+    //https://freesound.org/people/tvlaudio/sounds/267897/
+    this.load.audio(AudioKeys.SPIT, 'assets/audio/spit.wav')
   }
 }
 

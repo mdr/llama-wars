@@ -14,6 +14,7 @@ import { Unit } from '../../world/unit'
 import { Option } from '../../util/types'
 import { LocalGameState } from '../local-game-state'
 import Polygon = Phaser.GameObjects.Polygon
+import { canAttackOccur } from '../../server/attack-world-action-handler'
 
 type TileState = 'default' | 'selected' | 'targetable'
 
@@ -93,7 +94,7 @@ export class MapDisplayObject {
       }
     }
     if (mode.type == 'attack') {
-      if (selectedHex && hex.distanceTo(selectedHex) <= (mode.attackType == 'melee' ? 1 : 2)) {
+      if (selectedHex && canAttackOccur(mode.attackType, hex, selectedHex)) {
         const unit = this.findUnitInLocation(hex)
         if (unit && unit.playerId != playerId) {
           return 'targetable'

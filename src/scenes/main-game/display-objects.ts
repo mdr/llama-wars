@@ -11,6 +11,7 @@ import { UnreachableCaseError } from '../../util/unreachable-case-error'
 import { Option } from '../../util/types'
 import { AudioKeys } from '../asset-keys'
 import { randomElement } from '../../util/random-util'
+import { AttackType } from '../../world/world-actions'
 
 export interface MoveAnimationSpec {
   type: 'move'
@@ -21,6 +22,7 @@ export interface MoveAnimationSpec {
 
 export interface CombatAnimationSpec {
   type: 'combat'
+  attackType: AttackType
   attacker: {
     unitId: UnitId
     location: Hex
@@ -229,12 +231,20 @@ export class DisplayObjects {
     if (!attackerDisplayObject) throw `Unexpected missing display object for unit ${attacker.unitId}`
     const defenderDisplayObject = this.animatedUnitDisplayObjects.get(defender.unitId)
     if (!defenderDisplayObject) throw `Unexpected missing display object for unit ${defender.unitId}`
-    this.scene.sound.play(randomElement([AudioKeys.ATTACK_1, AudioKeys.ATTACK_2, AudioKeys.ATTACK_3]))
+    if (animation.attackType === 'melee') {
+      this.scene.sound.play(randomElement([AudioKeys.ATTACK_1, AudioKeys.ATTACK_2, AudioKeys.ATTACK_3]))
+    } else {
+      this.scene.sound.play(AudioKeys.SPIT)
+    }
     if (attacker.killed || defender.killed) {
       this.scene.sound.play(AudioKeys.DEATH)
     }
-    const simultaneousAnimations = []
-    simultaneousAnimations.push(attackerDisplayObject.runAttackAnimation(attacker.location, defender.location))
+    const simultaneousAnimations: Promise<void>[] = []
+    if (animation.attackType === 'melee') {
+      simultaneousAnimations.push(attackerDisplayObject.runAttackAnimation(attacker.location, defender.location))
+    } else {
+      simultaneousAnimations.push(attackerDisplayObject.runSpitAnimation(attacker.location, defender.location))
+    }
     if (attacker.killed) {
       simultaneousAnimations.push(attackerDisplayObject.runDeathAnimation())
     }
@@ -242,7 +252,7 @@ export class DisplayObjects {
       simultaneousAnimations.push(defenderDisplayObject.runDeathAnimation())
     }
     await Promise.all(simultaneousAnimations)
-    attackerDisplayObject.runDamageAnimation(attacker.location, attacker.damage)
-    defenderDisplayObject.runDamageAnimation(defender.location, defender.damage)
+    if (attacker.damage > 0) attackerDisplayObject.runDamageAnimation(attacker.location, attacker.damage)
+    if (defender.damage > 0) defenderDisplayObject.runDamageAnimation(defender.location, defender.damage)
   }
 }

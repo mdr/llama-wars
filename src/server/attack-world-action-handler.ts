@@ -1,10 +1,20 @@
 import * as R from 'ramda'
 import { WorldState } from '../world/world-state'
-import { AttackWorldAction } from '../world/world-actions'
+import { AttackType, AttackWorldAction } from '../world/world-actions'
 import { CombatWorldEvent, PlayerDefeatedWorldEvent, WorldEvent, WorldEventId } from '../world/world-events'
 import { Unit } from '../world/unit'
 import { PlayerId } from '../world/player'
 import { randomIntInclusive } from '../util/random-util'
+import { Hex } from '../world/hex'
+
+export const canAttackOccur = (attackType: AttackType, from: Hex, to: Hex): boolean => {
+  switch (attackType) {
+    case 'melee':
+      return from.isAdjacentTo(to)
+    case 'spit':
+      return from.distanceTo(to) <= 2
+  }
+}
 
 export class AttackWorldActionHandler {
   private readonly worldState: WorldState
@@ -19,9 +29,12 @@ export class AttackWorldActionHandler {
 
   public handleAttack = (action: AttackWorldAction): WorldEvent[] => {
     const { attacker, defender } = this.validateAttack(action)
-    const attackerDamage = Math.min(attacker.hitPoints.current, 10 + randomIntInclusive(-2, 2))
-    const defenderDamage = Math.min(defender.hitPoints.current, 20 + randomIntInclusive(-3, 3))
-    const combatWorldEvent = this.makeCombatWorldEvent(attacker, attackerDamage, defender, defenderDamage)
+    const { attackType } = action
+    const rawAttackerDamage = attackType === 'melee' ? randomIntInclusive(8, 12) : 0
+    const rawDefenderDamage = attackType === 'melee' ? randomIntInclusive(-17, 23) : randomIntInclusive(4, 6)
+    const attackerDamage = Math.min(attacker.hitPoints.current, rawAttackerDamage)
+    const defenderDamage = Math.min(defender.hitPoints.current, rawDefenderDamage)
+    const combatWorldEvent = this.makeCombatWorldEvent(attackType, attacker, attackerDamage, defender, defenderDamage)
 
     let newWorldState = this.worldState.applyEvent(combatWorldEvent)
     const events: WorldEvent[] = [combatWorldEvent]
@@ -66,12 +79,13 @@ export class AttackWorldActionHandler {
     if (defender.playerId == this.playerId) throw `Cannot attack own unit`
     if (!defender.location.equals(action.defender.location)) throw `Defender not in expected location`
 
-    if (!attacker.location.isAdjacentTo(defender.location))
-      throw `Invalid unit attack between non-adjacent hexes ${attacker.location} to ${defender.location}`
+    if (!canAttackOccur(action.attackType, attacker.location, defender.location))
+      throw `Invalid unit attack of type ${action.attackType} between hexes ${attacker.location} to ${defender.location} too far apart`
     return { attacker, defender }
   }
 
   private makeCombatWorldEvent = (
+    attackType: AttackType,
     attacker: Unit,
     attackerDamage: number,
     defender: Unit,
@@ -79,6 +93,7 @@ export class AttackWorldActionHandler {
   ): CombatWorldEvent => ({
     id: this.nextWorldEventId,
     type: 'combat',
+    attackType,
     attacker: {
       playerId: attacker.playerId,
       unitId: attacker.id,
