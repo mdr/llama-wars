@@ -7,6 +7,7 @@ import { INITIAL_WORLD_STATE } from '../../world/initial-world-state'
 import { setUrlInfo } from '../boot/boot-scene'
 import { LOBBY_SCENE_KEY, LobbySceneData } from '../lobby/lobby-scene'
 import { AudioKeys } from '../asset-keys'
+import { HOST_PLAYER_ID } from '../../world/player'
 
 export const MAIN_MENU_SCENE_KEY = 'MainMenu'
 
@@ -33,7 +34,7 @@ export class MainMenuScene extends Phaser.Scene {
   private handleHostGame = async (): Promise<void> => {
     const worldEventDb = await openWorldEventDb()
     const gameId: GameId = uuid()
-    const playerId = 1
+    const playerId = HOST_PLAYER_ID
     const server = new Server(worldEventDb, gameId, INITIAL_WORLD_STATE, 0)
     server.handleAction(playerId, { type: 'initialise', state: INITIAL_WORLD_STATE })
     setUrlInfo({ gameId })

@@ -17,7 +17,7 @@ import {
   UnitMovedWorldEvent,
   WorldEvent,
 } from '../world/world-events'
-import { Player, PlayerId } from '../world/player'
+import { HOST_PLAYER_ID, Player, PlayerId } from '../world/player'
 import { WorldGenerator } from './world-generator'
 import { AttackWorldActionHandler } from './attack-world-action-handler'
 import { applyEvent } from '../world/world-event-evaluator'
@@ -73,6 +73,9 @@ export class WorldActionHandler {
   private handleStartGame = (): [GameStartedWorldEvent] => {
     if (this.worldState.gameHasStarted) {
       throw `Cannot start an already-started game`
+    }
+    if (this.playerId !== HOST_PLAYER_ID) {
+      throw `Cannot start the game unless the host`
     }
     const units = new WorldGenerator(this.worldState).generateUnits()
     return [{ id: this.nextWorldEventId, type: 'gameStarted', units }]
