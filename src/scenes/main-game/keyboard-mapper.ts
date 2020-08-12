@@ -31,7 +31,10 @@ export const mapToLocalAction = (event: KeyboardEvent, mode: Mode): Option<Local
       if (mode.type == 'selectHex') return { type: 'enterMoveMode' }
       break
     case 'a':
-      if (mode.type == 'selectHex') return { type: 'enterAttackMode' }
+      if (mode.type == 'selectHex') return { type: 'enterAttackMode', attackType: 'melee' }
+      break
+    case 's':
+      if (mode.type == 'selectHex') return { type: 'enterAttackMode', attackType: 'spit' }
       break
   }
 }

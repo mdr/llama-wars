@@ -1,5 +1,5 @@
 import { LocalGameState } from '../local-game-state'
-import { WorldAction } from '../../world/world-actions'
+import { AttackType, WorldAction } from '../../world/world-actions'
 import { WorldState } from '../../world/world-state'
 import { LocalAction } from './local-action'
 import { nothing, Option } from '../../util/types'
@@ -43,11 +43,11 @@ export class LocalActionProcessor {
       case 'enterMoveMode':
         return this.handleEnterMoveMode()
       case 'enterAttackMode':
-        return this.handleEnterAttackMode()
+        return this.handleEnterAttackMode(action.attackType)
       case 'completeMove':
         return this.handleCompleteMove(action.unitId, action.hex)
       case 'completeAttack':
-        return this.handleCompleteAttack(action.unitId, action.hex)
+        return this.handleCompleteAttack(action.unitId, action.hex, action.attackType)
       case 'selectHex':
         return this.handleSelectHex(action.hex)
       default:
@@ -93,16 +93,17 @@ export class LocalActionProcessor {
       if (this.combinedState.unitCanMoveToHex(selectedUnit, hex)) {
         return this.moveToHex(selectedUnit, hex)
       }
-      const targetUnit = this.combinedState.unitCanAttackHex(selectedUnit, hex)
+      const targetUnit = this.combinedState.unitCanAttackHex(selectedUnit, hex, 'melee')
       if (targetUnit) {
-        return this.attackHex(selectedUnit, targetUnit)
+        return this.attackHex('melee', selectedUnit, targetUnit)
       }
     }
   }
 
-  private attackHex = (attacker: Unit, defender: Unit): LocalActionResult => ({
+  private attackHex = (attackType: AttackType, attacker: Unit, defender: Unit): LocalActionResult => ({
     worldAction: {
       type: 'attack',
+      attackType,
       attacker: { unitId: attacker.id, location: attacker.location },
       defender: { unitId: defender.id, location: defender.location },
     },
@@ -130,10 +131,10 @@ export class LocalActionProcessor {
     }
   }
 
-  private handleEnterAttackMode = (): Option<LocalActionResult> => {
+  private handleEnterAttackMode = (attackType: AttackType): Option<LocalActionResult> => {
     const unit = this.combinedState.findSelectedUnit()
     if (unit && this.combinedState.unitCouldPotentiallyAttack(unit)) {
-      const newMode: Mode = { type: 'attack', from: unit.location, unitId: unit.id }
+      const newMode: Mode = { type: 'attack', from: unit.location, unitId: unit.id, attackType }
       const newLocalGameState = this.localGameState.setMode(newMode)
       return { newLocalGameState }
     }
@@ -144,10 +145,14 @@ export class LocalActionProcessor {
     if (this.combinedState.unitCanMoveToHex(unit, destination)) return this.moveToHex(unit, destination)
   }
 
-  private handleCompleteAttack = (unitId: UnitId, targetHex: Hex): Option<LocalActionResult> => {
+  private handleCompleteAttack = (
+    unitId: UnitId,
+    targetHex: Hex,
+    attackType: AttackType,
+  ): Option<LocalActionResult> => {
     const attacker = this.worldState.getUnitById(unitId)
-    const defender = this.combinedState.unitCanAttackHex(attacker, targetHex)
-    if (defender) return this.attackHex(attacker, defender)
+    const defender = this.combinedState.unitCanAttackHex(attacker, targetHex, attackType)
+    if (defender) return this.attackHex(attackType, attacker, defender)
   }
 
   private handleSelectHex = (hex: Hex): Option<LocalActionResult> => {

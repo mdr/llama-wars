@@ -28,7 +28,9 @@ export class MapDisplayObject {
     this.scene = scene
     this.worldState = worldState
     this.localGameState = localGameState
-    for (const hex of this.worldState.map.getMapHexes()) this.createHex(hex)
+    for (const hex of this.worldState.map.getMapHexes()) {
+      this.createHex(hex)
+    }
   }
 
   private createHex = (hex: Hex): void => {
@@ -91,7 +93,7 @@ export class MapDisplayObject {
       }
     }
     if (mode.type == 'attack') {
-      if (selectedHex && hex.isAdjacentTo(selectedHex)) {
+      if (selectedHex && hex.distanceTo(selectedHex) <= (mode.attackType == 'melee' ? 1 : 2)) {
         const unit = this.findUnitInLocation(hex)
         if (unit && unit.playerId != playerId) {
           return 'targetable'

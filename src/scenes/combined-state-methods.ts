@@ -5,6 +5,7 @@ import { Unit, UnitId } from '../world/unit'
 import { Hex } from '../world/hex'
 import * as R from 'ramda'
 import { Player, PlayerId } from '../world/player'
+import { AttackType } from '../world/world-actions'
 
 export class CombinedState {
   protected readonly worldState: WorldState
@@ -43,13 +44,15 @@ export class CombinedState {
   /**
    * @return the unit in the hex to attack, if an attack is possible, else undefined.
    */
-  public unitCanAttackHex = (unit: Unit, location: Hex): Option<Unit> => {
+  public unitCanAttackHex = (unit: Unit, location: Hex, attackType: AttackType): Option<Unit> => {
     const targetUnit = this.findUnitInLocation(location)
     if (
       this.unitCouldPotentiallyAttack(unit) &&
       targetUnit != undefined &&
       targetUnit.playerId != this.localGameState.playerId &&
-      unit.location.isAdjacentTo(location)
+      attackType == 'melee'
+        ? unit.location.isAdjacentTo(location)
+        : unit.location.distanceTo(location) <= 2
     )
       return targetUnit
   }

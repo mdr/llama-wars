@@ -1,6 +1,7 @@
 import { HexDirection } from '../../world/hex-direction'
 import { Hex } from '../../world/hex'
 import { UnitId } from '../../world/unit'
+import { AttackType } from '../../world/world-actions'
 
 export interface GoLocalAction {
   type: 'go'
@@ -26,6 +27,7 @@ export interface EnterMoveModeLocalAction {
 
 export interface EnterAttackModeLocalAction {
   type: 'enterAttackMode'
+  attackType: AttackType
 }
 
 export interface AbortLocalAction {
@@ -42,6 +44,7 @@ export interface CompleteAttackLocalAction {
   type: 'completeAttack'
   unitId: UnitId
   hex: Hex
+  attackType: AttackType
 }
 
 export interface SelectHexLocalAction {

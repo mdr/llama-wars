@@ -187,22 +187,19 @@ export class GameScene extends Phaser.Scene {
     }
   }
 
-  private handleLeftClick = (hex: Hex): void => {
+  private getLocalActionForClickingAHex = (hex: Hex): LocalAction => {
     const mode = this.localGameState.mode
     switch (mode.type) {
       case 'selectHex':
-        this.handleLocalAction({ type: 'selectHex', hex })
-        break
+        return { type: 'selectHex', hex }
       case 'moveUnit':
-        this.handleLocalAction({ type: 'completeMove', unitId: mode.unitId, hex })
-        break
+        return { type: 'completeMove', unitId: mode.unitId, hex }
       case 'attack':
-        this.handleLocalAction({ type: 'completeAttack', unitId: mode.unitId, hex })
-        break
-      default:
-        throw new UnreachableCaseError(mode)
+        return { type: 'completeAttack', unitId: mode.unitId, hex, attackType: mode.attackType }
     }
   }
+
+  private handleLeftClick = (hex: Hex): void => this.handleLocalAction(this.getLocalActionForClickingAHex(hex))
 
   // Sync
   // ----

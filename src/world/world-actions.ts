@@ -26,8 +26,11 @@ export interface MoveUnitWorldAction {
   to: Hex
 }
 
+export type AttackType = 'melee' | 'spit'
+
 export interface AttackWorldAction {
   type: 'attack'
+  attackType: AttackType
   attacker: {
     unitId: UnitId
     location: Hex

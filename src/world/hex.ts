@@ -20,6 +20,9 @@ export class Hex {
 
   public isAdjacentTo = (that: Hex): boolean => R.includes(that, this.neighbours())
 
+  public distanceTo = (that: Hex): number =>
+    (Math.abs(this.x - that.x) + Math.abs(this.y - that.y) + Math.abs(this.z - that.z)) / 2
+
   private static NEIGHBOURS: Hex[] = [
     new Hex(0, 1),
     new Hex(1, 0),

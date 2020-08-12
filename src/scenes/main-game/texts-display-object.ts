@@ -10,6 +10,7 @@ import { CombinedState } from '../combined-state-methods'
 import { LocalAction } from './local-action'
 import { PlayerId } from '../../world/player'
 import { AudioKeys } from '../asset-keys'
+import { AttackType } from '../../world/world-actions'
 
 export type LocalActionDispatcher = (action: LocalAction) => void
 
@@ -22,6 +23,7 @@ export class TextsDisplayObject {
   private readonly selectionText: Phaser.GameObjects.Text
   private readonly actionText: Phaser.GameObjects.Text
   private readonly actionText2: Phaser.GameObjects.Text
+  private readonly actionText3: Phaser.GameObjects.Text
   private readonly endTurnText: Phaser.GameObjects.Text
   private readonly playerText: Phaser.GameObjects.Text
   private readonly hourglass: Phaser.GameObjects.Image
@@ -73,6 +75,14 @@ export class TextsDisplayObject {
       .on('pointerdown', this.handleActionText2Click)
       .on('pointerover', () => this.actionText2.setFill(HOVER_ACTION_TEXT_COLOUR))
       .on('pointerout', () => this.actionText2.setFill(ACTION_TEXT_COLOUR))
+    this.actionText3 = this.scene.add
+      .text(DRAWING_OFFSET.x - hexWidth(HEX_SIZE) / 2, mapHeight(map) * HEX_SIZE + DRAWING_OFFSET.y + 75, '', {
+        fill: ACTION_TEXT_COLOUR,
+      })
+      .setInteractive()
+      .on('pointerdown', this.handleActionText3Click)
+      .on('pointerover', () => this.actionText3.setFill(HOVER_ACTION_TEXT_COLOUR))
+      .on('pointerout', () => this.actionText3.setFill(ACTION_TEXT_COLOUR))
     this.endTurnText = this.scene.add
       .text(700, mapHeight(map) * HEX_SIZE + DRAWING_OFFSET.y, '', { fill: ACTION_TEXT_COLOUR })
       .setInteractive()
@@ -137,12 +147,19 @@ export class TextsDisplayObject {
   private handleActionText2Click = (): void => {
     if (this.localGameState.mode.type === 'selectHex') {
       this.scene.sound.play(AudioKeys.CLICK)
-      this.localActionDispatcher({ type: 'enterAttackMode' })
+      this.localActionDispatcher({ type: 'enterAttackMode', attackType: 'melee' })
+    }
+  }
+
+  private handleActionText3Click = (): void => {
+    if (this.localGameState.mode.type === 'selectHex') {
+      this.scene.sound.play(AudioKeys.CLICK)
+      this.localActionDispatcher({ type: 'enterAttackMode', attackType: 'spit' })
     }
   }
 
   public hasClickHandlerFor = (point: Point): boolean => {
-    for (const gameObject of [this.endTurnText, this.actionText, this.actionText2])
+    for (const gameObject of [this.endTurnText, this.actionText, this.actionText2, this.actionText3])
       if (gameObject.getBounds().contains(point.x, point.y)) return true
     return false
   }
@@ -156,6 +173,7 @@ export class TextsDisplayObject {
     this.selectionText.setText('')
     this.actionText.setText('')
     this.actionText2.setText('')
+    this.actionText3.setText('')
     const mode = this.localGameState.mode
     switch (mode.type) {
       case 'selectHex':
@@ -165,7 +183,7 @@ export class TextsDisplayObject {
         this.syncMoveUnitModeText(mode.unitId)
         break
       case 'attack':
-        this.syncAttackModeText(mode.unitId)
+        this.syncAttackModeText(mode.unitId, mode.attackType)
         break
       default:
         throw new UnreachableCaseError(mode)
@@ -183,10 +201,10 @@ export class TextsDisplayObject {
     this.victoryText.setVisible(worldState.gameOverInfo?.victor === player.id)
   }
 
-  private syncAttackModeText = (unitId: UnitId): void => {
+  private syncAttackModeText = (unitId: UnitId, attackType: AttackType): void => {
     const unit = this.worldState.getUnitById(unitId)
     this.selectionText.setText(this.describeUnit(unit))
-    this.actionText.setText('Click unit to attack (or ESC to cancel)')
+    this.actionText.setText(`Click unit to ${attackType === 'melee' ? 'attack' : 'spit'} (or ESC to cancel)`)
   }
 
   private syncMoveUnitModeText = (unitId: UnitId): void => {
@@ -201,6 +219,7 @@ export class TextsDisplayObject {
       this.selectionText.setText(this.describeUnit(selectedUnit))
       if (this.combinedState.unitCouldPotentiallyMove(selectedUnit)) this.actionText.setText('Move (m)')
       if (this.combinedState.unitCouldPotentiallyAttack(selectedUnit)) this.actionText2.setText('Attack (a)')
+      if (this.combinedState.unitCouldPotentiallyAttack(selectedUnit)) this.actionText3.setText('Spit (s)')
     }
   }
 
