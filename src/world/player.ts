@@ -1,3 +1,5 @@
+export const HOST_PLAYER_ID = 1
+
 export type PlayerId = number
 
 export class Player {
