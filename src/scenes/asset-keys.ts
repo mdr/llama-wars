@@ -1,5 +1,7 @@
 export const AudioKeys = {
-  ATTACK: 'attack',
+  ATTACK_1: 'attack1',
+  ATTACK_2: 'attack2',
+  ATTACK_3: 'attack3',
   DEATH: 'death',
   WALK: 'walk',
   NEW_TURN: 'new-turn',
@@ -9,7 +11,9 @@ export const AudioKeys = {
 }
 
 export const ALL_AUDIO_KEYS = [
-  AudioKeys.ATTACK,
+  AudioKeys.ATTACK_1,
+  AudioKeys.ATTACK_2,
+  AudioKeys.ATTACK_3,
   AudioKeys.DEATH,
   AudioKeys.WALK,
   AudioKeys.NEW_TURN,

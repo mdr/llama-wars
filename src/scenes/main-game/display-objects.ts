@@ -10,6 +10,7 @@ import { Hex } from '../../world/hex'
 import { UnreachableCaseError } from '../../util/unreachable-case-error'
 import { Option } from '../../util/types'
 import { AudioKeys } from '../asset-keys'
+import { randomElement } from '../../util/random-util'
 
 export interface MoveAnimationSpec {
   type: 'move'
@@ -228,7 +229,7 @@ export class DisplayObjects {
     if (!attackerDisplayObject) throw `Unexpected missing display object for unit ${attacker.unitId}`
     const defenderDisplayObject = this.animatedUnitDisplayObjects.get(defender.unitId)
     if (!defenderDisplayObject) throw `Unexpected missing display object for unit ${defender.unitId}`
-    this.scene.sound.play(AudioKeys.ATTACK)
+    this.scene.sound.play(randomElement([AudioKeys.ATTACK_1, AudioKeys.ATTACK_2, AudioKeys.ATTACK_3]))
     if (attacker.killed || defender.killed) {
       this.scene.sound.play(AudioKeys.DEATH)
     }

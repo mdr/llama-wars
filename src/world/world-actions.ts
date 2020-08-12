@@ -40,6 +40,7 @@ export interface AttackWorldAction {
 
 export interface EndTurnWorldAction {
   type: 'endTurn'
+  turn: number
 }
 
 export type WorldAction =

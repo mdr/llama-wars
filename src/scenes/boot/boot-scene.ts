@@ -171,7 +171,9 @@ export class BootScene extends Phaser.Scene {
     this.load.image('grass', 'assets/sprites/grass2.png')
 
     // https://opengameart.org/content/37-hitspunches
-    this.load.audio(AudioKeys.ATTACK, 'assets/audio/hit18.mp3.mp3')
+    this.load.audio(AudioKeys.ATTACK_1, 'assets/audio/hit14.mp3.mp3')
+    this.load.audio(AudioKeys.ATTACK_2, 'assets/audio/hit17.mp3.mp3')
+    this.load.audio(AudioKeys.ATTACK_3, 'assets/audio/hit18.mp3.mp3')
     // https://opengameart.org/content/male-gruntyelling-sounds
     this.load.audio(AudioKeys.DEATH, 'assets/audio/1yell4.wav')
     // https://opengameart.org/content/grass-foot-step-sounds-yo-frankie

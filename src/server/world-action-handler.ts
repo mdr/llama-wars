@@ -3,6 +3,7 @@ import { WorldState } from '../world/world-state'
 import {
   AttackWorldAction,
   ChangePlayerNameWorldAction,
+  EndTurnWorldAction,
   InitialiseWorldAction,
   MoveUnitWorldAction,
   WorldAction,
@@ -47,7 +48,7 @@ export class WorldActionHandler {
       case 'moveUnit':
         return this.handleMoveUnit(action)
       case 'endTurn':
-        return this.handleEndTurn()
+        return this.handleEndTurn(action)
     }
   }
 
@@ -102,7 +103,10 @@ export class WorldActionHandler {
     ]
   }
 
-  private handleEndTurn = (): WorldEvent[] => {
+  private handleEndTurn = (action: EndTurnWorldAction): WorldEvent[] => {
+    if (action.turn !== this.worldState.turn) {
+      throw `Cannot end a turn that's not the current turn`
+    }
     const player = this.getPlayer()
     if (player.endedTurn) {
       throw `Player has already ended their turn`

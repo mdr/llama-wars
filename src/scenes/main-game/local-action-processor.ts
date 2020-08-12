@@ -118,7 +118,7 @@ export class LocalActionProcessor {
 
   private handleEndTurn = (): Option<LocalActionResult> => {
     if (!this.combinedState.getCurrentPlayer().endedTurn) {
-      return { worldAction: { type: 'endTurn' } }
+      return { worldAction: { type: 'endTurn', turn: this.worldState.turn } }
     }
   }
 
