@@ -41,7 +41,7 @@ export class LobbyScene extends Phaser.Scene {
   }
 
   public sync(): void {
-    const requiredPlayerIds = this.worldState.players.map((player) => player.id)
+    const requiredPlayerIds = this.worldState.getPlayerIds()
     const currentPlayerIds = Array.from(this.playerNameTexts.keys())
     const surplusPlayerIds = R.difference(currentPlayerIds, requiredPlayerIds)
     for (const playerId of surplusPlayerIds) {

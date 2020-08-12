@@ -60,7 +60,7 @@ export class WorldActionHandler {
   }
 
   private handleAddPlayer = (): [PlayerAddedWorldEvent] => {
-    const existingPlayerIds = this.worldState.players.map((player) => player.id)
+    const existingPlayerIds = this.worldState.getPlayerIds()
     const playerId = R.apply(Math.max, existingPlayerIds) + 1
     return [{ id: this.nextWorldEventId, type: 'playerAdded', playerId }]
   }

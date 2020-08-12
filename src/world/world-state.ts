@@ -58,6 +58,8 @@ export class WorldState {
     return this.turn > 0
   }
 
+  public getPlayerIds = (): PlayerId[] => this.players.map((player) => player.id)
+
   public isPlayerDefeated = (playerId: PlayerId): boolean => this.getUnitsForPlayer(playerId).length == 0
 
   public canPlayerAct = (playerId: PlayerId): boolean => {
