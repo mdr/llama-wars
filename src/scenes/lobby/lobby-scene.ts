@@ -10,6 +10,7 @@ import { applyEvent } from '../../world/world-event-evaluator'
 import { ServerToClientMessage } from '../../server/messages'
 import { deserialiseFromJson } from '../../util/json-serialisation'
 import { WorldEvent } from '../../world/world-events'
+import { AudioKeys } from '../asset-keys'
 
 export const LOBBY_SCENE_KEY = 'Lobby'
 
@@ -92,7 +93,7 @@ export class LobbyScene extends Phaser.Scene {
     this.serverOrClient = serverOrClient
     this.playerId = playerId
     this.worldState = worldState
-
+    this.sound.add(AudioKeys.CLICK)
     if (serverOrClient instanceof Client) {
       this.actAsClient(serverOrClient, playerId)
     } else {
@@ -147,6 +148,7 @@ export class LobbyScene extends Phaser.Scene {
   }
 
   private handleStartGame = () => {
+    this.sound.play(AudioKeys.CLICK)
     if (!this.serverOrClient) {
       throw `Unexpected absence of serverOrClient`
     }

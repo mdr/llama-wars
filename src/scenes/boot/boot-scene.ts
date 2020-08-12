@@ -182,6 +182,9 @@ export class BootScene extends Phaser.Scene {
 
     // https://opengameart.org/content/clear-skies
     this.load.audio(AudioKeys.VICTORY_MUSIC, 'assets/audio/Clear Skies.mp3')
+
+    // https://opengameart.org/content/gui-sound-effects
+    this.load.audio(AudioKeys.CLICK, 'assets/audio/click.wav')
   }
 }
 

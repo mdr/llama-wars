@@ -8,6 +8,8 @@ import { Point } from '../point'
 import { Unit, UnitId } from '../../world/unit'
 import { CombinedState } from '../combined-state-methods'
 import { LocalAction } from './local-action'
+import { PlayerId } from '../../world/player'
+import { AudioKeys } from '../asset-keys'
 
 export type LocalActionDispatcher = (action: LocalAction) => void
 
@@ -119,10 +121,12 @@ export class TextsDisplayObject {
     const mode = this.localGameState.mode
     switch (mode.type) {
       case 'selectHex':
+        this.scene.sound.play(AudioKeys.CLICK)
         this.localActionDispatcher({ type: 'enterMoveMode' })
         break
       case 'moveUnit':
       case 'attack':
+        this.scene.sound.play(AudioKeys.CLICK)
         this.localActionDispatcher({ type: 'abort' })
         break
       default:
@@ -132,13 +136,14 @@ export class TextsDisplayObject {
 
   private handleActionText2Click = (): void => {
     if (this.localGameState.mode.type === 'selectHex') {
+      this.scene.sound.play(AudioKeys.CLICK)
       this.localActionDispatcher({ type: 'enterAttackMode' })
     }
   }
 
   public hasClickHandlerFor = (point: Point): boolean => {
-    for (const obj of [this.endTurnText, this.actionText, this.actionText2])
-      if (obj.getBounds().contains(point.x, point.y)) return true
+    for (const gameObject of [this.endTurnText, this.actionText, this.actionText2])
+      if (gameObject.getBounds().contains(point.x, point.y)) return true
     return false
   }
 
@@ -199,6 +204,11 @@ export class TextsDisplayObject {
     }
   }
 
-  private describeUnit = (unit: Unit): string =>
-    `${unit.name} - Llama warrior - HP ${unit.hitPoints.current}/${unit.hitPoints.max} - actions ${unit.actionPoints.current}/${unit.actionPoints.max}`
+  private getPlayerName = (playerId: PlayerId): string => this.worldState.getPlayer(playerId).name
+
+  private describeUnit = (unit: Unit): string => {
+    const { name, playerId, hitPoints, actionPoints } = unit
+    const playerName = this.getPlayerName(playerId)
+    return `${name} - Llama warrior - ${playerName} - HP ${hitPoints.current}/${hitPoints.max} - actions ${actionPoints.current}/${actionPoints.max}`
+  }
 }

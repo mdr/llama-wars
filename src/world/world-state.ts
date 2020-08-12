@@ -71,6 +71,14 @@ export class WorldState {
 
   public findPlayer = (playerId: PlayerId): Option<Player> => R.find((player) => player.id == playerId, this.players)
 
+  public getPlayer = (playerId: PlayerId): Player => {
+    const player = this.findPlayer(playerId)
+    if (!player) {
+      throw `No player found with ID ${playerId}`
+    }
+    return player
+  }
+
   public findUnitById = (unitId: UnitId): Option<Unit> => R.find((unit) => unit.id == unitId, this.units)
 
   public getUnitById = (unitId: number): Unit => {

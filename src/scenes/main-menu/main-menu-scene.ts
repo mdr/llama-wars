@@ -6,6 +6,7 @@ import { openWorldEventDb } from '../../db/world-event-db'
 import { INITIAL_WORLD_STATE } from '../../world/initial-world-state'
 import { setUrlInfo } from '../boot/boot-scene'
 import { LOBBY_SCENE_KEY, LobbySceneData } from '../lobby/lobby-scene'
+import { AudioKeys } from '../asset-keys'
 
 export const MAIN_MENU_SCENE_KEY = 'MainMenu'
 
@@ -22,11 +23,14 @@ export class MainMenuScene extends Phaser.Scene {
 
   public create = (): void => {
     this.add.text(100, 50, 'Llama Wars', { fill: '#FFFFFF' }).setFontSize(24)
-
-    new MenuButton(this, 100, 150, 'Host Game', () => this.handleStartGame())
+    this.sound.add(AudioKeys.CLICK)
+    new MenuButton(this, 100, 150, 'Host Game', () => {
+      this.sound.play(AudioKeys.CLICK)
+      this.handleHostGame()
+    })
   }
 
-  private handleStartGame = async (): Promise<void> => {
+  private handleHostGame = async (): Promise<void> => {
     const worldEventDb = await openWorldEventDb()
     const gameId: GameId = uuid()
     const playerId = 1
