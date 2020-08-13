@@ -28,8 +28,6 @@ export class TextsDisplayObject {
   private readonly playerText: Phaser.GameObjects.Text
   private readonly hourglass: Phaser.GameObjects.Image
   private readonly defeatText: Phaser.GameObjects.Text
-  private readonly defeatTextTweenX: Phaser.Tweens.Tween
-  private readonly defeatTextTweenY: Phaser.Tweens.Tween
   private readonly victoryText: Phaser.GameObjects.Text
 
   private get combinedState(): CombinedState {
@@ -98,24 +96,6 @@ export class TextsDisplayObject {
       .setFontSize(42)
       .setVisible(false)
       .setDepth(100)
-    this.defeatTextTweenX = this.scene.tweens.add({
-      targets: this.defeatText,
-      x: '+=50',
-      duration: 1900,
-      ease: 'Sine.easeInOut',
-      yoyo: true,
-      repeat: -1,
-      paused: true,
-    })
-    this.defeatTextTweenY = this.scene.tweens.add({
-      targets: this.defeatText,
-      y: '+=50',
-      duration: 2000,
-      ease: 'Sine.easeInOut',
-      yoyo: true,
-      repeat: -1,
-      paused: true,
-    })
     this.victoryText = this.scene.add
       .text(462, 30, 'Victory!', {
         stroke: '#000000',
@@ -194,10 +174,6 @@ export class TextsDisplayObject {
       this.endTurnText.setText('End Turn (Shift + Enter)')
     }
     this.defeatText.setVisible(player.defeated)
-    if (player.defeated) {
-      this.defeatTextTweenX.play()
-      this.defeatTextTweenY.play()
-    }
     this.victoryText.setVisible(worldState.gameOverInfo?.victor === player.id)
   }
 

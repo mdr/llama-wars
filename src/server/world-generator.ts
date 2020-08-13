@@ -7,7 +7,18 @@ import { ActionPoints } from '../world/action-points'
 import { HitPoints } from '../world/hit-points'
 import { WorldState } from '../world/world-state'
 
-const LLAMA_NAMES = ['Walter', 'Dolly', 'Chewpaca', 'Barack O. Llama', 'Como Se']
+const LLAMA_NAMES = [
+  'Walter',
+  'Dolly',
+  'Chewpaca',
+  'Barack O. Llama',
+  'Como Se',
+  'Fuzzy',
+  'Jeremy',
+  'Alfonso',
+  'Rose',
+  'Lorenzo',
+]
 
 export class WorldGenerator {
   private readonly worldState: WorldState
@@ -29,7 +40,7 @@ export class WorldGenerator {
       playerId,
       name,
       location,
-      actionPoints: new ActionPoints({ current: 20, max: 20 }),
+      actionPoints: new ActionPoints({ current: 2, max: 2 }),
       hitPoints: new HitPoints({ current: 100, max: 100 }),
     })
   }

@@ -5,6 +5,7 @@ import { HEALTH_BORDER_COLOUR, HEALTH_EMPTY_COLOUR, HEALTH_FULL_COLOUR, PLAYER_T
 import { addPoints, distanceBetweenPoints, Point } from '../point'
 import { playTween } from '../../util/phaser/tween-utils'
 import assert = require('assert')
+import { PlayerId } from '../../world/player'
 
 const HEALTH_BAR_WIDTH = 50
 const HEALTH_BAR_HEIGHT = 12
@@ -21,12 +22,12 @@ export class UnitDisplayObject {
   constructor(scene: Phaser.Scene, unit: Unit) {
     this.scene = scene
     this.unit = unit
-    this.image = scene.add
-      .image(0, 0, 'llama')
-      .setScale(0.8)
-      .setTint(PLAYER_TINTS[this.unit.playerId - 1])
+    this.image = scene.add.image(0, 0, 'llama').setScale(0.8).setTint(this.getPlayerTint(this.unit.playerId))
     this.healthBarGraphics = scene.add.graphics()
   }
+
+  private getPlayerTint = (playerId: PlayerId) =>
+    PLAYER_TINTS[(PLAYER_TINTS.length + playerId - 1) % PLAYER_TINTS.length]
 
   private getHealthBarPosition = (point: Point): Point => addPoints(point, HEALTH_BAR_OFFSET)
 

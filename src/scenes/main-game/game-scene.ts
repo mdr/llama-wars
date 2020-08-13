@@ -251,6 +251,8 @@ export class GameScene extends Phaser.Scene {
   }
 
   private handlePlayerDefeated = (): void => {
+    console.log('Player defeated')
+    console.log(this.combinedState.getCurrentPlayer().defeated)
     this.sound.play(AudioKeys.PLAYER_DEFEATED)
     this.syncScene()
   }
