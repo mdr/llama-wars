@@ -2,7 +2,7 @@ import { Hex } from '../../world/hex'
 import { Unit } from '../../world/unit'
 import { hexCenter } from './game-scene'
 import { HEALTH_BORDER_COLOUR, HEALTH_EMPTY_COLOUR, HEALTH_FULL_COLOUR, PLAYER_TINTS } from '../colours'
-import { addPoints, Point } from '../point'
+import { addPoints, distanceBetweenPoints, Point } from '../point'
 import { playTween } from '../../util/phaser/tween-utils'
 import assert = require('assert')
 
@@ -97,7 +97,8 @@ export class UnitDisplayObject {
   public runSpitAnimation = async (from: Hex, to: Hex): Promise<void> => {
     const fromPoint = hexCenter(from)
     const toPoint = hexCenter(to)
-    const image = this.scene.add.image(fromPoint.x, fromPoint.y, 'spit')
+    const distance = distanceBetweenPoints(fromPoint, toPoint)
+    const image = this.scene.add.image(fromPoint.x, fromPoint.y, 'spit').setScale(0.8)
     const tween = this.scene.tweens.create({
       targets: image,
       x: {
@@ -108,8 +109,8 @@ export class UnitDisplayObject {
         from: fromPoint.y,
         to: toPoint.y,
       },
-      duration: 300,
-      ease: 'Linear',
+      duration: distance * 4,
+      ease: 'Quad',
     })
     await playTween(tween)
     image.destroy()

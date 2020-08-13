@@ -31,7 +31,7 @@ export class AttackWorldActionHandler {
     const { attacker, defender } = this.validateAttack(action)
     const { attackType } = action
     const rawAttackerDamage = attackType === 'melee' ? randomIntInclusive(8, 12) : 0
-    const rawDefenderDamage = attackType === 'melee' ? randomIntInclusive(-17, 23) : randomIntInclusive(4, 6)
+    const rawDefenderDamage = attackType === 'melee' ? randomIntInclusive(17, 23) : randomIntInclusive(4, 6)
     const attackerDamage = Math.min(attacker.hitPoints.current, rawAttackerDamage)
     const defenderDamage = Math.min(defender.hitPoints.current, rawDefenderDamage)
     const combatWorldEvent = this.makeCombatWorldEvent(attackType, attacker, attackerDamage, defender, defenderDamage)

@@ -17,4 +17,13 @@ export const TARGETABLE_TILE_BORDER_COLOUR = colourNumber('#9df1e7')
 export const ACTION_TEXT_COLOUR = '#cccc00'
 export const HOVER_ACTION_TEXT_COLOUR = '#ffff00'
 
-export const PLAYER_TINTS = ['#ffbbbb', '#bbbbff', '#bbffbb', '#bbffff', '#ffffbb', '#ffbbff'].map(colourNumber)
+export const PLAYER_TINTS = [
+  '#ffbbbb',
+  '#bbbbff',
+  '#bbffbb',
+  '#bbffff',
+  '#ffffbb',
+  '#ffbbff',
+  '#ffffff',
+  '#bbbbbb',
+].map(colourNumber)

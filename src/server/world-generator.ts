@@ -29,7 +29,7 @@ export class WorldGenerator {
       playerId,
       name,
       location,
-      actionPoints: new ActionPoints({ current: 2, max: 2 }),
+      actionPoints: new ActionPoints({ current: 20, max: 20 }),
       hitPoints: new HitPoints({ current: 100, max: 100 }),
     })
   }
