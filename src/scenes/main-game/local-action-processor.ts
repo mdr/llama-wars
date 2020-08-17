@@ -152,7 +152,11 @@ export class LocalActionProcessor {
   ): Option<LocalActionResult> => {
     const attacker = this.worldState.getUnitById(unitId)
     const defender = this.combinedState.unitCanAttackHex(attacker, targetHex, attackType)
-    if (defender) return this.attackHex(attackType, attacker, defender)
+    if (defender) {
+      return this.attackHex(attackType, attacker, defender)
+    } else {
+      return this.handleAbort()
+    }
   }
 
   private handleSelectHex = (hex: Hex): Option<LocalActionResult> => {
