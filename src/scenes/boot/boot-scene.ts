@@ -176,7 +176,7 @@ interface UrlInfo {
 
 export const getUrlInfo = (): Option<UrlInfo> => {
   const hash = window.location.hash
-  if (hash == '') {
+  if (hash === '') {
     return
   }
   const path = hash.substr(1)
@@ -188,7 +188,7 @@ export const getUrlInfo = (): Option<UrlInfo> => {
 
 export const setUrlInfo = (urlInfo: UrlInfo): void => {
   let hash = urlInfo.gameId
-  if (urlInfo.playerId != undefined) {
+  if (urlInfo.playerId !== undefined) {
     hash += '/' + urlInfo.playerId
   }
   window.location.hash = hash

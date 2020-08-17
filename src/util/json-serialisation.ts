@@ -50,19 +50,19 @@ export const deserialiseFromJson = (value: any): any => {
     case 'object':
       if (Array.isArray(value)) {
         return value.map(deserialiseFromJson)
-      } else if (value._llamaClass == 'Hex') {
+      } else if (value._llamaClass === 'Hex') {
         return Hex.fromJson(value)
-      } else if (value._llamaClass == 'WorldMap') {
+      } else if (value._llamaClass === 'WorldMap') {
         return WorldMap.fromJson(value)
-      } else if (value._llamaClass == 'WorldState') {
+      } else if (value._llamaClass === 'WorldState') {
         return WorldState.fromJson(value)
-      } else if (value._llamaClass == 'Unit') {
+      } else if (value._llamaClass === 'Unit') {
         return Unit.fromJson(value)
-      } else if (value._llamaClass == 'ActionPoints') {
+      } else if (value._llamaClass === 'ActionPoints') {
         return ActionPoints.fromJson(value)
-      } else if (value._llamaClass == 'HitPoints') {
+      } else if (value._llamaClass === 'HitPoints') {
         return HitPoints.fromJson(value)
-      } else if (value._llamaClass == 'Player') {
+      } else if (value._llamaClass === 'Player') {
         return Player.fromJson(value)
       } else {
         const newObject: any = {}

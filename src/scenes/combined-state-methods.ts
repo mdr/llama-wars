@@ -31,10 +31,10 @@ export class CombinedState {
   public findUnitInLocation = (hex: Hex): Option<Unit> => this.worldState.findUnitInLocation(hex)
 
   public unitCouldPotentiallyMove = (unit: Unit): boolean =>
-    unit.playerId == this.playerId && unit.hasUnspentActionPoints && !this.getCurrentPlayer().endedTurn
+    unit.playerId === this.playerId && unit.hasUnspentActionPoints && !this.getCurrentPlayer().endedTurn
 
   public unitCouldPotentiallyAttack = (unit: Unit): boolean =>
-    unit.playerId == this.playerId && unit.hasUnspentActionPoints && !this.getCurrentPlayer().endedTurn
+    unit.playerId === this.playerId && unit.hasUnspentActionPoints && !this.getCurrentPlayer().endedTurn
 
   public unitCanMoveToHex = (unit: Unit, hex: Hex): boolean =>
     this.unitCouldPotentiallyMove(unit) &&
@@ -49,8 +49,8 @@ export class CombinedState {
     const targetUnit = this.findUnitInLocation(location)
     if (
       this.unitCouldPotentiallyAttack(unit) &&
-      targetUnit != undefined &&
-      targetUnit.playerId != this.localGameState.playerId &&
+      targetUnit !== undefined &&
+      targetUnit.playerId !== this.localGameState.playerId &&
       canAttackOccur(attackType, unit.location, location)
     )
       return targetUnit

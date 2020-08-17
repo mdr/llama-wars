@@ -62,7 +62,7 @@ export class Unit {
 
   public refreshActionPoints = (): Unit => this.copy({ actionPoints: this.actionPoints.refresh() })
 
-  public get hasUnspentActionPoints() {
+  public get hasUnspentActionPoints(): boolean {
     return this.actionPoints.current > 0
   }
 

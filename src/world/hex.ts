@@ -32,7 +32,7 @@ export class Hex {
     new Hex(-1, 1),
   ]
 
-  public equals = (that: Hex): boolean => this.x == that.x && this.y == that.y
+  public equals = (that: Hex): boolean => this.x === that.x && this.y === that.y
 
   public toString = (): string => `Hex(${this.x}, ${this.y})`
 

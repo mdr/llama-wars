@@ -32,7 +32,7 @@ export class UnitDisplayObject {
   private getHealthBarPosition = (point: Point): Point => addPoints(point, HEALTH_BAR_OFFSET)
 
   public syncScene = (unit: Unit): void => {
-    assert(unit.id == this.unit.id)
+    assert(unit.id === this.unit.id)
     this.unit = unit
     const unitPoint = hexCenter(this.unit.location)
     this.image.setPosition(unitPoint.x + IMAGE_OFFSET.x, unitPoint.y + IMAGE_OFFSET.y)

@@ -52,7 +52,7 @@ export class AttackWorldActionHandler {
     const undefeatedPlayers = newWorldState.players.filter((player) => !player.defeated)
     if (R.isEmpty(undefeatedPlayers)) {
       events.push({ id: nextWorldEventId++, type: 'gameOver' })
-    } else if (undefeatedPlayers.length == 1) {
+    } else if (undefeatedPlayers.length === 1) {
       const victor = undefeatedPlayers[0].id
       events.push({ id: nextWorldEventId++, type: 'gameOver', victor })
     }
@@ -69,14 +69,14 @@ export class AttackWorldActionHandler {
     const attackerId = action.attacker.unitId
     const attacker = this.worldState.findUnitById(attackerId)
     if (!attacker) throw `No unit found with ID ${attackerId}`
-    if (attacker.playerId != this.playerId) throw `Cannot control another player's unit: ${attacker.id}`
+    if (attacker.playerId !== this.playerId) throw `Cannot control another player's unit: ${attacker.id}`
     if (attacker.actionPoints.current < 1) throw `Not enough action points to attack`
     if (!attacker.location.equals(action.attacker.location)) throw `Attacker not in expected location`
 
     const defenderId = action.defender.unitId
     const defender = this.worldState.findUnitById(defenderId)
     if (!defender) throw `No unit found with ID ${defenderId}`
-    if (defender.playerId == this.playerId) throw `Cannot attack own unit`
+    if (defender.playerId === this.playerId) throw `Cannot attack own unit`
     if (!defender.location.equals(action.defender.location)) throw `Defender not in expected location`
 
     if (!canAttackOccur(action.attackType, attacker.location, defender.location))
@@ -99,14 +99,14 @@ export class AttackWorldActionHandler {
       unitId: attacker.id,
       location: attacker.location,
       damage: attackerDamage,
-      killed: attacker.hitPoints.current == attackerDamage,
+      killed: attacker.hitPoints.current === attackerDamage,
     },
     defender: {
       playerId: defender.playerId,
       unitId: defender.id,
       location: defender.location,
       damage: defenderDamage,
-      killed: defender.hitPoints.current == defenderDamage,
+      killed: defender.hitPoints.current === defenderDamage,
     },
     actionPointsConsumed: 1,
   })

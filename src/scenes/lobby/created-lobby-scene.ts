@@ -42,7 +42,7 @@ export class CreatedLobbyScene {
 
   private handleWorldEvent = (event: WorldEvent, client: Client): void => {
     this.worldState = this.worldState.applyEvent(event)
-    if (event.type == 'gameStarted') {
+    if (event.type === 'gameStarted') {
       if (this.listener) {
         client.removeListener(this.listener)
         this.listener = undefined

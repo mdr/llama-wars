@@ -44,7 +44,7 @@ export class WorldEventDb {
 
   public hasEventsForGame = async (gameId: GameId): Promise<boolean> => {
     const record = await this.queryEventsByGameId(gameId).first()
-    return record != undefined
+    return record !== undefined
   }
 
   private queryEventsByGameId = (gameId: string): Collection<WorldEventRecord, string> =>

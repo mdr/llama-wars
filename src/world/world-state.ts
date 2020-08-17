@@ -61,7 +61,7 @@ export class WorldState {
   } = {}): WorldState => new WorldState({ turn, map, units, players, gameOverInfo: toOption(gameOverInfo), worldLog })
 
   public get isGameOver(): boolean {
-    return this.gameOverInfo != undefined
+    return this.gameOverInfo !== undefined
   }
 
   public get gameHasStarted(): boolean {
@@ -70,7 +70,7 @@ export class WorldState {
 
   public getPlayerIds = (): PlayerId[] => this.players.map((player) => player.id)
 
-  public isPlayerDefeated = (playerId: PlayerId): boolean => this.getUnitsForPlayer(playerId).length == 0
+  public isPlayerDefeated = (playerId: PlayerId): boolean => this.getUnitsForPlayer(playerId).length === 0
 
   public canPlayerAct = (playerId: PlayerId): boolean => {
     const endedTurn = this.findPlayer(playerId)?.endedTurn
@@ -81,7 +81,7 @@ export class WorldState {
 
   public getUnitsForPlayer = (playerId: PlayerId): Unit[] => this.units.filter((unit) => unit.playerId === playerId)
 
-  public findPlayer = (playerId: PlayerId): Option<Player> => R.find((player) => player.id == playerId, this.players)
+  public findPlayer = (playerId: PlayerId): Option<Player> => R.find((player) => player.id === playerId, this.players)
 
   public getPlayer = (playerId: PlayerId): Player => {
     const player = this.findPlayer(playerId)
@@ -91,7 +91,7 @@ export class WorldState {
     return player
   }
 
-  public findUnitById = (unitId: UnitId): Option<Unit> => R.find((unit) => unit.id == unitId, this.units)
+  public findUnitById = (unitId: UnitId): Option<Unit> => R.find((unit) => unit.id === unitId, this.units)
 
   public getUnitById = (unitId: number): Unit => {
     const unit = this.findUnitById(unitId)
@@ -107,12 +107,12 @@ export class WorldState {
     this.copy({
       units: R.append(
         unit,
-        R.filter((unit) => unit.id != unitId, this.units),
+        R.filter((unit) => unit.id !== unitId, this.units),
       ),
     })
 
   public removeUnit = (unitId: UnitId): WorldState =>
-    this.copy({ units: R.filter((unit) => unit.id != unitId, this.units) })
+    this.copy({ units: R.filter((unit) => unit.id !== unitId, this.units) })
 
   public updatePlayer = (playerId: PlayerId, modify: (player: Player) => Player): WorldState => {
     const player = this.findPlayer(playerId)
@@ -121,11 +121,11 @@ export class WorldState {
   }
 
   public replacePlayer = (playerId: PlayerId, player: Player): WorldState => {
-    assert(playerId == player.id)
+    assert(playerId === player.id)
     return this.copy({
       players: R.append(
         player,
-        R.filter((player) => player.id != playerId, this.players),
+        R.filter((player) => player.id !== playerId, this.players),
       ),
     })
   }
@@ -149,7 +149,7 @@ export class WorldState {
       gameOverInfo: json.gameOverInfo,
     })
 
-  public isValidPlayerId = (playerId: PlayerId): boolean => R.any((player) => player.id == playerId, this.players)
+  public isValidPlayerId = (playerId: PlayerId): boolean => R.any((player) => player.id === playerId, this.players)
 
   public gameOver = (victor: Option<number>): WorldState => this.copy({ gameOverInfo: just({ victor }) })
 

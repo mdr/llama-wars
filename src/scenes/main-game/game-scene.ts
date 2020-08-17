@@ -164,7 +164,7 @@ export class GameScene extends Phaser.Scene {
       return
     }
     const hex = fromPoint(multiplyPoint(subtractPoints(pressedPoint, DRAWING_OFFSET), 1 / HEX_SIZE))
-    if (pointer.button == 2) {
+    if (pointer.button === 2) {
       this.handleLocalAction({ type: 'goHex', hex })
     } else {
       this.handleLeftClick(hex)
@@ -259,8 +259,9 @@ export class GameScene extends Phaser.Scene {
     const { unitId, from, to } = event
     const unit = this.worldState.getUnitById(unitId)
     const wasPreviouslySelected =
-      this.localGameState.selectedHex && oldWorldState.findUnitInLocation(this.localGameState.selectedHex)?.id == unitId
-    if (wasPreviouslySelected && unit.playerId == this.playerId) {
+      this.localGameState.selectedHex &&
+      oldWorldState.findUnitInLocation(this.localGameState.selectedHex)?.id === unitId
+    if (wasPreviouslySelected && unit.playerId === this.playerId) {
       const newSelectedHex = this.calculateNewSelectedUnitAfterMoveOrAttack(unitId, to)
       this.localGameState = this.localGameState.copy({
         mode: { type: 'selectHex' },
@@ -274,7 +275,7 @@ export class GameScene extends Phaser.Scene {
     const unit = this.worldState.findUnitById(unitId)
     // Retain selection if unit still exists and we still have action points, else select next unit (or nothing if there isn't one)
     let newSelectedHex
-    if (!unit || unit.actionPoints.current == 0) {
+    if (!unit || unit.actionPoints.current === 0) {
       const nextUnit = this.combinedState.findNextUnitWithUnspentActionPoints(unitId)
       newSelectedHex = nextUnit?.location
     } else {
@@ -300,7 +301,7 @@ export class GameScene extends Phaser.Scene {
     oldWorldState: WorldState,
   ) => {
     const previouslySelectedUnitId = new CombinedState(oldWorldState, this.localGameState).findSelectedUnit()?.id
-    if (previouslySelectedUnitId == attacker.unitId && attacker.playerId == this.playerId) {
+    if (previouslySelectedUnitId === attacker.unitId && attacker.playerId === this.playerId) {
       const newSelectedHex = this.calculateNewSelectedUnitAfterMoveOrAttack(attacker.unitId, attacker.location)
       this.localGameState = this.localGameState.copy({
         mode: { type: 'selectHex' },
@@ -308,7 +309,7 @@ export class GameScene extends Phaser.Scene {
       })
     } else {
       // deselect unit killed by another player
-      if (defender.killed && defender.unitId == previouslySelectedUnitId && defender.playerId == this.playerId) {
+      if (defender.killed && defender.unitId === previouslySelectedUnitId && defender.playerId === this.playerId) {
         this.localGameState = this.localGameState.copy({
           mode: { type: 'selectHex' },
           selectedHex: nothing,

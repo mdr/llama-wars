@@ -51,7 +51,7 @@ const handleInitialise = (event: InitialiseWorldEvent): WorldState => {
 }
 
 const handlePlayerAdded = (state: WorldState, event: PlayerAddedWorldEvent): WorldState => {
-  if (R.any((player) => player.id == event.playerId, state.players)) {
+  if (R.any((player) => player.id === event.playerId, state.players)) {
     throw `Player ID already in use`
   }
   const { playerId } = event
@@ -85,12 +85,12 @@ const handleUnitMoved = (state: WorldState, event: UnitMovedWorldEvent): WorldSt
   const unit = state.findUnitById(unitId)
   if (!unit) throw `No unit found with ID ${unitId}`
   const fromUnit = state.findUnitInLocation(from)
-  if (fromUnit?.id != unitId) {
+  if (fromUnit?.id !== unitId) {
     throw `Invalid from location for unit movement. Unit at ${from} is ${fromUnit?.id}, but was expected to be ${unitId}`
   }
   const toUnit = state.findUnitInLocation(to)
   if (toUnit) throw `Invalid unit movement to already-occupied hex`
-  if (unit.playerId != playerId) throw `Invalid attempt to move unit of another player`
+  if (unit.playerId !== playerId) throw `Invalid attempt to move unit of another player`
   if (unit.actionPoints.current < event.actionPointsConsumed) throw `Invalid action point usage`
   return state.replaceUnit(unit.id, unit.move(to, event.actionPointsConsumed))
 }
@@ -108,7 +108,7 @@ const handleCombat = (state: WorldState, event: CombatWorldEvent): WorldState =>
   if (!defenderUnit.location.equals(defender.location))
     throw `Invalid location for defender. Defending unit ${defenderUnit.id} is at location ${defenderUnit.location}, but was expected to be at ${defender.location}`
 
-  if (attackerUnit.playerId == defenderUnit.playerId) throw `Invalid combat with self`
+  if (attackerUnit.playerId === defenderUnit.playerId) throw `Invalid combat with self`
   if (!canAttackOccur(event.attackType, attacker.location, defender.location))
     throw `Invalid combat of type ${event.attackType} between hexes ${attacker.location} to ${defender.location}`
   if (attackerUnit.actionPoints.current < event.actionPointsConsumed) throw `Invalid action point usage`
@@ -138,7 +138,7 @@ const handleCombat = (state: WorldState, event: CombatWorldEvent): WorldState =>
     newState = newState.addWorldLog(`${attackerUnit.name} died in a futile attempt to take on ${attackerUnit.name}.`)
   } else {
     const verb = event.attackType === 'melee' ? 'attacked' : 'spat at'
-    const takingDamageClause = attacker.damage == 0 ? '' : ` and taking ${attacker.damage} damage`
+    const takingDamageClause = attacker.damage === 0 ? '' : ` and taking ${attacker.damage} damage`
     const message = `${attackerUnit.name} ${verb} ${defenderUnit.name}, causing ${defender.damage} damage${takingDamageClause}.`
     newState = newState.addWorldLog(message)
   }

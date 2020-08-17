@@ -88,15 +88,15 @@ export class MapDisplayObject {
     if (selectedHex && selectedHex.equals(hex)) {
       return 'selected'
     }
-    if (mode.type == 'moveUnit') {
+    if (mode.type === 'moveUnit') {
       if (selectedHex && hex.isAdjacentTo(selectedHex) && !this.findUnitInLocation(hex)) {
         return 'targetable'
       }
     }
-    if (mode.type == 'attack') {
+    if (mode.type === 'attack') {
       if (selectedHex && canAttackOccur(mode.attackType, hex, selectedHex)) {
         const unit = this.findUnitInLocation(hex)
-        if (unit && unit.playerId != playerId) {
+        if (unit && unit.playerId !== playerId) {
           return 'targetable'
         }
       }

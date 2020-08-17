@@ -28,13 +28,13 @@ export const mapToLocalAction = (event: KeyboardEvent, mode: Mode): Option<Local
       if (event.ctrlKey) return { type: 'selectNextUnit' }
       break
     case 'm':
-      if (mode.type == 'selectHex') return { type: 'enterMoveMode' }
+      if (mode.type === 'selectHex') return { type: 'enterMoveMode' }
       break
     case 'a':
-      if (mode.type == 'selectHex') return { type: 'enterAttackMode', attackType: 'melee' }
+      if (mode.type === 'selectHex') return { type: 'enterAttackMode', attackType: 'melee' }
       break
     case 's':
-      if (mode.type == 'selectHex') return { type: 'enterAttackMode', attackType: 'spit' }
+      if (mode.type === 'selectHex') return { type: 'enterAttackMode', attackType: 'spit' }
       break
   }
 }
