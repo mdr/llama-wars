@@ -40,6 +40,7 @@ export class CombinedState {
     this.unitCouldPotentiallyMove(unit) &&
     hex.isAdjacentTo(unit.location) &&
     this.worldState.map.isInBounds(hex) &&
+    !this.worldState.map.isMountain(hex) &&
     !this.findUnitInLocation(hex)
 
   /**

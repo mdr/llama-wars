@@ -75,7 +75,10 @@ const handleGameStarted = (state: WorldState, event: GameStartedWorldEvent): Wor
   if (state.gameHasStarted) {
     throw new Error(`Game already started`)
   }
-  return state.copy({ turn: 1, units: event.units }).addWorldLog('Let battle commence!')
+  return state
+    .copy({ turn: 1, units: event.units })
+    .updateWorldMap((map) => map.copy({ mountains: event.mountains }))
+    .addWorldLog('Let battle commence!')
 }
 
 const handleUnitMoved = (state: WorldState, event: UnitMovedWorldEvent): WorldState => {

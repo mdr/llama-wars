@@ -45,6 +45,14 @@ export class WorldGenerator {
     })
   }
 
+  private generateMountain = (): Hex => {
+    const location = randomElement(this.remainingHexes)
+    this.remainingHexes = R.without([location], this.remainingHexes)
+    return location
+  }
+
+  public generateMountains = (): Hex[] => R.range(1, 10).map(this.generateMountain)
+
   public generateUnits = (): Unit[] =>
     R.chain((player) => [this.generateUnit(player.id), this.generateUnit(player.id)], this.worldState.players)
 }

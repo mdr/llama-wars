@@ -165,6 +165,8 @@ export class WorldState {
 
   public addWorldLog = (message: string): WorldState => this.copy({ worldLog: R.append(message, this.worldLog) })
 
+  public updateWorldMap = (modify: (map: WorldMap) => WorldMap): WorldState => this.copy({ map: modify(this.map) })
+
   public newTurn = (): WorldState =>
     this.copy({
       turn: this.turn + 1,

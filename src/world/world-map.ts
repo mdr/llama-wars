@@ -1,15 +1,19 @@
-import { Hex } from './hex'
+import * as R from 'ramda'
 import assert = require('assert')
+
+import { Hex } from './hex'
 
 export class WorldMap {
   readonly width: number
   readonly height: number
+  readonly mountains: Hex[]
 
-  constructor({ width, height }: { width: number; height: number }) {
+  constructor({ width, height, mountains = [] }: { width: number; height: number; mountains?: Hex[] }) {
     assert(width > 0)
     assert(height > 0)
     this.width = width
     this.height = height
+    this.mountains = mountains
   }
 
   public isInBounds = (hex: Hex): boolean => {
@@ -25,7 +29,21 @@ export class WorldMap {
       }
   }
 
-  public toJson = (): any => ({ width: this.width, height: this.height })
+  public copy = ({
+    width = this.width,
+    height = this.height,
+    mountains = this.mountains,
+  }: { width?: number; height?: number; mountains?: Hex[] } = {}): WorldMap =>
+    new WorldMap({ width, height, mountains })
 
-  public static fromJson = (json: any): WorldMap => new WorldMap({ width: json.width, height: json.height })
+  public toJson = (): any => ({
+    width: this.width,
+    height: this.height,
+    mountains: this.mountains.map((mountain) => mountain.toJson()),
+  })
+
+  public static fromJson = (json: any): WorldMap =>
+    new WorldMap({ width: json.width, height: json.height, mountains: json.mountains.map(Hex.fromJson) })
+
+  public isMountain = (hex: Hex): boolean => R.contains(hex, this.mountains)
 }

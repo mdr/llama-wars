@@ -35,6 +35,7 @@ export interface GameStartedWorldEvent {
   id: WorldEventId
   type: 'gameStarted'
   units: Unit[]
+  mountains: Hex[]
 }
 
 export interface UnitMovedWorldEvent {

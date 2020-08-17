@@ -15,6 +15,7 @@ import { Option } from '../../util/types'
 import { LocalGameState } from '../local-game-state'
 import Polygon = Phaser.GameObjects.Polygon
 import { canAttackOccur } from '../../server/attack-world-action-handler'
+import { CombinedState } from '../combined-state-methods'
 
 type TileState = 'default' | 'selected' | 'targetable'
 
@@ -34,9 +35,16 @@ export class MapDisplayObject {
     }
   }
 
+  private get combinedState(): CombinedState {
+    return new CombinedState(this.worldState, this.localGameState)
+  }
+
   private createHex = (hex: Hex): void => {
     const polygonCenter = hexCenter(hex)
     this.scene.add.image(polygonCenter.x, polygonCenter.y, 'grass').setScale(0.65).setDepth(-5)
+    if (this.worldState.map.isMountain(hex)) {
+      this.scene.add.image(polygonCenter.x, polygonCenter.y, 'mountain').setDepth(-5)
+    }
     const polygon = this.addPolygon(polygonCenter, HEX_SIZE)
     this.hexPolygons.set(hex.toString(), polygon)
   }
@@ -89,7 +97,8 @@ export class MapDisplayObject {
       return 'selected'
     }
     if (mode.type === 'moveUnit') {
-      if (selectedHex && hex.isAdjacentTo(selectedHex) && !this.findUnitInLocation(hex)) {
+      const unit = this.worldState.getUnitById(mode.unitId)
+      if (selectedHex && this.combinedState.unitCanMoveToHex(unit, hex)) {
         return 'targetable'
       }
     }
