@@ -69,6 +69,7 @@ export class CreatedLobbyScene {
       case 'gameStarted':
         this.scene.sound.play(AudioKeys.NEW_TURN)
         if (this.listener) {
+          server.removeListener(this.listener)
           this.listener = undefined
         }
         this.launchGameScene()

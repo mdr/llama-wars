@@ -37,6 +37,13 @@ export class Server {
     this.listeners.push(listener)
   }
 
+  public removeListener = (listener: WorldEventListener): void => {
+    const index = this.listeners.indexOf(listener)
+    if (index > -1) {
+      this.listeners.splice(index, 1)
+    }
+  }
+
   private notifyListeners = (event: WorldEvent): void => {
     for (const listener of this.listeners) listener(event)
   }

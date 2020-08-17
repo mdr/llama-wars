@@ -147,7 +147,7 @@ export class GameScene extends Phaser.Scene {
       this.localGameState = this.localGameState.incrementActionsOutstandingWithServer()
       this.syncScene()
 
-      this.asyncSendToServer(result.worldAction).then(() => {
+      this.asyncSendToServer(result.worldAction).finally(() => {
         this.localGameState = this.localGameState.decrementActionsOutstandingWithServer()
         this.syncScene()
       })
