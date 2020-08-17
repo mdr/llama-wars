@@ -6,7 +6,7 @@ import { Option } from '../../util/types'
 import { openWorldEventDb, WorldEventDb } from '../../db/world-event-db'
 import { Server } from '../../server/server'
 import { PlayerId } from '../../world/player'
-import { Client, ServerToClientMessageListener } from '../../server/client'
+import { Client, WorldEventMessageListener } from '../../server/client'
 import { LOBBY_SCENE_KEY, LobbySceneData } from '../lobby/lobby-scene'
 import FileConfig = Phaser.Types.Loader.FileConfig
 import { WorldState } from '../../world/world-state'
@@ -20,7 +20,7 @@ const sceneConfig: Phaser.Types.Scenes.SettingsConfig = {
 }
 
 export class BootScene extends Phaser.Scene {
-  private rejoinedListener: Option<ServerToClientMessageListener>
+  private rejoinedListener: Option<WorldEventMessageListener>
   constructor() {
     super(sceneConfig)
   }

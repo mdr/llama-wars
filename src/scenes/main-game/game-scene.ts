@@ -20,14 +20,14 @@ import { LocalAction } from './local-action'
 import { LocalActionProcessor, LocalActionResult } from './local-action-processor'
 import { CombinedState } from '../combined-state-methods'
 import { WorldAction } from '../../world/world-actions'
-import { ServerToClientMessage } from '../../server/messages'
+import { WorldEventMessage } from '../../server/messages'
 import { deserialiseFromJson } from '../../util/json-serialisation'
 import { INITIAL_WORLD_STATE } from '../../world/initial-world-state'
 import { Client } from '../../server/client'
 import { Server } from '../../server/server'
 import { AnimationSpec, DisplayObjects } from './display-objects'
-import Pointer = Phaser.Input.Pointer
 import { PlayerId } from '../../world/player'
+import Pointer = Phaser.Input.Pointer
 
 export const GAME_SCENE_KEY = 'Game'
 
@@ -101,19 +101,8 @@ export class GameScene extends Phaser.Scene {
     client.addListener(this.handleServerToClientMessage)
   }
 
-  private handleServerToClientMessage = (message: ServerToClientMessage): void => {
-    switch (message.type) {
-      case 'joined':
-      case 'rejoined':
-        console.log('Unexpected message mid-game')
-        break
-      case 'worldEvent':
-        this.handleWorldEvent(deserialiseFromJson(message.event))
-        break
-      default:
-        throw new UnreachableCaseError(message)
-    }
-  }
+  private handleServerToClientMessage = (message: WorldEventMessage): void =>
+    this.handleWorldEvent(deserialiseFromJson(message.event))
 
   private actAsServer = (server: Server): void => {
     server.addListener(this.handleWorldEvent)

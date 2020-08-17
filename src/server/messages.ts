@@ -17,13 +17,13 @@ export interface WorldActionMessage {
 
 export type ClientToServerMessage = JoinMessage | RejoinMessage | WorldActionMessage
 
-export interface JoinedMessage {
+export interface JoinedResponse {
   type: 'joined'
   playerId: PlayerId
   worldState: any
 }
 
-export interface RejoinedMessage {
+export interface RejoinedResponse {
   type: 'rejoined'
   worldState: any
 }
@@ -32,5 +32,3 @@ export interface WorldEventMessage {
   type: 'worldEvent'
   event: any
 }
-
-export type ServerToClientMessage = JoinedMessage | RejoinedMessage | WorldEventMessage

@@ -1,7 +1,7 @@
 import * as R from 'ramda'
 import { WorldEventListener, WorldStateOwner } from './world-state-owner'
 import { PlayerAddedWorldEvent, WorldEvent, WorldEventId } from '../world/world-events'
-import { ClientToServerMessage, RejoinMessage, ServerToClientMessage } from './messages'
+import { ClientToServerMessage, RejoinMessage, WorldEventMessage } from './messages'
 import { deserialiseFromJson, serialiseToJson } from '../util/json-serialisation'
 import { UnreachableCaseError } from '../util/unreachable-case-error'
 import { PlayerId } from '../world/player'
@@ -49,7 +49,7 @@ export class Server {
     this.worldStateOwner.addListener((event: WorldEvent): void => {
       this.notifyListeners(event)
       this.worldEventDb.store(this.gameId, event)
-      const message: ServerToClientMessage = { type: 'worldEvent', event: serialiseToJson(event) }
+      const message: WorldEventMessage = { type: 'worldEvent', event: serialiseToJson(event) }
       this.peerServer.broadcast(message)
     })
   }

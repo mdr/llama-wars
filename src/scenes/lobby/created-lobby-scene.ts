@@ -1,14 +1,14 @@
-import { Client, ServerToClientMessageListener } from '../../server/client'
+import { Client, WorldEventMessageListener } from '../../server/client'
 import { Server } from '../../server/server'
 import { PlayerId } from '../../world/player'
 import { WorldState } from '../../world/world-state'
 import { GAME_SCENE_KEY, GameSceneData } from '../main-game/game-scene'
-import { ServerToClientMessage } from '../../server/messages'
 import { deserialiseFromJson } from '../../util/json-serialisation'
 import { WorldEvent } from '../../world/world-events'
 import { AudioKeys } from '../asset-keys'
 import { LobbyDisplayObjects } from './lobby-display-objects'
 import { WorldAction } from '../../world/world-actions'
+import { WorldEventMessage } from '../../server/messages'
 
 export class CreatedLobbyScene {
   private readonly scene: Phaser.Scene
@@ -16,7 +16,7 @@ export class CreatedLobbyScene {
   private readonly serverOrClient: Server | Client
   private readonly playerId: PlayerId
   private readonly lobbyDisplayObjects: LobbyDisplayObjects
-  private listener?: ServerToClientMessageListener
+  private listener?: WorldEventMessageListener
 
   constructor(scene: Phaser.Scene, serverOrClient: Server | Client, playerId: PlayerId, worldState: WorldState) {
     this.scene = scene
@@ -37,23 +37,22 @@ export class CreatedLobbyScene {
     new LobbyDisplayObjects(scene, playerId, this.handleStartGame, this.handleChangePlayerName)
 
   private actAsClient = (client: Client): void => {
-    this.listener = (message: ServerToClientMessage) => this.handleServerToClientMessage(message, client)
+    this.listener = (message: WorldEventMessage) => this.handleWorldEventMessage(message, client)
     client.addListener(this.listener)
   }
 
-  private handleServerToClientMessage = (message: ServerToClientMessage, client: Client): void => {
-    if (message.type == 'worldEvent') {
-      const event: WorldEvent = deserialiseFromJson(message.event)
-      this.worldState = this.worldState.applyEvent(event)
-      if (event.type == 'gameStarted') {
-        if (this.listener) {
-          client.removeListener(this.listener)
-          this.listener = undefined
-        }
-        this.launchGameScene()
+  private handleWorldEventMessage = (message: WorldEventMessage, client: Client): void => {
+    const event: WorldEvent = deserialiseFromJson(message.event)
+    this.worldState = this.worldState.applyEvent(event)
+    if (event.type == 'gameStarted') {
+      if (this.listener) {
+        client.removeListener(this.listener)
+        this.listener = undefined
       }
+      this.launchGameScene()
+    } else {
+      this.sync()
     }
-    this.sync()
   }
 
   private launchGameScene = (): void => {

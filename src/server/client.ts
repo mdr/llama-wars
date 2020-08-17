@@ -1,10 +1,10 @@
 import {
-  JoinedMessage,
+  JoinedResponse,
   JoinMessage,
-  RejoinedMessage,
+  RejoinedResponse,
   RejoinMessage,
-  ServerToClientMessage,
   WorldActionMessage,
+  WorldEventMessage,
 } from './messages'
 import { GameId } from '../scenes/main-game/game-scene'
 import { WorldAction } from '../world/world-actions'
@@ -14,24 +14,24 @@ import { PeerClient } from './peer-client'
 import { WorldState } from '../world/world-state'
 import Peer = require('peerjs')
 
-export type ServerToClientMessageListener = (message: ServerToClientMessage) => void
+export type WorldEventMessageListener = (message: WorldEventMessage) => void
 
 export class Client {
   private readonly peerClient: PeerClient
-  private readonly listeners: ServerToClientMessageListener[] = []
+  private readonly listeners: WorldEventMessageListener[] = []
 
-  public addListener = (listener: ServerToClientMessageListener): void => {
+  public addListener = (listener: WorldEventMessageListener): void => {
     this.listeners.push(listener)
   }
 
-  public removeListener = (listener: ServerToClientMessageListener): void => {
+  public removeListener = (listener: WorldEventMessageListener): void => {
     const index = this.listeners.indexOf(listener)
     if (index > -1) {
       this.listeners.splice(index, 1)
     }
   }
 
-  private notifyListeners = (message: ServerToClientMessage): void => {
+  private notifyListeners = (message: WorldEventMessage): void => {
     for (const listener of this.listeners) listener(message)
   }
 
@@ -49,13 +49,13 @@ export class Client {
 
   public rejoin = async (playerId: PlayerId): Promise<WorldState> => {
     const rejoinRequest: RejoinMessage = { type: 'rejoin', playerId }
-    const rejoinedResponse: RejoinedMessage = await this.peerClient.sendRequest(rejoinRequest)
+    const rejoinedResponse: RejoinedResponse = await this.peerClient.sendRequest(rejoinRequest)
     return WorldState.fromJson(rejoinedResponse.worldState)
   }
 
   public join = async (): Promise<{ playerId: PlayerId; worldState: WorldState }> => {
     const joinRequest: JoinMessage = { type: 'join' }
-    const joinedResponse: JoinedMessage = await this.peerClient.sendRequest(joinRequest)
+    const joinedResponse: JoinedResponse = await this.peerClient.sendRequest(joinRequest)
     const playerId = joinedResponse.playerId
     const worldState = WorldState.fromJson(joinedResponse.worldState)
     return { playerId, worldState }
