@@ -1,4 +1,5 @@
 import Peer = require('peerjs')
+import { newPeer } from './peer-utils'
 
 export type PeerId = string
 
@@ -59,9 +60,4 @@ export class PeerServer {
     }
     connection.send(responseMessage)
   }
-}
-
-export const newPeer = (id?: string, options?: Peer.PeerJSOption): Peer => {
-  const _Peer = (window as any).Peer as typeof Peer
-  return new _Peer(id, options)
 }

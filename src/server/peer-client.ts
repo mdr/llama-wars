@@ -1,5 +1,4 @@
 import { v4 as uuid } from 'uuid'
-import { newPeer } from './client'
 import {
   BroadcastMessage2,
   PeerId,
@@ -11,6 +10,7 @@ import {
 import { UnreachableCaseError } from '../util/unreachable-case-error'
 import { Option } from '../util/types'
 import Peer = require('peerjs')
+import { newPeer } from './peer-utils'
 
 type Resolve<T> = (value?: T | PromiseLike<T>) => void
 

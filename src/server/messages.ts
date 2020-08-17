@@ -1,21 +1,21 @@
 import { PlayerId } from '../world/player'
 
-export interface JoinMessage {
+export interface JoinRequest {
   type: 'join'
 }
 
-export interface RejoinMessage {
+export interface RejoinRequest {
   type: 'rejoin'
   playerId: PlayerId
 }
 
-export interface WorldActionMessage {
+export interface WorldActionRequest {
   type: 'worldAction'
   action: any
   playerId: PlayerId
 }
 
-export type ClientToServerMessage = JoinMessage | RejoinMessage | WorldActionMessage
+export type ClientRequest = JoinRequest | RejoinRequest | WorldActionRequest
 
 export interface JoinedResponse {
   type: 'joined'

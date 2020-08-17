@@ -1,7 +1,7 @@
 import * as R from 'ramda'
 import { WorldEventListener, WorldStateOwner } from './world-state-owner'
 import { PlayerAddedWorldEvent, WorldEvent, WorldEventId } from '../world/world-events'
-import { ClientToServerMessage, RejoinMessage, WorldEventMessage } from './messages'
+import { ClientRequest, RejoinRequest, WorldEventMessage } from './messages'
 import { deserialiseFromJson, serialiseToJson } from '../util/json-serialisation'
 import { UnreachableCaseError } from '../util/unreachable-case-error'
 import { PlayerId } from '../world/player'
@@ -68,7 +68,7 @@ export class Server {
     }
   }
 
-  private handleClientRejoin = (message: RejoinMessage): any => {
+  private handleClientRejoin = (message: RejoinRequest): any => {
     const worldState = this.worldState
     if (worldState.isValidPlayerId(message.playerId))
       return {
@@ -80,7 +80,7 @@ export class Server {
     }
   }
 
-  private handleClientToServerMessage = (message: ClientToServerMessage): any => {
+  private handleClientToServerMessage = (message: ClientRequest): any => {
     console.log(message)
     switch (message.type) {
       case 'join':

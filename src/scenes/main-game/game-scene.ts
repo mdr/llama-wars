@@ -20,8 +20,6 @@ import { LocalAction } from './local-action'
 import { LocalActionProcessor, LocalActionResult } from './local-action-processor'
 import { CombinedState } from '../combined-state-methods'
 import { WorldAction } from '../../world/world-actions'
-import { WorldEventMessage } from '../../server/messages'
-import { deserialiseFromJson } from '../../util/json-serialisation'
 import { INITIAL_WORLD_STATE } from '../../world/initial-world-state'
 import { Client } from '../../server/client'
 import { Server } from '../../server/server'
@@ -98,11 +96,8 @@ export class GameScene extends Phaser.Scene {
 
   private actAsClient = (client: Client): void => {
     this.serverOrClient = client
-    client.addListener(this.handleServerToClientMessage)
+    client.addListener(this.handleWorldEvent)
   }
-
-  private handleServerToClientMessage = (message: WorldEventMessage): void =>
-    this.handleWorldEvent(deserialiseFromJson(message.event))
 
   private actAsServer = (server: Server): void => {
     server.addListener(this.handleWorldEvent)

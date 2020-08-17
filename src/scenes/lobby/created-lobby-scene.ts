@@ -1,14 +1,13 @@
-import { Client, WorldEventMessageListener } from '../../server/client'
+import { Client } from '../../server/client'
 import { Server } from '../../server/server'
 import { PlayerId } from '../../world/player'
 import { WorldState } from '../../world/world-state'
 import { GAME_SCENE_KEY, GameSceneData } from '../main-game/game-scene'
-import { deserialiseFromJson } from '../../util/json-serialisation'
 import { WorldEvent } from '../../world/world-events'
 import { AudioKeys } from '../asset-keys'
 import { LobbyDisplayObjects } from './lobby-display-objects'
 import { WorldAction } from '../../world/world-actions'
-import { WorldEventMessage } from '../../server/messages'
+import { WorldEventListener } from '../../server/world-state-owner'
 
 export class CreatedLobbyScene {
   private readonly scene: Phaser.Scene
@@ -16,7 +15,7 @@ export class CreatedLobbyScene {
   private readonly serverOrClient: Server | Client
   private readonly playerId: PlayerId
   private readonly lobbyDisplayObjects: LobbyDisplayObjects
-  private listener?: WorldEventMessageListener
+  private listener?: WorldEventListener
 
   constructor(scene: Phaser.Scene, serverOrClient: Server | Client, playerId: PlayerId, worldState: WorldState) {
     this.scene = scene
@@ -37,12 +36,11 @@ export class CreatedLobbyScene {
     new LobbyDisplayObjects(scene, playerId, this.handleStartGame, this.handleChangePlayerName)
 
   private actAsClient = (client: Client): void => {
-    this.listener = (message: WorldEventMessage) => this.handleWorldEventMessage(message, client)
+    this.listener = (event: WorldEvent) => this.handleWorldEvent(event, client)
     client.addListener(this.listener)
   }
 
-  private handleWorldEventMessage = (message: WorldEventMessage, client: Client): void => {
-    const event: WorldEvent = deserialiseFromJson(message.event)
+  private handleWorldEvent = (event: WorldEvent, client: Client): void => {
     this.worldState = this.worldState.applyEvent(event)
     if (event.type == 'gameStarted') {
       if (this.listener) {
