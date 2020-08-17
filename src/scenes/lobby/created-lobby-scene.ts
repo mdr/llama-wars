@@ -22,7 +22,10 @@ export class CreatedLobbyScene {
     this.serverOrClient = serverOrClient
     this.playerId = playerId
     this.worldState = worldState
+    this.scene.sound.pauseOnBlur = false
     this.scene.sound.add(AudioKeys.CLICK)
+    this.scene.sound.add(AudioKeys.NEW_TURN)
+    this.scene.sound.add(AudioKeys.PLAYER_JOINED_LOBBY)
     this.lobbyDisplayObjects = this.makeLobbyDisplayObjects(scene, playerId)
     if (serverOrClient instanceof Client) {
       this.actAsClient(serverOrClient)
@@ -42,17 +45,42 @@ export class CreatedLobbyScene {
 
   private handleWorldEvent = (event: WorldEvent, client: Client): void => {
     this.worldState = this.worldState.applyEvent(event)
-    if (event.type === 'gameStarted') {
-      if (this.listener) {
-        client.removeListener(this.listener)
-        this.listener = undefined
-      }
-      this.launchGameScene()
-    } else {
-      this.sync()
+    switch (event.type) {
+      case 'gameStarted':
+        this.scene.sound.play(AudioKeys.NEW_TURN)
+        if (this.listener) {
+          client.removeListener(this.listener)
+          this.listener = undefined
+        }
+        this.launchGameScene()
+        break
+      case 'playerAdded':
+        this.scene.sound.play(AudioKeys.PLAYER_JOINED_LOBBY)
+        this.sync()
+        break
+      default:
+        this.sync()
     }
   }
 
+  private handleWorldEvent2 = (event: WorldEvent, server: Server): void => {
+    this.worldState = this.worldState.applyEvent(event)
+    switch (event.type) {
+      case 'gameStarted':
+        this.scene.sound.play(AudioKeys.NEW_TURN)
+        if (this.listener) {
+          this.listener = undefined
+        }
+        this.launchGameScene()
+        break
+      case 'playerAdded':
+        this.scene.sound.play(AudioKeys.PLAYER_JOINED_LOBBY)
+        this.sync()
+        break
+      default:
+        this.sync()
+    }
+  }
   private launchGameScene = (): void => {
     const sceneData: GameSceneData = {
       serverOrClient: this.serverOrClient,
@@ -74,11 +102,7 @@ export class CreatedLobbyScene {
 
   public sync = (): void => this.lobbyDisplayObjects.sync(this.worldState)
 
-  private actAsServer = (server: Server): void =>
-    server.addListener(() => {
-      this.worldState = server.worldState
-      this.sync()
-    })
+  private actAsServer = (server: Server): void => server.addListener((event) => this.handleWorldEvent2(event, server))
 
   private handleStartGame = () => {
     this.dispatchAction({ type: 'startGame' })
