@@ -1,6 +1,5 @@
-import { getGameWidth, getGameHeight } from '../../helpers'
+import { getGameHeight, getGameWidth } from '../../helpers'
 import { AudioKeys } from '../asset-keys'
-import FileConfig = Phaser.Types.Loader.FileConfig
 import { GAME_SCENE_KEY, GameId, GameSceneData } from '../main-game/game-scene'
 import { MAIN_MENU_SCENE_KEY } from '../main-menu/main-menu-scene'
 import { Option } from '../../util/types'
@@ -8,9 +7,9 @@ import { openWorldEventDb, WorldEventDb } from '../../db/world-event-db'
 import { Server } from '../../server/server'
 import { PlayerId } from '../../world/player'
 import { Client, ServerToClientMessageListener } from '../../server/client'
-import { WorldState } from '../../world/world-state'
-import { ServerToClientMessage } from '../../server/messages'
 import { LOBBY_SCENE_KEY, LobbySceneData } from '../lobby/lobby-scene'
+import FileConfig = Phaser.Types.Loader.FileConfig
+import { WorldState } from '../../world/world-state'
 
 export const BOOT_SCENE_KEY = 'Boot'
 
@@ -105,48 +104,25 @@ export class BootScene extends Phaser.Scene {
     }
   }
 
-  private joinAsClient = (client: Client, gameId: GameId): void => {
-    this.rejoinedListener = (message: ServerToClientMessage) => {
-      if (message.type == 'joined') {
-        if (this.rejoinedListener) {
-          client.removeListener(this.rejoinedListener)
-          this.rejoinedListener = undefined
-        }
-        const playerId = message.playerId
-        setUrlInfo({ gameId, playerId })
-        const worldState = WorldState.fromJson(message.worldState)
-        if (worldState.gameHasStarted) {
-          const sceneData: GameSceneData = { serverOrClient: client, worldState, playerId }
-          this.scene.start(GAME_SCENE_KEY, sceneData)
-        } else {
-          const sceneData: LobbySceneData = { serverOrClient: client, worldState, playerId }
-          this.scene.start(LOBBY_SCENE_KEY, sceneData)
-        }
-      }
-    }
-    client.addListener(this.rejoinedListener)
-    client.send({ type: 'join' })
+  private joinAsClient = async (client: Client, gameId: GameId): Promise<void> => {
+    const { playerId, worldState } = await client.join()
+    setUrlInfo({ gameId, playerId })
+    this.joinGame(worldState, client, playerId)
   }
 
-  private rejoinAsClient = (client: Client, gameId: GameId, playerId: PlayerId): void => {
-    this.rejoinedListener = (message: ServerToClientMessage) => {
-      if (message.type == 'rejoined') {
-        if (this.rejoinedListener) {
-          client.removeListener(this.rejoinedListener)
-          this.rejoinedListener = undefined
-        }
-        const worldState = WorldState.fromJson(message.worldState)
-        if (worldState.gameHasStarted) {
-          const sceneData: GameSceneData = { serverOrClient: client, worldState, playerId }
-          this.scene.start(GAME_SCENE_KEY, sceneData)
-        } else {
-          const sceneData: LobbySceneData = { serverOrClient: client, worldState, playerId }
-          this.scene.start(LOBBY_SCENE_KEY, sceneData)
-        }
-      }
+  private rejoinAsClient = async (client: Client, gameId: GameId, playerId: PlayerId): Promise<void> => {
+    const worldState = await client.rejoin(playerId)
+    this.joinGame(worldState, client, playerId)
+  }
+
+  private joinGame = (worldState: WorldState, client: Client, playerId: number) => {
+    if (worldState.gameHasStarted) {
+      const sceneData: GameSceneData = { serverOrClient: client, worldState, playerId }
+      this.scene.start(GAME_SCENE_KEY, sceneData)
+    } else {
+      const sceneData: LobbySceneData = { serverOrClient: client, worldState, playerId }
+      this.scene.start(LOBBY_SCENE_KEY, sceneData)
     }
-    client.addListener(this.rejoinedListener)
-    client.send({ type: 'rejoin', playerId })
   }
 
   private restoreGameAsServer = async (gameId: GameId, worldEventDb: WorldEventDb): Promise<void> => {
