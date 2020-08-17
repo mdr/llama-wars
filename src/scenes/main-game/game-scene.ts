@@ -9,7 +9,6 @@ import {
   UnitMovedWorldEvent,
   WorldEvent,
 } from '../../world/world-events'
-import { applyEvent } from '../../world/world-event-evaluator'
 import { UnitId } from '../../world/unit'
 import { UnreachableCaseError } from '../../util/unreachable-case-error'
 import { nothing, Option, toMaybe } from '../../util/types'
@@ -48,6 +47,7 @@ export const hexCenter = (hex: Hex): Point => addPoints(multiplyPoint(centerPoin
 export type GameId = string
 
 export class GameScene extends Phaser.Scene {
+  private created: boolean = false
   private serverOrClient?: Server | Client
 
   private worldState: WorldState = INITIAL_WORLD_STATE
@@ -67,6 +67,11 @@ export class GameScene extends Phaser.Scene {
   // ------
 
   public create = (sceneData: GameSceneData): void => {
+    if (this.created) {
+      throw new Error('Game scene has already been created')
+    } else {
+      this.created = true
+    }
     const { serverOrClient, playerId, worldState } = sceneData
     this.setUpSound()
     this.worldState = worldState
@@ -187,15 +192,13 @@ export class GameScene extends Phaser.Scene {
 
   private handleLeftClick = (hex: Hex): void => this.handleLocalAction(this.getLocalActionForClickingAHex(hex))
 
-  // Sync
-  // ----
-
   // Handle world events
   // -------------------
 
   private handleWorldEvent = (event: WorldEvent): void => {
     const oldWorldState = this.worldState
-    this.worldState = applyEvent(oldWorldState, event)
+    this.worldState = oldWorldState.applyEvent(event)
+
     switch (event.type) {
       case 'initialise':
       case 'playerAdded':
@@ -237,8 +240,6 @@ export class GameScene extends Phaser.Scene {
   }
 
   private handlePlayerDefeated = (): void => {
-    console.log('Player defeated')
-    console.log(this.combinedState.getCurrentPlayer().defeated)
     this.sound.play(AudioKeys.PLAYER_DEFEATED)
     this.syncScene()
   }

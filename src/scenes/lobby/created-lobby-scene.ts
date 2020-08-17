@@ -103,10 +103,10 @@ export class CreatedLobbyScene {
 
   public sync = (): void => this.lobbyDisplayObjects.sync(this.worldState)
 
-  private actAsServer = (server: Server): void => server.addListener((event) => this.handleWorldEvent2(event, server))
-
-  private handleStartGame = () => {
-    this.dispatchAction({ type: 'startGame' })
-    this.launchGameScene()
+  private actAsServer = (server: Server): void => {
+    this.listener = (event) => this.handleWorldEvent2(event, server)
+    server.addListener(this.listener)
   }
+
+  private handleStartGame = () => this.dispatchAction({ type: 'startGame' })
 }

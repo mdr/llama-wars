@@ -26,10 +26,8 @@ export class Server {
 
   public static restoreGame = async (worldEventDb: WorldEventDb, gameId: GameId): Promise<Server> => {
     const events = await worldEventDb.getEventsForGame(gameId)
-    let worldState = INITIAL_WORLD_STATE
-    for (const event of R.sortBy((event) => event.id, events)) {
-      worldState = worldState.applyEvent(event)
-    }
+    const sortedEvents = R.sortBy((event) => event.id, events)
+    const worldState = INITIAL_WORLD_STATE.applyEvents(sortedEvents)
     return new Server(worldEventDb, gameId, worldState, events.length + 1)
   }
 
@@ -45,7 +43,9 @@ export class Server {
   }
 
   private notifyListeners = (event: WorldEvent): void => {
-    for (const listener of this.listeners) listener(event)
+    for (const listener of this.listeners) {
+      listener(event)
+    }
   }
 
   constructor(worldEventDb: WorldEventDb, gameId: GameId, worldState: WorldState, nextWorldEventId: WorldEventId) {

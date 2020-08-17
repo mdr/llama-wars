@@ -45,14 +45,14 @@ export const applyEvent = (state: WorldState, event: WorldEvent): WorldState => 
 
 const handleInitialise = (event: InitialiseWorldEvent): WorldState => {
   if (event.id > 0) {
-    throw `Initialise must be the first event`
+    throw new Error(`Initialise must be the first event`)
   }
   return event.state
 }
 
 const handlePlayerAdded = (state: WorldState, event: PlayerAddedWorldEvent): WorldState => {
   if (R.any((player) => player.id === event.playerId, state.players)) {
-    throw `Player ID already in use`
+    throw new Error(`Player ID already in use`)
   }
   const { playerId } = event
   const player = new Player({ id: playerId, name: `Player ${playerId}` })
@@ -67,13 +67,13 @@ const handlePlayerChangedName = (state: WorldState, event: PlayerChangedNameWorl
 
 const getPlayer = (state: WorldState, playerId: PlayerId): Player => {
   const player = state.findPlayer(playerId)
-  if (!player) throw `No player found with ID ${playerId}`
+  if (!player) throw new Error(`No player found with ID ${playerId}`)
   return player
 }
 
 const handleGameStarted = (state: WorldState, event: GameStartedWorldEvent): WorldState => {
   if (state.gameHasStarted) {
-    throw `Game already started`
+    throw new Error(`Game already started`)
   }
   return state.copy({ turn: 1, units: event.units }).addWorldLog('Let battle commence!')
 }
@@ -81,27 +81,29 @@ const handleGameStarted = (state: WorldState, event: GameStartedWorldEvent): Wor
 const handleUnitMoved = (state: WorldState, event: UnitMovedWorldEvent): WorldState => {
   const { unitId, playerId, from, to } = event
   if (!from.isAdjacentTo(to)) {
-    throw `Invalid unit movement between non-adjacent hexes ${from} to ${to}`
+    throw new Error(`Invalid unit movement between non-adjacent hexes ${from} to ${to}`)
   }
   if (!state.map.isInBounds(to)) {
-    throw `Invalid unit movement to out-of-bounds hex ${to}`
+    throw new Error(`Invalid unit movement to out-of-bounds hex ${to}`)
   }
   const unit = state.findUnitById(unitId)
   if (!unit) {
-    throw `No unit found with ID ${unitId}`
+    throw new Error(`No unit found with ID ${unitId}`)
   }
   if (!unit.location.equals(from)) {
-    throw `Unit is not in the expected location for movement. Unit is at ${unit.location}, but was expected to be at ${from}`
+    throw new Error(
+      `Unit is not in the expected location for movement. Unit is at ${unit.location}, but was expected to be at ${from}`,
+    )
   }
   const toUnit = state.findUnitInLocation(to)
   if (toUnit) {
-    throw `Invalid unit movement to already-occupied hex`
+    throw new Error(`Invalid unit movement to already-occupied hex`)
   }
   if (unit.playerId !== playerId) {
-    throw `Invalid attempt to move unit of another player`
+    throw new Error(`Invalid attempt to move unit of another player`)
   }
   if (unit.actionPoints.current < event.actionPointsConsumed) {
-    throw `Invalid action point usage`
+    throw new Error(`Invalid action point usage`)
   }
   return state.replaceUnit(unit.id, unit.move(to, event.actionPointsConsumed))
 }
@@ -110,19 +112,25 @@ const handleCombat = (state: WorldState, event: CombatWorldEvent): WorldState =>
   const { attacker, defender } = event
 
   const attackerUnit = state.findUnitById(attacker.unitId)
-  if (!attackerUnit) throw `No unit found with ID ${attacker.unitId}`
+  if (!attackerUnit) throw new Error(`No unit found with ID ${attacker.unitId}`)
   if (!attackerUnit.location.equals(attacker.location))
-    throw `Invalid location for attacker. Attacking unit ${attackerUnit.id} is at location ${attackerUnit.location}, but was expected to be at ${attacker.location}`
+    throw new Error(
+      `Invalid location for attacker. Attacking unit ${attackerUnit.id} is at location ${attackerUnit.location}, but was expected to be at ${attacker.location}`,
+    )
 
   const defenderUnit = state.findUnitById(defender.unitId)
-  if (!defenderUnit) throw `No unit found with ID ${defender.unitId}`
+  if (!defenderUnit) throw new Error(`No unit found with ID ${defender.unitId}`)
   if (!defenderUnit.location.equals(defender.location))
-    throw `Invalid location for defender. Defending unit ${defenderUnit.id} is at location ${defenderUnit.location}, but was expected to be at ${defender.location}`
+    throw new Error(
+      `Invalid location for defender. Defending unit ${defenderUnit.id} is at location ${defenderUnit.location}, but was expected to be at ${defender.location}`,
+    )
 
-  if (attackerUnit.playerId === defenderUnit.playerId) throw `Invalid combat with self`
+  if (attackerUnit.playerId === defenderUnit.playerId) throw new Error(`Invalid combat with self`)
   if (!canAttackOccur(event.attackType, attacker.location, defender.location))
-    throw `Invalid combat of type ${event.attackType} between hexes ${attacker.location} to ${defender.location}`
-  if (attackerUnit.actionPoints.current < event.actionPointsConsumed) throw `Invalid action point usage`
+    throw new Error(
+      `Invalid combat of type ${event.attackType} between hexes ${attacker.location} to ${defender.location}`,
+    )
+  if (attackerUnit.actionPoints.current < event.actionPointsConsumed) throw new Error(`Invalid action point usage`)
 
   let newState = state
 
