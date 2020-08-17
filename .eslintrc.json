@@ -10,9 +10,11 @@
   ],
   "rules": {
     "@typescript-eslint/no-explicit-any": "off",
+    "@typescript-eslint/no-this-alias": "off",
     "@typescript-eslint/explicit-module-boundary-types": ["warn", {
       "allowArgumentsExplicitlyTypedAsAny": true
     }],
+    "eqeqeq": "warn",
     "@typescript-eslint/no-inferrable-types": ["warn", {
       "ignoreParameters": true,
       "ignoreProperties": true

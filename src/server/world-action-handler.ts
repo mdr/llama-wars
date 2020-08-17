@@ -11,6 +11,7 @@ import {
 import {
   GameStartedWorldEvent,
   InitialiseWorldEvent,
+  NewTurnWorldEvent,
   PlayerAddedWorldEvent,
   PlayerChangedNameWorldEvent,
   PlayerEndedTurnWorldEvent,
@@ -33,6 +34,27 @@ export class WorldActionHandler {
   }
 
   public calculateWorldEvents = (action: WorldAction): WorldEvent[] => {
+    const events = this.calculateSpecificWorldEvents(action)
+    return this.addNewTurnIfNeeded(events)
+  }
+
+  private addNewTurnIfNeeded(events: WorldEvent[]) {
+    const lastEvent = R.last(events)
+    if (lastEvent === undefined) {
+      return []
+    } else {
+      const newWorldState = this.worldState.applyEvents(events)
+      if (newWorldState.canAnyPlayerAct() || newWorldState.units.length === 0) {
+        return events
+      } else {
+        const nextWorldEventId = lastEvent.id + 1
+        const newTurnEvent: NewTurnWorldEvent = { id: nextWorldEventId, type: 'newTurn' }
+        return R.append(newTurnEvent, events)
+      }
+    }
+  }
+
+  private calculateSpecificWorldEvents = (action: WorldAction): WorldEvent[] => {
     switch (action.type) {
       case 'initialise':
         return this.handleInitialise(action)
@@ -86,12 +108,22 @@ export class WorldActionHandler {
   private handleMoveUnit = (action: MoveUnitWorldAction): [UnitMovedWorldEvent] => {
     const { unitId, to } = action
     const unit = this.worldState.findUnitById(unitId)
-    if (!unit) throw `No unit found with ID ${unitId}`
+    if (!unit) {
+      throw `No unit found with ID ${unitId}`
+    }
     const from = unit.location
-    if (!from.isAdjacentTo(to)) throw `Invalid unit movement between non-adjacent hexes ${from} to ${to}`
-    if (!this.worldState.map.isInBounds(to)) throw `Invalid unit movement to out-of-bounds hex ${to}`
-    if (this.worldState.findUnitInLocation(to)) throw `Invalid unit movement to already-occupied hex`
-    if (unit.actionPoints.current < 1) throw `Not enough action points to move`
+    if (!from.isAdjacentTo(to)) {
+      throw `Invalid unit movement between non-adjacent hexes ${from} to ${to}`
+    }
+    if (!this.worldState.map.isInBounds(to)) {
+      throw `Invalid unit movement to out-of-bounds hex ${to}`
+    }
+    if (this.worldState.findUnitInLocation(to)) {
+      throw `Invalid unit movement to already-occupied hex`
+    }
+    if (unit.actionPoints.current < 1) {
+      throw `Not enough action points to move`
+    }
     return [
       {
         id: this.nextWorldEventId,
@@ -118,17 +150,14 @@ export class WorldActionHandler {
       type: 'playerEndedTurn',
       playerId: this.playerId,
     }
-    const newWorldState = this.worldState.applyEvent(playerEndedTurnAction)
-    if (newWorldState.canAnyPlayerAct()) {
-      return [playerEndedTurnAction]
-    } else {
-      return [playerEndedTurnAction, { id: this.nextWorldEventId + 1, type: 'newTurn' }]
-    }
+    return [playerEndedTurnAction]
   }
 
   private getPlayer = (): Player => {
     const player = this.worldState.findPlayer(this.playerId)
-    if (!player) throw `No player with ID ${this.playerId}`
+    if (!player) {
+      throw `No player with ID ${this.playerId}`
+    }
     return player
   }
 }

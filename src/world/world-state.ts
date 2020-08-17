@@ -60,6 +60,10 @@ export class WorldState {
     worldLog?: string[]
   } = {}): WorldState => new WorldState({ turn, map, units, players, gameOverInfo: toOption(gameOverInfo), worldLog })
 
+  public get isGameOver(): boolean {
+    return this.gameOverInfo != undefined
+  }
+
   public get gameHasStarted(): boolean {
     return this.turn > 0
   }
@@ -150,6 +154,14 @@ export class WorldState {
   public gameOver = (victor: Option<number>): WorldState => this.copy({ gameOverInfo: just({ victor }) })
 
   public applyEvent = (event: WorldEvent): WorldState => applyEvent(this, event)
+
+  public applyEvents = (events: WorldEvent[]): WorldState => {
+    let state: WorldState = this
+    for (const event of events) {
+      state = state.applyEvent(event)
+    }
+    return state
+  }
 
   public addWorldLog = (message: string): WorldState => this.copy({ worldLog: R.append(message, this.worldLog) })
 
