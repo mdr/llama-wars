@@ -75,7 +75,7 @@ const handleGameStarted = (state: WorldState, event: GameStartedWorldEvent): Wor
   if (state.gameHasStarted) {
     throw `Game already started`
   }
-  return state.copy({ turn: 1, units: event.units })
+  return state.copy({ turn: 1, units: event.units }).addWorldLog('Let battle commence!')
 }
 
 const handleUnitMoved = (state: WorldState, event: UnitMovedWorldEvent): WorldState => {
