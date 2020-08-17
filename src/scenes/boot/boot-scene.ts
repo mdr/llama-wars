@@ -54,7 +54,7 @@ export class BootScene extends Phaser.Scene {
     this.load.on('progress', (value: number) => {
       progressBar.width = (progressBarWidth - 30) * value
 
-      const percent = value * 100
+      const percent = Math.round(value * 100)
       percentText.setText(`${percent}%`)
     })
 
@@ -147,6 +147,8 @@ export class BootScene extends Phaser.Scene {
     this.load.image('grass', 'assets/sprites/grass2.png')
     // https://opengameart.org/content/puddle-corpses
     this.load.image('spit', 'assets/sprites/puddle_light_blue.png')
+    // https://opengameart.org/content/world-map-tiles
+    this.load.image('mountain', 'assets/sprites/mountains_outer.png')
 
     // https://opengameart.org/content/37-hitspunches
     this.load.audio(AudioKeys.ATTACK_1, 'assets/audio/hit14.mp3.mp3')
