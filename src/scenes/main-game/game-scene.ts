@@ -105,11 +105,13 @@ export class GameScene extends Phaser.Scene {
   }
 
   private asyncSendToServer = async (action: WorldAction): Promise<void> => {
-    if (!this.serverOrClient) throw `Unexpected missing serverOrClient`
+    if (!this.serverOrClient) {
+      throw `Unexpected missing serverOrClient`
+    }
     if (this.serverOrClient instanceof Server) {
       this.serverOrClient.handleAction(this.playerId, action)
     } else {
-      this.serverOrClient.sendAction(this.playerId, action)
+      await this.serverOrClient.sendAction(this.playerId, action)
     }
   }
 
@@ -142,11 +144,11 @@ export class GameScene extends Phaser.Scene {
       this.syncScene()
     }
     if (result.worldAction) {
-      this.localGameState = this.localGameState.copy({ actionOutstandingWithServer: true })
+      this.localGameState = this.localGameState.incrementActionsOutstandingWithServer()
       this.syncScene()
 
       this.asyncSendToServer(result.worldAction).then(() => {
-        this.localGameState = this.localGameState.copy({ actionOutstandingWithServer: false })
+        this.localGameState = this.localGameState.decrementActionsOutstandingWithServer()
         this.syncScene()
       })
     }

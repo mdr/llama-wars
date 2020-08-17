@@ -73,7 +73,11 @@ export class LobbyDisplayObjects {
       playerText?.setText(player.name).setY(y)
       y += 50
     }
-    if (this.startGameButton) this.startGameButton.setY(y)
-    if (this.waitingForHostText) this.waitingForHostText.setY(y)
+    if (this.startGameButton) {
+      this.startGameButton.setY(y)
+    }
+    if (this.waitingForHostText) {
+      this.waitingForHostText.setY(y)
+    }
   }
 }

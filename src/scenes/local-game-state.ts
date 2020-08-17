@@ -2,46 +2,54 @@ import { Hex } from '../world/hex'
 import { Mode } from './main-game/mode'
 import { Maybe, Option, toMaybe, toOption } from '../util/types'
 import { PlayerId } from '../world/player'
+import assert = require('assert')
 
 export class LocalGameState {
   readonly playerId: PlayerId
   readonly mode: Mode
   readonly selectedHex: Option<Hex>
-  readonly actionOutstandingWithServer: boolean
+  readonly actionsOutstandingWithServer: number
 
   constructor({
     playerId,
     mode,
     selectedHex,
-    actionOutstandingWithServer = false,
+    actionsOutstandingWithServer = 0,
   }: {
     playerId: PlayerId
     mode: Mode
     selectedHex?: Option<Hex>
-    actionOutstandingWithServer?: boolean
+    actionsOutstandingWithServer?: number
   }) {
     this.playerId = playerId
     this.mode = mode
     this.selectedHex = selectedHex
-    this.actionOutstandingWithServer = actionOutstandingWithServer
+    this.actionsOutstandingWithServer = actionsOutstandingWithServer
+    assert(actionsOutstandingWithServer >= 0)
   }
 
   public copy = ({
     playerId = this.playerId,
     mode = this.mode,
     selectedHex = toMaybe(this.selectedHex),
-    actionOutstandingWithServer = this.actionOutstandingWithServer,
+    actionsOutstandingWithServer = this.actionsOutstandingWithServer,
   }: {
     playerId?: PlayerId
     mode?: Mode
     selectedHex?: Maybe<Hex>
-    actionOutstandingWithServer?: boolean
+    actionsOutstandingWithServer?: number
   } = {}): LocalGameState =>
-    new LocalGameState({ playerId, mode, selectedHex: toOption(selectedHex), actionOutstandingWithServer })
+    new LocalGameState({ playerId, mode, selectedHex: toOption(selectedHex), actionsOutstandingWithServer })
 
   public setSelectedHex = (selectedHex: Option<Hex>): LocalGameState => this.copy({ selectedHex: toMaybe(selectedHex) })
 
   public setMode = (mode: Mode): LocalGameState => this.copy({ mode })
+
+  public incrementActionsOutstandingWithServer = (): LocalGameState =>
+    this.copy({ actionsOutstandingWithServer: this.actionsOutstandingWithServer + 1 })
+
+  public decrementActionsOutstandingWithServer = (): LocalGameState =>
+    this.copy({ actionsOutstandingWithServer: this.actionsOutstandingWithServer - 1 })
 }
 
 export const INITIAL_LOCAL_GAME_STATE = new LocalGameState({
