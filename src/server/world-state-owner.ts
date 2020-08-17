@@ -1,6 +1,5 @@
 import { WorldState } from '../world/world-state'
 import { WorldAction } from '../world/world-actions'
-import { applyEvent } from '../world/world-event-evaluator'
 import { WorldEvent, WorldEventId } from '../world/world-events'
 import { WorldActionHandler } from './world-action-handler'
 import { PlayerId } from '../world/player'
@@ -29,7 +28,7 @@ export class WorldStateOwner {
     const worldActionHandler = new WorldActionHandler(this.worldState, playerId, this.nextWorldEventId)
     const events = worldActionHandler.calculateWorldEvents(action)
     for (const event of events) {
-      this.worldState = applyEvent(this.worldState, event)
+      this.worldState = this.worldState.applyEvent(event)
       this.notifyListeners(event)
     }
     this.nextWorldEventId += events.length

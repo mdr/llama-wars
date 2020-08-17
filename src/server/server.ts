@@ -11,7 +11,6 @@ import { AddPlayerWorldAction, WorldAction } from '../world/world-actions'
 import { WorldEventDb } from '../db/world-event-db'
 import { GameId } from '../scenes/main-game/game-scene'
 import { INITIAL_WORLD_STATE } from '../world/initial-world-state'
-import { applyEvent } from '../world/world-event-evaluator'
 import { WorldState } from '../world/world-state'
 
 export class Server {
@@ -30,7 +29,7 @@ export class Server {
     const events = await worldEventDb.getEventsForGame(gameId)
     let worldState = INITIAL_WORLD_STATE
     for (const event of R.sortBy((event) => event.id, events)) {
-      worldState = applyEvent(worldState, event)
+      worldState = worldState.applyEvent(event)
     }
     return new Server(worldEventDb, gameId, worldState, events.length + 1)
   }

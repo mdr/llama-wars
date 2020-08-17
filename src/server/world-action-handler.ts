@@ -20,7 +20,6 @@ import {
 import { HOST_PLAYER_ID, Player, PlayerId } from '../world/player'
 import { WorldGenerator } from './world-generator'
 import { AttackWorldActionHandler } from './attack-world-action-handler'
-import { applyEvent } from '../world/world-event-evaluator'
 
 export class WorldActionHandler {
   private readonly worldState: WorldState
@@ -119,7 +118,7 @@ export class WorldActionHandler {
       type: 'playerEndedTurn',
       playerId: this.playerId,
     }
-    const newWorldState = applyEvent(this.worldState, playerEndedTurnAction)
+    const newWorldState = this.worldState.applyEvent(playerEndedTurnAction)
     if (newWorldState.canAnyPlayerAct()) {
       return [playerEndedTurnAction]
     } else {

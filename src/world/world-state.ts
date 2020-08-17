@@ -18,6 +18,7 @@ export class WorldState {
   readonly units: Unit[]
   readonly players: Player[]
   readonly gameOverInfo?: GameOverInfo
+  readonly worldLog: string[]
 
   constructor({
     turn,
@@ -25,18 +26,21 @@ export class WorldState {
     units,
     players,
     gameOverInfo,
+    worldLog = [],
   }: {
     turn: number
     map: WorldMap
     units: Unit[]
     players: Player[]
     gameOverInfo?: Option<GameOverInfo>
+    worldLog?: string[]
   }) {
     this.turn = turn
     this.map = map
     this.units = units
     this.players = players
     this.gameOverInfo = gameOverInfo
+    this.worldLog = worldLog
     assert(turn >= 0)
   }
 
@@ -46,13 +50,15 @@ export class WorldState {
     units = this.units,
     players = this.players,
     gameOverInfo = toMaybe(this.gameOverInfo),
+    worldLog = this.worldLog,
   }: {
     turn?: number
     map?: WorldMap
     units?: Unit[]
     players?: Player[]
     gameOverInfo?: Maybe<GameOverInfo>
-  } = {}): WorldState => new WorldState({ turn, map, units, players, gameOverInfo: toOption(gameOverInfo) })
+    worldLog?: string[]
+  } = {}): WorldState => new WorldState({ turn, map, units, players, gameOverInfo: toOption(gameOverInfo), worldLog })
 
   public get gameHasStarted(): boolean {
     return this.turn > 0
@@ -144,4 +150,13 @@ export class WorldState {
   public gameOver = (victor: Option<number>): WorldState => this.copy({ gameOverInfo: just({ victor }) })
 
   public applyEvent = (event: WorldEvent): WorldState => applyEvent(this, event)
+
+  public addWorldLog = (message: string): WorldState => this.copy({ worldLog: R.append(message, this.worldLog) })
+
+  public newTurn = (): WorldState =>
+    this.copy({
+      turn: this.turn + 1,
+      units: this.units.map((unit) => unit.refreshActionPoints()),
+      players: this.players.map((player) => player.copy({ endedTurn: false })),
+    })
 }

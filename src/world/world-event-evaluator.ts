@@ -61,13 +61,14 @@ const handlePlayerAdded = (state: WorldState, event: PlayerAddedWorldEvent): Wor
 
 const handlePlayerChangedName = (state: WorldState, event: PlayerChangedNameWorldEvent): WorldState => {
   const { playerId, name } = event
-  validatePlayerId(state, playerId)
+  getPlayer(state, playerId)
   return state.updatePlayer(playerId, (player) => player.copy({ name }))
 }
 
-const validatePlayerId = (state: WorldState, playerId: PlayerId): void => {
+const getPlayer = (state: WorldState, playerId: PlayerId): Player => {
   const player = state.findPlayer(playerId)
   if (!player) throw `No player found with ID ${playerId}`
+  return player
 }
 
 const handleGameStarted = (state: WorldState, event: GameStartedWorldEvent): WorldState => {
@@ -114,42 +115,61 @@ const handleCombat = (state: WorldState, event: CombatWorldEvent): WorldState =>
 
   let newState = state
 
-  if (attacker.killed) newState = newState.removeUnit(attackerUnit.id)
-  else
-    newState = newState.replaceUnit(
-      attackerUnit.id,
-      attackerUnit.damage(attacker.damage).reduceActionPoints(event.actionPointsConsumed),
-    )
+  if (attacker.killed) {
+    newState = newState.removeUnit(attackerUnit.id)
+  } else {
+    const updatedAttacker = attackerUnit.damage(attacker.damage).reduceActionPoints(event.actionPointsConsumed)
+    newState = newState.replaceUnit(attackerUnit.id, updatedAttacker)
+  }
 
-  if (defender.killed) newState = newState.removeUnit(defenderUnit.id)
-  else newState = newState.replaceUnit(defenderUnit.id, defenderUnit.damage(defender.damage))
+  if (defender.killed) {
+    newState = newState.removeUnit(defenderUnit.id)
+  } else {
+    newState = newState.replaceUnit(defenderUnit.id, defenderUnit.damage(defender.damage))
+  }
 
+  if (defender.killed) {
+    if (attacker.killed) {
+      newState = newState.addWorldLog(`${defenderUnit.name} was taken out in a suicide attack by ${attackerUnit.name}.`)
+    } else {
+      newState = newState.addWorldLog(`${defenderUnit.name} was brutally murdered by ${attackerUnit.name}.`)
+    }
+  } else if (attacker.killed) {
+    newState = newState.addWorldLog(`${attackerUnit.name} died in a futile attempt to take on ${attackerUnit.name}.`)
+  } else {
+    const verb = event.attackType === 'melee' ? 'attacked' : 'spat at'
+    const takingDamageClause = attacker.damage == 0 ? '' : ` and taking ${attacker.damage} damage`
+    const message = `${attackerUnit.name} ${verb} ${defenderUnit.name}, causing ${defender.damage} damage${takingDamageClause}.`
+    newState = newState.addWorldLog(message)
+  }
   return newState
 }
 
 const handlePlayerEndedTurn = (state: WorldState, event: PlayerEndedTurnWorldEvent): WorldState => {
   const { playerId } = event
-  validatePlayerId(state, playerId)
+  getPlayer(state, playerId)
   return state.updatePlayer(playerId, (player) => player.copy({ endedTurn: true }))
 }
 
 const handlePlayerDefeated = (state: WorldState, event: PlayerDefeatedWorldEvent): WorldState => {
   const { playerId } = event
-  validatePlayerId(state, playerId)
-  return state.updatePlayer(playerId, (player) => player.copy({ defeated: true }))
+  const player = getPlayer(state, playerId)
+  return state
+    .updatePlayer(playerId, (player) => player.copy({ defeated: true }))
+    .addWorldLog(`${player.name} has been vanquished.`)
 }
 
 const handleNewTurn = (state: WorldState): WorldState =>
-  state.copy({
-    turn: state.turn + 1,
-    units: state.units.map((unit) => unit.refreshActionPoints()),
-    players: state.players.map((player) => player.copy({ endedTurn: false })),
-  })
+  state.newTurn().addWorldLog(`Turn ${state.turn + 1} has begun.`)
 
 const handleGameOver = (state: WorldState, event: GameOverWorldEvent): WorldState => {
   const { victor } = event
+  let newState = state.gameOver(victor)
   if (victor) {
-    validatePlayerId(state, victor)
+    const victorPlayer = getPlayer(state, victor)
+    newState = newState.addWorldLog(`🏆 ${victorPlayer.name} is victorious!`)
+  } else {
+    newState = newState.addWorldLog(`There are no winners in war.`)
   }
-  return state.gameOver(victor)
+  return newState
 }

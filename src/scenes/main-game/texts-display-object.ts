@@ -1,3 +1,5 @@
+import * as R from 'ramda'
+
 import { WorldState } from '../../world/world-state'
 import { LocalGameState } from '../local-game-state'
 import { hexWidth, mapHeight } from '../hex-geometry'
@@ -29,6 +31,7 @@ export class TextsDisplayObject {
   private readonly hourglass: Phaser.GameObjects.Image
   private readonly defeatText: Phaser.GameObjects.Text
   private readonly victoryText: Phaser.GameObjects.Text
+  private readonly worldLogText: Phaser.GameObjects.Text
 
   private get combinedState(): CombinedState {
     return new CombinedState(this.worldState, this.localGameState)
@@ -105,6 +108,7 @@ export class TextsDisplayObject {
       .setFontSize(42)
       .setVisible(false)
       .setDepth(100)
+    this.worldLogText = this.scene.add.text(960, 50, '')
   }
 
   private handleActionTextClick = (): void => {
@@ -175,6 +179,7 @@ export class TextsDisplayObject {
     }
     this.defeatText.setVisible(player.defeated)
     this.victoryText.setVisible(worldState.gameOverInfo?.victor === player.id)
+    this.worldLogText.setText(R.takeLast(30, this.worldState.worldLog).join('\n'))
   }
 
   private syncAttackModeText = (unitId: UnitId, attackType: AttackType): void => {
