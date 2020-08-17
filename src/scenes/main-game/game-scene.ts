@@ -79,7 +79,7 @@ export class GameScene extends Phaser.Scene {
     }
 
     this.displayObjects = new DisplayObjects(this, this.worldState, this.localGameState, this.handleLocalAction)
-    this.handleNewTurn()
+    this.updateAsAtStartOfTurn()
     this.setUpInputs()
   }
 
@@ -242,12 +242,16 @@ export class GameScene extends Phaser.Scene {
   }
 
   private handleNewTurn = (): void => {
+    this.sound.play(AudioKeys.NEW_TURN)
+    this.updateAsAtStartOfTurn()
+  }
+
+  private updateAsAtStartOfTurn() {
     const unitToSelect = this.combinedState.findNextUnitWithUnspentActionPoints()
     this.localGameState = this.localGameState.copy({
       mode: { type: 'selectHex' },
       selectedHex: toMaybe(unitToSelect?.location),
     })
-    this.sound.play(AudioKeys.NEW_TURN)
     this.syncScene()
   }
 
