@@ -10,6 +10,7 @@ import { Client } from '../../server/client'
 import { LOBBY_SCENE_KEY, LobbySceneData } from '../lobby/lobby-scene'
 import FileConfig = Phaser.Types.Loader.FileConfig
 import { WorldState } from '../../world/world-state'
+import { getUrlInfo, setUrlInfo, UrlInfo } from './url-info'
 
 export const BOOT_SCENE_KEY = 'Boot'
 
@@ -168,29 +169,4 @@ export class BootScene extends Phaser.Scene {
     //https://freesound.org/people/tvlaudio/sounds/267897/
     this.load.audio(AudioKeys.SPIT, 'assets/audio/spit.wav')
   }
-}
-
-interface UrlInfo {
-  gameId: GameId
-  playerId?: PlayerId
-}
-
-export const getUrlInfo = (): Option<UrlInfo> => {
-  const hash = window.location.hash
-  if (hash === '') {
-    return
-  }
-  const path = hash.substr(1)
-  const segments = path.split('/')
-  const gameId = segments[0]
-  const playerId = segments.length > 1 ? Number.parseInt(segments[1]) : undefined
-  return { gameId, playerId }
-}
-
-export const setUrlInfo = (urlInfo: UrlInfo): void => {
-  let hash = urlInfo.gameId
-  if (urlInfo.playerId !== undefined) {
-    hash += '/' + urlInfo.playerId
-  }
-  window.location.hash = hash
 }
