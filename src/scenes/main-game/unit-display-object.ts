@@ -155,6 +155,10 @@ export class UnitDisplayObject {
     text.destroy()
   }
 
+  public runEatAnimation = async (): Promise<void> => {
+    this.image.anims.play('llama-eat')
+  }
+
   public runAttackAnimation = async (from: Hex, to: Hex, speed: AnimationSpeed): Promise<void> => {
     const beforeCoords = hexCenter(from)
     const afterCoords = hexCenter(to)

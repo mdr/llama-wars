@@ -2,7 +2,7 @@ import { HOST_PLAYER_ID, Player, PlayerId } from '../../world/player'
 import { MenuButton } from '../../ui/menu-button'
 import * as R from 'ramda'
 import { WorldState } from '../../world/world-state'
-import { AudioKeys } from '../asset-keys'
+import { AudioKeys, ImageKeys } from '../asset-keys'
 import { PLAYER_TINTS } from '../colours'
 
 interface PlayerObjects {
@@ -39,7 +39,12 @@ export class LobbyDisplayObjects {
     }
     this.scene.anims.create({
       key: 'llama-walk',
-      frames: [{ key: 'llama-1' } as any, { key: 'llama-2' }, { key: 'llama-3' }, { key: 'llama-4' }],
+      frames: [
+        { key: ImageKeys.LLAMA_1 } as any,
+        { key: ImageKeys.LLAMA_2 },
+        { key: ImageKeys.LLAMA_3 },
+        { key: ImageKeys.LLAMA_4 },
+      ],
       frameRate: 8,
       repeat: -1,
     })
@@ -111,7 +116,7 @@ export class LobbyDisplayObjects {
       .setInteractive()
       .on('pointerdown', () => this.handlePlayerTextClick(player, nameText))
     const llama = this.scene.add
-      .sprite(70, 0, 'llama-1')
+      .sprite(70, 0, ImageKeys.LLAMA_1)
       .setScale(0.6)
       .setTint(PLAYER_TINTS[player.id - 1])
       .play('llama-walk')

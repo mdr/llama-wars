@@ -166,10 +166,10 @@ export class BootScene extends Phaser.Scene {
     this.load.image(ImageKeys.LLAMA_2, 'assets/sprites/llama/llama_14.png')
     this.load.image(ImageKeys.LLAMA_3, 'assets/sprites/llama/llama_13.png')
     this.load.image(ImageKeys.LLAMA_4, 'assets/sprites/llama/llama_12.png')
-    this.load.image(ImageKeys.LLAMA_EAT_1, 'assets/sprites/llama-eat/llama_12.png')
-    this.load.image(ImageKeys.LLAMA_EAT_2, 'assets/sprites/llama-eat/llama_13.png')
-    this.load.image(ImageKeys.LLAMA_EAT_3, 'assets/sprites/llama-eat/llama_14.png')
-    this.load.image(ImageKeys.LLAMA_EAT_4, 'assets/sprites/llama-eat/llama_15.png')
+    this.load.image(ImageKeys.LLAMA_EAT_1, 'assets/sprites/llama-eat/llama_eat_12.png')
+    this.load.image(ImageKeys.LLAMA_EAT_2, 'assets/sprites/llama-eat/llama_eat_13.png')
+    this.load.image(ImageKeys.LLAMA_EAT_3, 'assets/sprites/llama-eat/llama_eat_14.png')
+    this.load.image(ImageKeys.LLAMA_EAT_4, 'assets/sprites/llama-eat/llama_eat_15.png')
 
     // https://opengameart.org/content/hourglass-icon
     this.load.image(ImageKeys.HOURGLASS, 'assets/sprites/Hourglass.png')

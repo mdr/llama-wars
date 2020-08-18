@@ -9,7 +9,7 @@ import * as R from 'ramda'
 import { Hex } from '../../world/hex'
 import { UnreachableCaseError } from '../../util/unreachable-case-error'
 import { Option } from '../../util/types'
-import { AudioKeys } from '../asset-keys'
+import { AudioKeys, ImageKeys } from '../asset-keys'
 import { randomElement } from '../../util/random-util'
 import { AttackType } from '../../world/world-actions'
 import { fireAndForget } from '../../util/async-util'
@@ -73,10 +73,42 @@ export class DisplayObjects {
     )
     this.scene.anims.create({
       key: 'llama-walk',
-      frames: [{ key: 'llama-1' } as any, { key: 'llama-2' }, { key: 'llama-3' }, { key: 'llama-4' }],
+      frames: [
+        { key: ImageKeys.LLAMA_1 } as any,
+        { key: ImageKeys.LLAMA_2 },
+        { key: ImageKeys.LLAMA_3 },
+        { key: ImageKeys.LLAMA_4 },
+      ],
       frameRate: 8,
       repeat: -1,
     })
+    this.scene.anims.create({
+      key: 'llama-eat',
+      frames: [
+        { key: ImageKeys.LLAMA_EAT_1 } as any,
+        { key: ImageKeys.LLAMA_EAT_2 },
+        { key: ImageKeys.LLAMA_EAT_3 },
+        { key: ImageKeys.LLAMA_EAT_4 },
+        { key: ImageKeys.LLAMA_EAT_3 },
+        { key: ImageKeys.LLAMA_EAT_4 },
+      ],
+      frameRate: 4,
+      yoyo: true,
+    })
+    this.scheduleEatingAnimation()
+  }
+
+  private scheduleEatingAnimation = (): void => {
+    const times = [2000, 3000, 5000]
+    const delay = randomElement(times)
+    setTimeout(() => {
+      const unitDisplayObjects = Array.from(this.unitDisplayObjects.values())
+      if (unitDisplayObjects.length > 0) {
+        const randomUnit = randomElement(unitDisplayObjects)
+        fireAndForget(() => randomUnit.runEatAnimation())
+      }
+      setTimeout(() => this.scheduleEatingAnimation(), 2000)
+    }, delay)
   }
 
   public handlePointerMove = (point: Point): void => this.mapDisplayObject?.handlePointerMove(point)
