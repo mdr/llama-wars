@@ -1,13 +1,11 @@
 import { Client } from '../../server/client'
 import { Server } from '../../server/server'
-import { PlayerId } from '../../world/player'
 import { CreatedLobbyScene } from './created-lobby-scene'
 
 export const LOBBY_SCENE_KEY = 'Lobby'
 
 export interface LobbySceneData {
   serverOrClient: Server | Client
-  playerId: PlayerId
 }
 
 const sceneConfig: Phaser.Types.Scenes.SettingsConfig = {
@@ -22,7 +20,7 @@ export class LobbyScene extends Phaser.Scene {
   }
 
   public create = (sceneData: LobbySceneData): void => {
-    const { serverOrClient, playerId } = sceneData
-    new CreatedLobbyScene(this, serverOrClient, playerId)
+    const { serverOrClient } = sceneData
+    new CreatedLobbyScene(this, serverOrClient)
   }
 }

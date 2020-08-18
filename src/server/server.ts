@@ -20,6 +20,10 @@ export class Server {
   private readonly listeners: WorldEventListener[] = []
   private readonly peerServer: PeerServer
 
+  public get playerId(): PlayerId {
+    return HOST_PLAYER_ID
+  }
+
   public get worldState(): WorldState {
     return this.worldStateOwner.worldState
   }
@@ -66,7 +70,7 @@ export class Server {
       return { type: 'unableToJoin' }
     } else {
       const addPlayerAction: AddPlayerWorldAction = { type: 'addPlayer' }
-      const playerAddedEvent = <PlayerAddedWorldEvent>this.handleAction(HOST_PLAYER_ID, addPlayerAction)[0]
+      const playerAddedEvent = <PlayerAddedWorldEvent>this.handleAction(this.playerId, addPlayerAction)[0]
       return {
         type: 'joined',
         playerId: playerAddedEvent.playerId,

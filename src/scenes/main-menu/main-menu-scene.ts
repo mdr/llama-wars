@@ -39,7 +39,7 @@ export class MainMenuScene extends Phaser.Scene {
     const server = new Server(worldEventDb, gameId, INITIAL_WORLD_STATE, 0)
     server.handleAction(playerId, { type: 'initialise', state: INITIAL_WORLD_STATE })
     setUrlInfo({ gameId })
-    const sceneData: LobbySceneData = { serverOrClient: server, playerId: playerId }
+    const sceneData: LobbySceneData = { serverOrClient: server }
     this.scene.start(LOBBY_SCENE_KEY, sceneData)
   }
 }

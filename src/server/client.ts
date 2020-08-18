@@ -25,9 +25,14 @@ export class Client {
   private readonly peerClient: PeerClient
   private readonly listeners: WorldEventListener[] = []
   private _worldState: WorldState = INITIAL_WORLD_STATE
+  private _playerId: PlayerId = -1
 
   public get worldState(): WorldState {
     return this._worldState
+  }
+
+  public get playerId(): PlayerId {
+    return this._playerId
   }
 
   public addListener = (listener: WorldEventListener): void => {
@@ -69,6 +74,7 @@ export class Client {
     switch (response.type) {
       case 'rejoined':
         const worldState = WorldState.fromJson(response.worldState)
+        this._playerId = playerId
         this._worldState = worldState
         return worldState
       case 'unableToRejoin':
@@ -85,6 +91,7 @@ export class Client {
       case 'joined':
         const playerId = response.playerId
         const worldState = WorldState.fromJson(response.worldState)
+        this._playerId = playerId
         this._worldState = worldState
         return { playerId, worldState }
       case 'unableToJoin':

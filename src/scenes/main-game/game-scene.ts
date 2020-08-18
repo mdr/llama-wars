@@ -36,8 +36,6 @@ const sceneConfig: Phaser.Types.Scenes.SettingsConfig = {
 
 export interface GameSceneData {
   serverOrClient: Server | Client
-  playerId: PlayerId
-  worldState: WorldState
 }
 
 export const HEX_SIZE = 48
@@ -72,10 +70,10 @@ export class GameScene extends Phaser.Scene {
     } else {
       this.created = true
     }
-    const { serverOrClient, playerId, worldState } = sceneData
+    const { serverOrClient } = sceneData
     this.setUpSound()
-    this.worldState = worldState
-    this.localGameState = INITIAL_LOCAL_GAME_STATE.copy({ playerId })
+    this.worldState = serverOrClient.worldState
+    this.localGameState = INITIAL_LOCAL_GAME_STATE.copy({ playerId: serverOrClient.playerId })
     this.serverOrClient = serverOrClient
     if (serverOrClient instanceof Server) {
       this.actAsServer(serverOrClient)

@@ -1,7 +1,6 @@
 import { Client } from '../../server/client'
 import { Server } from '../../server/server'
 import { PlayerId } from '../../world/player'
-import { WorldState } from '../../world/world-state'
 import { GAME_SCENE_KEY, GameSceneData } from '../main-game/game-scene'
 import { WorldEvent } from '../../world/world-events'
 import { AudioKeys } from '../asset-keys'
@@ -16,15 +15,15 @@ export class CreatedLobbyScene {
   private readonly lobbyDisplayObjects: LobbyDisplayObjects
   private listener?: WorldEventListener
 
-  constructor(scene: Phaser.Scene, serverOrClient: Server | Client, playerId: PlayerId) {
+  constructor(scene: Phaser.Scene, serverOrClient: Server | Client) {
     this.scene = scene
     this.serverOrClient = serverOrClient
-    this.playerId = playerId
+    this.playerId = serverOrClient.playerId
     this.scene.sound.pauseOnBlur = false
     this.scene.sound.add(AudioKeys.CLICK)
     this.scene.sound.add(AudioKeys.NEW_TURN)
     this.scene.sound.add(AudioKeys.PLAYER_JOINED_LOBBY)
-    this.lobbyDisplayObjects = this.makeLobbyDisplayObjects(scene, playerId)
+    this.lobbyDisplayObjects = this.makeLobbyDisplayObjects(scene, this.playerId)
     if (serverOrClient instanceof Client) {
       this.actAsClient(serverOrClient)
     } else {
@@ -82,8 +81,6 @@ export class CreatedLobbyScene {
   private launchGameScene = (): void => {
     const sceneData: GameSceneData = {
       serverOrClient: this.serverOrClient,
-      worldState: this.serverOrClient.worldState,
-      playerId: this.playerId,
     }
     this.scene.scene.start(GAME_SCENE_KEY, sceneData)
   }
