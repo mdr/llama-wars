@@ -75,11 +75,7 @@ export class GameScene extends Phaser.Scene {
     this.worldState = serverOrClient.worldState
     this.localGameState = INITIAL_LOCAL_GAME_STATE.copy({ playerId: serverOrClient.playerId })
     this.serverOrClient = serverOrClient
-    if (serverOrClient instanceof Server) {
-      this.actAsServer(serverOrClient)
-    } else {
-      this.actAsClient(serverOrClient)
-    }
+    serverOrClient.addListener(this.handleWorldEvent)
 
     this.displayObjects = new DisplayObjects(this, this.worldState, this.localGameState, this.handleLocalAction)
     this.updateAsAtStartOfTurn()
@@ -96,16 +92,6 @@ export class GameScene extends Phaser.Scene {
 
   // Networking
   // ----------
-
-  private actAsClient = (client: Client): void => {
-    this.serverOrClient = client
-    client.addListener(this.handleWorldEvent)
-  }
-
-  private actAsServer = (server: Server): void => {
-    server.addListener(this.handleWorldEvent)
-    this.worldState = server.worldState
-  }
 
   private asyncSendToServer = async (action: WorldAction): Promise<void> => {
     if (!this.serverOrClient) {
