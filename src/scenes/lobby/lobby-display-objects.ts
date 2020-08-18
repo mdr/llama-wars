@@ -59,7 +59,7 @@ export class LobbyDisplayObjects {
   public sync = (worldState: WorldState): void => {
     this.createAndDestroyPlayerObjects(worldState)
     let y = 100
-    const sortedPlayers = R.sortBy((player) => player.id, worldState.players)
+    const sortedPlayers = worldState.getSortedPlayers()
     for (const player of sortedPlayers) {
       if (player.id === HOST_PLAYER_ID) {
         this.hostCrown.setY(y + 5)
@@ -116,7 +116,7 @@ export class LobbyDisplayObjects {
       .setInteractive()
       .on('pointerdown', () => this.handlePlayerTextClick(player, nameText))
     const llama = this.scene.add
-      .sprite(70, 0, ImageKeys.LLAMA_1)
+      .sprite(70, 0, ImageKeys.LLAMA_EAT_1)
       .setScale(0.6)
       .setTint(PLAYER_TINTS[player.id - 1])
       .play('llama-walk')

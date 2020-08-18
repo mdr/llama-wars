@@ -175,4 +175,6 @@ export class WorldState {
       units: this.units.map((unit) => unit.refreshActionPoints()),
       players: this.players.map((player) => player.copy({ endedTurn: false })),
     })
+
+  public getSortedPlayers = (): Player[] => R.sortBy((player) => player.id, this.players)
 }

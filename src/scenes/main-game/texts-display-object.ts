@@ -10,11 +10,16 @@ import { Point } from '../point'
 import { Unit, UnitId } from '../../world/unit'
 import { CombinedState } from '../combined-state-methods'
 import { LocalAction } from './local-action'
-import { PlayerId } from '../../world/player'
-import { AudioKeys } from '../asset-keys'
+import { HOST_PLAYER_ID, PlayerId } from '../../world/player'
+import { AudioKeys, ImageKeys } from '../asset-keys'
 import { AttackType } from '../../world/world-actions'
 
 export type LocalActionDispatcher = (action: LocalAction) => void
+
+interface PlayerObjects {
+  nameText: Phaser.GameObjects.Text
+  llama: Phaser.GameObjects.Image
+}
 
 export class TextsDisplayObject {
   private readonly scene: Phaser.Scene
@@ -34,6 +39,8 @@ export class TextsDisplayObject {
   private readonly worldLogText: Phaser.GameObjects.Text
   private readonly selectWorldLogText: Phaser.GameObjects.Text
   private readonly selectPlayersText: Phaser.GameObjects.Text
+  private readonly playerObjects: Map<PlayerId, PlayerObjects> = new Map()
+  private readonly hostCrown: Phaser.GameObjects.Image
 
   private get combinedState(): CombinedState {
     return new CombinedState(this.worldState, this.localGameState)
@@ -123,6 +130,23 @@ export class TextsDisplayObject {
       .setVisible(false)
       .setDepth(100)
     this.worldLogText = this.scene.add.text(960, 50, '')
+    this.hostCrown = this.scene.add.image(1235, 0, 'crown').setScale(0.6)
+    for (const player of worldState.getSortedPlayers()) {
+      const nameText = this.scene.add
+        .text(1005, 0, player.name, {
+          fill: '#FFFFFF',
+          fixedWidth: 200,
+          fontStyle: player.id === this.localGameState.playerId ? 'bold' : 'normal',
+        })
+        .setFontSize(18)
+        .setPadding(0, 0, 0, 0)
+      const llama = this.scene.add
+        .sprite(975, 0, ImageKeys.LLAMA_EAT_1)
+        .setScale(0.6)
+        .setTint(PLAYER_TINTS[player.id - 1])
+      const playerObjects: PlayerObjects = { nameText, llama }
+      this.playerObjects.set(player.id, playerObjects)
+    }
   }
 
   private handleActionTextClick = (): void => {
@@ -195,6 +219,23 @@ export class TextsDisplayObject {
     this.victoryText.setVisible(worldState.gameOverInfo?.victor === player.id)
     this.worldLogText.setText(R.takeLast(30, this.worldState.worldLog).join('\n'))
     this.worldLogText.setVisible(localGameState.sidebar === 'log')
+    let y = 65
+    for (const player of worldState.getSortedPlayers()) {
+      if (player.id === HOST_PLAYER_ID) {
+        this.hostCrown.setY(y + 5)
+      }
+      const { nameText, llama } = this.getPlayerObjects(player.id)
+      nameText
+        .setText(player.name)
+        .setY(y)
+        .setVisible(localGameState.sidebar === 'players')
+      llama
+        .setY(y + 10)
+        .setVisible(localGameState.sidebar === 'players')
+        .setFlipX(!this.worldState.canPlayerAct(player.id))
+      y += 50
+    }
+    this.hostCrown.setVisible(localGameState.sidebar === 'players')
   }
 
   private syncAttackModeText = (unitId: UnitId, attackType: AttackType): void => {
@@ -225,5 +266,13 @@ export class TextsDisplayObject {
     const { name, playerId, hitPoints, actionPoints } = unit
     const playerName = this.getPlayerName(playerId)
     return `${name} - Llama warrior - ${playerName} - HP ${hitPoints.current}/${hitPoints.max} - actions ${actionPoints.current}/${actionPoints.max}`
+  }
+
+  private getPlayerObjects = (playerId: PlayerId): PlayerObjects => {
+    const playerObjects = this.playerObjects.get(playerId)
+    if (!playerObjects) {
+      throw new Error(`No player objects found for ${playerId}`)
+    }
+    return playerObjects
   }
 }

@@ -35,10 +35,10 @@ export class WorldActionHandler {
 
   public calculateWorldEvents = (action: WorldAction): WorldEvent[] => {
     const events = this.calculateSpecificWorldEvents(action)
-    return this.addNewTurnIfNeeded(events)
+    return this.beginNewTurnIfNeeded(events)
   }
 
-  private addNewTurnIfNeeded(events: WorldEvent[]) {
+  private beginNewTurnIfNeeded(events: WorldEvent[]) {
     const lastEvent = R.last(events)
     if (lastEvent === undefined) {
       return []
