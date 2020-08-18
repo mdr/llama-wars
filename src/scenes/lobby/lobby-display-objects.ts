@@ -1,8 +1,14 @@
-import { HOST_PLAYER_ID, PlayerId } from '../../world/player'
+import { HOST_PLAYER_ID, Player, PlayerId } from '../../world/player'
 import { MenuButton } from '../../ui/menu-button'
 import * as R from 'ramda'
 import { WorldState } from '../../world/world-state'
 import { AudioKeys } from '../asset-keys'
+import { PLAYER_TINTS } from '../colours'
+
+interface PlayerObjects {
+  nameText: Phaser.GameObjects.Text
+  llama: Phaser.GameObjects.Image
+}
 
 export class LobbyDisplayObjects {
   private readonly scene: Phaser.Scene
@@ -10,7 +16,7 @@ export class LobbyDisplayObjects {
   private readonly onStartGame: VoidFunction
   private readonly onChangePlayerName: (name: string) => void
 
-  private readonly playerNameTexts: Map<PlayerId, Phaser.GameObjects.Text> = new Map()
+  private readonly playerObjects: Map<PlayerId, PlayerObjects> = new Map()
   private readonly startGameButton?: MenuButton
   private readonly waitingForHostText?: Phaser.GameObjects.Text
 
@@ -38,39 +44,13 @@ export class LobbyDisplayObjects {
   }
 
   public sync = (worldState: WorldState): void => {
-    const requiredPlayerIds = worldState.getPlayerIds()
-    const currentPlayerIds = Array.from(this.playerNameTexts.keys())
-    const surplusPlayerIds = R.difference(currentPlayerIds, requiredPlayerIds)
-    for (const playerId of surplusPlayerIds) {
-      this.playerNameTexts.get(playerId)?.destroy()
-    }
-    const missingPlayerIds = R.difference(requiredPlayerIds, currentPlayerIds)
-    for (const playerId of missingPlayerIds) {
-      const player = worldState.getPlayer(playerId)
-      const playerText = this.scene.add
-        .text(100, 0, player.name, {
-          fill: '#FFFFFF',
-          fixedWidth: 200,
-          backgroundColor: playerId === this.playerId ? '#333333' : '#000000',
-        })
-        .setFontSize(18)
-        .setPadding(0, 0, 0, 0)
-        .setInteractive()
-        .on('pointerdown', () => {
-          if (playerId === this.playerId) {
-            const plugin = this.scene.plugins.get('rexTextEdit') as any
-            plugin.edit(playerText, {
-              onClose: () => this.onChangePlayerName(playerText.text),
-            })
-          }
-        })
-      this.playerNameTexts.set(playerId, playerText)
-    }
+    this.createAndDestroyPlayerObjects(worldState)
     let y = 100
     const sortedPlayers = R.sortBy((player) => player.id, worldState.players)
     for (const player of sortedPlayers) {
-      const playerText = this.playerNameTexts.get(player.id)
-      playerText?.setText(player.name).setY(y)
+      const { nameText, llama } = this.getPlayerObjects(player.id)
+      nameText.setText(player.name).setY(y)
+      llama.setY(y + 10)
       y += 50
     }
     if (this.startGameButton) {
@@ -78,6 +58,60 @@ export class LobbyDisplayObjects {
     }
     if (this.waitingForHostText) {
       this.waitingForHostText.setY(y)
+    }
+  }
+
+  private getPlayerObjects = (playerId: PlayerId): PlayerObjects => {
+    const playerObjects = this.playerObjects.get(playerId)
+    if (!playerObjects) {
+      throw new Error(`No player objects found for ${playerId}`)
+    }
+    return playerObjects
+  }
+
+  private createAndDestroyPlayerObjects = (worldState: WorldState): void => {
+    const requiredPlayerIds = worldState.getPlayerIds()
+    const currentPlayerIds = Array.from(this.playerObjects.keys())
+
+    const surplusPlayerIds = R.difference(currentPlayerIds, requiredPlayerIds)
+    for (const playerId of surplusPlayerIds) {
+      const { nameText, llama } = this.getPlayerObjects(playerId)
+      nameText.destroy()
+      llama.destroy()
+      this.playerObjects.delete(playerId)
+    }
+
+    const missingPlayerIds = R.difference(requiredPlayerIds, currentPlayerIds)
+    for (const playerId of missingPlayerIds) {
+      const player = worldState.getPlayer(playerId)
+      this.createObjectsForPlayer(player)
+    }
+  }
+
+  private createObjectsForPlayer(player: Player) {
+    const nameText = this.scene.add
+      .text(100, 0, player.name, {
+        fill: '#FFFFFF',
+        fixedWidth: 200,
+        backgroundColor: player.id === this.playerId ? '#333333' : '#000000',
+      })
+      .setFontSize(18)
+      .setPadding(0, 0, 0, 0)
+      .setInteractive()
+      .on('pointerdown', () => this.handlePlayerTextClick(player, nameText))
+    const llama = this.scene.add
+      .image(70, 0, 'llama')
+      .setScale(0.6)
+      .setTint(PLAYER_TINTS[player.id - 1])
+    this.playerObjects.set(player.id, { nameText, llama })
+  }
+
+  private handlePlayerTextClick = (player: Player, playerText: Phaser.GameObjects.Text): void => {
+    if (player.id === this.playerId) {
+      const plugin = this.scene.plugins.get('rexTextEdit') as any
+      plugin.edit(playerText, {
+        onClose: () => this.onChangePlayerName(playerText.text),
+      })
     }
   }
 }
