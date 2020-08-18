@@ -4,7 +4,7 @@ import { WorldEvent, WorldEventId } from '../world/world-events'
 import { WorldActionHandler } from './world-action-handler'
 import { PlayerId } from '../world/player'
 
-export type WorldEventListener = (event: WorldEvent) => void
+export type WorldEventListener = (event: WorldEvent, previousWorldState: WorldState, newWorldState: WorldState) => void
 
 export class WorldStateOwner {
   public worldState: WorldState
@@ -20,16 +20,20 @@ export class WorldStateOwner {
     this.listeners.push(listener)
   }
 
-  private notifyListeners = (event: WorldEvent): void => {
-    for (const listener of this.listeners) listener(event)
+  private notifyListeners = (event: WorldEvent, previousWorldState: WorldState, newWorldState: WorldState): void => {
+    for (const listener of this.listeners) {
+      listener(event, previousWorldState, newWorldState)
+    }
   }
 
   public handleAction = (playerId: PlayerId, action: WorldAction): WorldEvent[] => {
     const worldActionHandler = new WorldActionHandler(this.worldState, playerId, this.nextWorldEventId)
     const events = worldActionHandler.calculateWorldEvents(action)
     for (const event of events) {
-      this.worldState = this.worldState.applyEvent(event)
-      this.notifyListeners(event)
+      const previousWorldState = this.worldState
+      const newWorldState = previousWorldState.applyEvent(event)
+      this.worldState = newWorldState
+      this.notifyListeners(event, previousWorldState, newWorldState)
     }
     this.nextWorldEventId += events.length
     return events

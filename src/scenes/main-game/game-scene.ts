@@ -191,10 +191,8 @@ export class GameScene extends Phaser.Scene {
   // Handle world events
   // -------------------
 
-  private handleWorldEvent = (event: WorldEvent): void => {
-    const oldWorldState = this.worldState
-    this.worldState = oldWorldState.applyEvent(event)
-
+  private handleWorldEvent = (event: WorldEvent, previousWorldState: WorldState, newWorldState: WorldState): void => {
+    this.worldState = newWorldState
     switch (event.type) {
       case 'initialise':
       case 'playerAdded':
@@ -202,10 +200,10 @@ export class GameScene extends Phaser.Scene {
       case 'gameStarted':
         break
       case 'unitMoved':
-        this.handleUnitMovedWorldEvent(event, oldWorldState)
+        this.handleUnitMovedWorldEvent(event, previousWorldState)
         break
       case 'combat':
-        this.handleCombatWorldEvent(event, oldWorldState)
+        this.handleCombatWorldEvent(event, previousWorldState)
         break
       case 'playerEndedTurn':
         this.handlePlayerEndedTurn()
@@ -253,12 +251,12 @@ export class GameScene extends Phaser.Scene {
     this.syncScene()
   }
 
-  private handleUnitMovedWorldEvent = (event: UnitMovedWorldEvent, oldWorldState: WorldState): void => {
+  private handleUnitMovedWorldEvent = (event: UnitMovedWorldEvent, previousWorldState: WorldState): void => {
     const { unitId, from, to } = event
     const unit = this.worldState.getUnitById(unitId)
     const wasPreviouslySelected =
       this.localGameState.selectedHex &&
-      oldWorldState.findUnitInLocation(this.localGameState.selectedHex)?.id === unitId
+      previousWorldState.findUnitInLocation(this.localGameState.selectedHex)?.id === unitId
     if (wasPreviouslySelected && unit.playerId === this.playerId) {
       const newSelectedHex = this.calculateNewSelectedUnitAfterMoveOrAttack(unitId, to)
       this.localGameState = this.localGameState.copy({ mode: { type: 'selectHex' } }).setSelectedHex(newSelectedHex)
@@ -279,9 +277,9 @@ export class GameScene extends Phaser.Scene {
     return newSelectedHex
   }
 
-  private handleCombatWorldEvent = (event: CombatWorldEvent, oldWorldState: WorldState) => {
+  private handleCombatWorldEvent = (event: CombatWorldEvent, previousWorldState: WorldState) => {
     const { attacker, defender } = event
-    this.updateSelectionAfterCombat(attacker, defender, oldWorldState)
+    this.updateSelectionAfterCombat(attacker, defender, previousWorldState)
     this.syncScene({
       type: 'combat',
       attackType: event.attackType,
@@ -293,9 +291,9 @@ export class GameScene extends Phaser.Scene {
   private updateSelectionAfterCombat = (
     attacker: CombatParticipantInfo,
     defender: CombatParticipantInfo,
-    oldWorldState: WorldState,
+    previousWorldState: WorldState,
   ) => {
-    const previouslySelectedUnitId = new CombinedState(oldWorldState, this.localGameState).findSelectedUnit()?.id
+    const previouslySelectedUnitId = new CombinedState(previousWorldState, this.localGameState).findSelectedUnit()?.id
     if (previouslySelectedUnitId === attacker.unitId && attacker.playerId === this.playerId) {
       const newSelectedHex = this.calculateNewSelectedUnitAfterMoveOrAttack(attacker.unitId, attacker.location)
       this.localGameState = this.localGameState.copy({ mode: { type: 'selectHex' } }).setSelectedHex(newSelectedHex)

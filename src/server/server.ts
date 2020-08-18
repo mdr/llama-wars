@@ -46,9 +46,9 @@ export class Server {
     }
   }
 
-  private notifyListeners = (event: WorldEvent): void => {
+  private notifyListeners = (event: WorldEvent, previousWorldState: WorldState, newWorldState: WorldState): void => {
     for (const listener of this.listeners) {
-      listener(event)
+      listener(event, previousWorldState, newWorldState)
     }
   }
 
@@ -57,12 +57,14 @@ export class Server {
     this.gameId = gameId
     this.peerServer = new PeerServer(this.gameId, this.handleClientToServerMessage)
     this.worldStateOwner = new WorldStateOwner(worldState, nextWorldEventId)
-    this.worldStateOwner.addListener((event: WorldEvent): void => {
-      this.notifyListeners(event)
-      this.worldEventDb.store(this.gameId, event)
-      const message: WorldEventMessage = { type: 'worldEvent', event: serialiseToJson(event) }
-      this.peerServer.broadcast(message)
-    })
+    this.worldStateOwner.addListener(
+      (event: WorldEvent, previousWorldState: WorldState, newWorldState: WorldState): void => {
+        this.notifyListeners(event, previousWorldState, newWorldState)
+        this.worldEventDb.store(this.gameId, event)
+        const message: WorldEventMessage = { type: 'worldEvent', event: serialiseToJson(event) }
+        this.peerServer.broadcast(message)
+      },
+    )
   }
 
   private handleClientJoin = (): JoinResponse => {

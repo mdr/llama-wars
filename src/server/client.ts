@@ -46,9 +46,9 @@ export class Client {
     }
   }
 
-  private notifyListeners = (event: WorldEvent): void => {
+  private notifyListeners = (event: WorldEvent, previousWorldState: WorldState, newWorldState: WorldState): void => {
     for (const listener of this.listeners) {
-      listener(event)
+      listener(event, previousWorldState, newWorldState)
     }
   }
 
@@ -59,8 +59,10 @@ export class Client {
 
   private handleWorldEventMessage = (message: WorldEventMessage): void => {
     const event = deserialiseFromJson(message.event)
-    this._worldState = this._worldState.applyEvent(event)
-    this.notifyListeners(event)
+    const previousWorldState = this._worldState
+    const newWorldState = previousWorldState.applyEvent(event)
+    this._worldState = newWorldState
+    this.notifyListeners(event, previousWorldState, newWorldState)
   }
 
   public static connect = async (gameId: GameId): Promise<Client> => {
