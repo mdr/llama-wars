@@ -1,10 +1,10 @@
 import * as R from 'ramda'
 import { WorldEventListener, WorldStateOwner } from './world-state-owner'
 import { PlayerAddedWorldEvent, WorldEvent, WorldEventId } from '../world/world-events'
-import { ClientRequest, RejoinRequest, WorldEventMessage } from './messages'
+import { ClientRequest, JoinResponse, RejoinRequest, WorldEventMessage } from './messages'
 import { deserialiseFromJson, serialiseToJson } from '../util/json-serialisation'
 import { UnreachableCaseError } from '../util/unreachable-case-error'
-import { PlayerId } from '../world/player'
+import { HOST_PLAYER_ID, PlayerId } from '../world/player'
 import { AddPlayerWorldAction, WorldAction } from '../world/world-actions'
 import { WorldEventDb } from '../db/world-event-db'
 import { GameId } from '../scenes/main-game/game-scene'
@@ -61,12 +61,12 @@ export class Server {
     })
   }
 
-  private handleClientJoin = (): any => {
+  private handleClientJoin = (): JoinResponse => {
     if (this.worldState.gameHasStarted) {
-      // TODO: tell the client "bad luck"
+      return { type: 'unableToJoin' }
     } else {
       const addPlayerAction: AddPlayerWorldAction = { type: 'addPlayer' }
-      const playerAddedEvent = <PlayerAddedWorldEvent>this.handleAction(1, addPlayerAction)[0]
+      const playerAddedEvent = <PlayerAddedWorldEvent>this.handleAction(HOST_PLAYER_ID, addPlayerAction)[0]
       return {
         type: 'joined',
         playerId: playerAddedEvent.playerId,

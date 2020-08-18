@@ -1,6 +1,7 @@
 import {
   JoinedResponse,
   JoinRequest,
+  JoinResponse,
   RejoinedResponse,
   RejoinRequest,
   WorldActionRequest,
@@ -14,6 +15,8 @@ import { PeerClient } from './peer-client'
 import { WorldState } from '../world/world-state'
 import { WorldEvent } from '../world/world-events'
 import { WorldEventListener } from './world-state-owner'
+import { Option } from '../util/types'
+import { UnreachableCaseError } from '../util/unreachable-case-error'
 
 export class Client {
   private readonly peerClient: PeerClient
@@ -57,12 +60,19 @@ export class Client {
     return WorldState.fromJson(rejoinedResponse.worldState)
   }
 
-  public join = async (): Promise<{ playerId: PlayerId; worldState: WorldState }> => {
-    const joinRequest: JoinRequest = { type: 'join' }
-    const joinedResponse: JoinedResponse = await this.peerClient.sendRequest(joinRequest)
-    const playerId = joinedResponse.playerId
-    const worldState = WorldState.fromJson(joinedResponse.worldState)
-    return { playerId, worldState }
+  public join = async (): Promise<Option<{ playerId: PlayerId; worldState: WorldState }>> => {
+    const request: JoinRequest = { type: 'join' }
+    const response: JoinResponse = await this.peerClient.sendRequest(request)
+    switch (response.type) {
+      case 'joined':
+        const playerId = response.playerId
+        const worldState = WorldState.fromJson(response.worldState)
+        return { playerId, worldState }
+      case 'unableToJoin':
+        return undefined
+      default:
+        throw new UnreachableCaseError(response)
+    }
   }
 
   public sendAction = async (playerId: PlayerId, action: WorldAction): Promise<void> => {

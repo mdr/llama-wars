@@ -105,9 +105,18 @@ export class BootScene extends Phaser.Scene {
   }
 
   private joinAsClient = async (client: Client, gameId: GameId): Promise<void> => {
-    const { playerId, worldState } = await client.join()
-    setUrlInfo({ gameId, playerId })
-    this.joinGame(worldState, client, playerId)
+    const joinResult = await client.join()
+    if (joinResult) {
+      const { playerId, worldState } = joinResult
+      setUrlInfo({ gameId, playerId })
+      this.joinGame(worldState, client, playerId)
+    } else {
+      const { width, height } = this.game.scale.gameSize
+      this.add
+        .text(width / 2, height / 2, 'Unable to join game as it has already started.')
+        .setOrigin(0.5)
+        .setFontSize(24)
+    }
   }
 
   private rejoinAsClient = async (client: Client, gameId: GameId, playerId: PlayerId): Promise<void> => {
