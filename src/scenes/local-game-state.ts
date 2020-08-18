@@ -41,6 +41,8 @@ export class LocalGameState {
   } = {}): LocalGameState =>
     new LocalGameState({ playerId, mode, selectedHex: toOption(selectedHex), actionsOutstandingWithServer })
 
+  public deselect = (): LocalGameState => this.setSelectedHex(undefined)
+
   public setSelectedHex = (selectedHex: Option<Hex>): LocalGameState => this.copy({ selectedHex: toMaybe(selectedHex) })
 
   public setMode = (mode: Mode): LocalGameState => this.copy({ mode })

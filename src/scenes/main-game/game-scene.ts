@@ -11,7 +11,7 @@ import {
 } from '../../world/world-events'
 import { UnitId } from '../../world/unit'
 import { UnreachableCaseError } from '../../util/unreachable-case-error'
-import { nothing, Option, toMaybe } from '../../util/types'
+import { Option } from '../../util/types'
 import { INITIAL_LOCAL_GAME_STATE, LocalGameState } from '../local-game-state'
 import { ALL_AUDIO_KEYS, AudioKeys } from '../asset-keys'
 import { mapToLocalAction } from './keyboard-mapper'
@@ -126,7 +126,9 @@ export class GameScene extends Phaser.Scene {
 
   private handleKey = (event: KeyboardEvent): void => {
     const localAction = mapToLocalAction(event, this.localGameState.mode)
-    if (localAction) this.handleLocalAction(localAction)
+    if (localAction) {
+      this.handleLocalAction(localAction)
+    }
   }
 
   private handleLocalAction = (localAction: LocalAction): void => {
@@ -245,10 +247,9 @@ export class GameScene extends Phaser.Scene {
 
   private updateAsAtStartOfTurn() {
     const unitToSelect = this.combinedState.findNextUnitWithUnspentActionPoints()
-    this.localGameState = this.localGameState.copy({
-      mode: { type: 'selectHex' },
-      selectedHex: toMaybe(unitToSelect?.location),
-    })
+    this.localGameState = this.localGameState
+      .copy({ mode: { type: 'selectHex' } })
+      .setSelectedHex(unitToSelect?.location)
     this.syncScene()
   }
 
@@ -260,10 +261,7 @@ export class GameScene extends Phaser.Scene {
       oldWorldState.findUnitInLocation(this.localGameState.selectedHex)?.id === unitId
     if (wasPreviouslySelected && unit.playerId === this.playerId) {
       const newSelectedHex = this.calculateNewSelectedUnitAfterMoveOrAttack(unitId, to)
-      this.localGameState = this.localGameState.copy({
-        mode: { type: 'selectHex' },
-        selectedHex: toMaybe(newSelectedHex),
-      })
+      this.localGameState = this.localGameState.copy({ mode: { type: 'selectHex' } }).setSelectedHex(newSelectedHex)
     }
     this.syncScene({ type: 'move', unitId, from, to })
   }
@@ -300,17 +298,11 @@ export class GameScene extends Phaser.Scene {
     const previouslySelectedUnitId = new CombinedState(oldWorldState, this.localGameState).findSelectedUnit()?.id
     if (previouslySelectedUnitId === attacker.unitId && attacker.playerId === this.playerId) {
       const newSelectedHex = this.calculateNewSelectedUnitAfterMoveOrAttack(attacker.unitId, attacker.location)
-      this.localGameState = this.localGameState.copy({
-        mode: { type: 'selectHex' },
-        selectedHex: toMaybe(newSelectedHex),
-      })
+      this.localGameState = this.localGameState.copy({ mode: { type: 'selectHex' } }).setSelectedHex(newSelectedHex)
     } else {
       // deselect unit killed by another player
       if (defender.killed && defender.unitId === previouslySelectedUnitId && defender.playerId === this.playerId) {
-        this.localGameState = this.localGameState.copy({
-          mode: { type: 'selectHex' },
-          selectedHex: nothing,
-        })
+        this.localGameState = this.localGameState.copy({ mode: { type: 'selectHex' } }).deselect()
       }
     }
   }

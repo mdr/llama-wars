@@ -2,7 +2,7 @@ import { LocalGameState } from '../local-game-state'
 import { AttackType, WorldAction } from '../../world/world-actions'
 import { WorldState } from '../../world/world-state'
 import { LocalAction } from './local-action'
-import { nothing, Option } from '../../util/types'
+import { Option } from '../../util/types'
 import { Unit, UnitId } from '../../world/unit'
 import { Hex } from '../../world/hex'
 import { UnreachableCaseError } from '../../util/unreachable-case-error'
@@ -71,7 +71,7 @@ export class LocalActionProcessor {
   private handleAbort = (): Option<LocalActionResult> => {
     switch (this.localGameState.mode.type) {
       case 'selectHex':
-        return { newLocalGameState: this.localGameState.copy({ selectedHex: nothing }) }
+        return { newLocalGameState: this.localGameState.deselect() }
       case 'attack':
       case 'moveUnit':
         return { newLocalGameState: this.localGameState.setMode({ type: 'selectHex' }) }
@@ -164,11 +164,11 @@ export class LocalActionProcessor {
     if (!this.worldState.map.isInBounds(hex)) {
       // If click is out of bounds, deselect any selected hex
       if (selectedHex) {
-        return { newLocalGameState: this.localGameState.setSelectedHex(undefined) }
+        return { newLocalGameState: this.localGameState.deselect() }
       }
     } else if (selectedHex && selectedHex.equals(hex)) {
       // if selected hex is clicked, toggle selection off
-      return { newLocalGameState: this.localGameState.setSelectedHex(undefined) }
+      return { newLocalGameState: this.localGameState.deselect() }
     } else {
       return { newLocalGameState: this.localGameState.setSelectedHex(hex) }
     }
