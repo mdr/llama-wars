@@ -162,10 +162,14 @@ export class BootScene extends Phaser.Scene {
 
   private loadAssets() {
     // Source: https://opengameart.org/content/lpc-style-farm-animals
-    this.load.image(ImageKeys.LLAMA_1, 'assets/sprites/llama_15.png')
-    this.load.image(ImageKeys.LLAMA_2, 'assets/sprites/llama_14.png')
-    this.load.image(ImageKeys.LLAMA_3, 'assets/sprites/llama_13.png')
-    this.load.image(ImageKeys.LLAMA_4, 'assets/sprites/llama_12.png')
+    this.load.image(ImageKeys.LLAMA_1, 'assets/sprites/llama/llama_15.png')
+    this.load.image(ImageKeys.LLAMA_2, 'assets/sprites/llama/llama_14.png')
+    this.load.image(ImageKeys.LLAMA_3, 'assets/sprites/llama/llama_13.png')
+    this.load.image(ImageKeys.LLAMA_4, 'assets/sprites/llama/llama_12.png')
+    this.load.image(ImageKeys.LLAMA_EAT_1, 'assets/sprites/llama-eat/llama_12.png')
+    this.load.image(ImageKeys.LLAMA_EAT_2, 'assets/sprites/llama-eat/llama_13.png')
+    this.load.image(ImageKeys.LLAMA_EAT_3, 'assets/sprites/llama-eat/llama_14.png')
+    this.load.image(ImageKeys.LLAMA_EAT_4, 'assets/sprites/llama-eat/llama_15.png')
 
     // https://opengameart.org/content/hourglass-icon
     this.load.image(ImageKeys.HOURGLASS, 'assets/sprites/Hourglass.png')
