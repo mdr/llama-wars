@@ -1,3 +1,27 @@
+export const ImageKeys = {
+  LLAMA_1: 'llama-1',
+  LLAMA_2: 'llama-2',
+  LLAMA_3: 'llama-3',
+  LLAMA_4: 'llama-4',
+  HOURGLASS: 'hourglass',
+  GRASS: 'grass',
+  SPIT: 'spit',
+  MOUNTAIN: 'mountain',
+  CROWN: 'crown',
+}
+
+export const ALL_IMAGE_KEYS = [
+  ImageKeys.LLAMA_1,
+  ImageKeys.LLAMA_2,
+  ImageKeys.LLAMA_3,
+  ImageKeys.LLAMA_4,
+  ImageKeys.HOURGLASS,
+  ImageKeys.GRASS,
+  ImageKeys.SPIT,
+  ImageKeys.MOUNTAIN,
+  ImageKeys.CROWN,
+]
+
 export const AudioKeys = {
   ATTACK_1: 'attack1',
   ATTACK_2: 'attack2',

@@ -1,5 +1,5 @@
 import { getGameHeight, getGameWidth } from '../../helpers'
-import { AudioKeys } from '../asset-keys'
+import { AudioKeys, ImageKeys } from '../asset-keys'
 import { GAME_SCENE_KEY, GameId, GameSceneData } from '../main-game/game-scene'
 import { MAIN_MENU_SCENE_KEY } from '../main-menu/main-menu-scene'
 import { Option } from '../../util/types'
@@ -162,22 +162,22 @@ export class BootScene extends Phaser.Scene {
 
   private loadAssets() {
     // Source: https://opengameart.org/content/lpc-style-farm-animals
-    this.load.image('llama-1', 'assets/sprites/llama_15.png')
-    this.load.image('llama-2', 'assets/sprites/llama_14.png')
-    this.load.image('llama-3', 'assets/sprites/llama_13.png')
-    this.load.image('llama-4', 'assets/sprites/llama_12.png')
+    this.load.image(ImageKeys.LLAMA_1, 'assets/sprites/llama_15.png')
+    this.load.image(ImageKeys.LLAMA_2, 'assets/sprites/llama_14.png')
+    this.load.image(ImageKeys.LLAMA_3, 'assets/sprites/llama_13.png')
+    this.load.image(ImageKeys.LLAMA_4, 'assets/sprites/llama_12.png')
 
     // https://opengameart.org/content/hourglass-icon
-    this.load.image('hourglass', 'assets/sprites/Hourglass.png')
+    this.load.image(ImageKeys.HOURGLASS, 'assets/sprites/Hourglass.png')
     // https://opengameart.org/content/grass-textures-tiles
     // https://opengameart.org/content/grass-texture
-    this.load.image('grass', 'assets/sprites/grass2.png')
+    this.load.image(ImageKeys.GRASS, 'assets/sprites/grass2.png')
     // https://opengameart.org/content/puddle-corpses
-    this.load.image('spit', 'assets/sprites/puddle_light_blue.png')
+    this.load.image(ImageKeys.SPIT, 'assets/sprites/puddle_light_blue.png')
     // https://opengameart.org/content/world-map-tiles
-    this.load.image('mountain', 'assets/sprites/mountains_outer.png')
+    this.load.image(ImageKeys.MOUNTAIN, 'assets/sprites/mountains_outer.png')
     // https://opengameart.org/content/game-icons-0
-    this.load.image('crown', 'assets/sprites/crown.png')
+    this.load.image(ImageKeys.CROWN, 'assets/sprites/crown.png')
 
     // https://opengameart.org/content/37-hitspunches
     this.load.audio(AudioKeys.ATTACK_1, 'assets/audio/hit14.mp3.mp3')
