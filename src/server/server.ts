@@ -105,4 +105,8 @@ export class Server {
 
   public handleAction = (playerId: PlayerId, action: WorldAction): WorldEvent[] =>
     this.worldStateOwner.handleAction(playerId, action)
+
+  public sendAction = async (playerId: PlayerId, action: WorldAction): Promise<void> => {
+    this.handleAction(playerId, action)
+  }
 }

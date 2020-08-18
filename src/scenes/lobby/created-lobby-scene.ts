@@ -7,6 +7,7 @@ import { AudioKeys } from '../asset-keys'
 import { LobbyDisplayObjects } from './lobby-display-objects'
 import { WorldAction } from '../../world/world-actions'
 import { WorldEventListener } from '../../server/world-state-owner'
+import { fireAndForget } from '../../util/async-util'
 
 export class CreatedLobbyScene {
   private readonly scene: Phaser.Scene
@@ -40,31 +41,12 @@ export class CreatedLobbyScene {
     client.addListener(this.listener)
   }
 
-  private handleWorldEvent = (event: WorldEvent, client: Client): void => {
+  private handleWorldEvent = (event: WorldEvent, serverOrClient: Server | Client): void => {
     switch (event.type) {
       case 'gameStarted':
         this.scene.sound.play(AudioKeys.NEW_TURN)
         if (this.listener) {
-          client.removeListener(this.listener)
-          this.listener = undefined
-        }
-        this.launchGameScene()
-        break
-      case 'playerAdded':
-        this.scene.sound.play(AudioKeys.PLAYER_JOINED_LOBBY)
-        this.sync()
-        break
-      default:
-        this.sync()
-    }
-  }
-
-  private handleWorldEvent2 = (event: WorldEvent, server: Server): void => {
-    switch (event.type) {
-      case 'gameStarted':
-        this.scene.sound.play(AudioKeys.NEW_TURN)
-        if (this.listener) {
-          server.removeListener(this.listener)
+          serverOrClient.removeListener(this.listener)
           this.listener = undefined
         }
         this.launchGameScene()
@@ -88,17 +70,13 @@ export class CreatedLobbyScene {
   private handleChangePlayerName = (name: string): void => this.dispatchAction({ type: 'changePlayerName', name })
 
   private dispatchAction = (action: WorldAction): void => {
-    if (this.serverOrClient instanceof Server) {
-      this.serverOrClient.handleAction(this.playerId, action)
-    } else {
-      this.serverOrClient.sendAction(this.playerId, action)
-    }
+    fireAndForget(() => this.serverOrClient.sendAction(this.playerId, action))
   }
 
   public sync = (): void => this.lobbyDisplayObjects.sync(this.serverOrClient.worldState)
 
   private actAsServer = (server: Server): void => {
-    this.listener = (event) => this.handleWorldEvent2(event, server)
+    this.listener = (event) => this.handleWorldEvent(event, server)
     server.addListener(this.listener)
   }
 

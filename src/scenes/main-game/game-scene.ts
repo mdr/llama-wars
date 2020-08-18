@@ -111,11 +111,7 @@ export class GameScene extends Phaser.Scene {
     if (!this.serverOrClient) {
       throw `Unexpected missing serverOrClient`
     }
-    if (this.serverOrClient instanceof Server) {
-      this.serverOrClient.handleAction(this.playerId, action)
-    } else {
-      await this.serverOrClient.sendAction(this.playerId, action)
-    }
+    await this.serverOrClient.sendAction(this.playerId, action)
   }
 
   // Input handlers
