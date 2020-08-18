@@ -32,6 +32,8 @@ export class TextsDisplayObject {
   private readonly defeatText: Phaser.GameObjects.Text
   private readonly victoryText: Phaser.GameObjects.Text
   private readonly worldLogText: Phaser.GameObjects.Text
+  private readonly selectWorldLogText: Phaser.GameObjects.Text
+  private readonly selectPlayersText: Phaser.GameObjects.Text
 
   private get combinedState(): CombinedState {
     return new CombinedState(this.worldState, this.localGameState)
@@ -90,6 +92,18 @@ export class TextsDisplayObject {
       .on('pointerdown', () => this.localActionDispatcher({ type: 'endTurn' }))
       .on('pointerover', () => this.endTurnText.setFill(HOVER_ACTION_TEXT_COLOUR))
       .on('pointerout', () => this.endTurnText.setFill(ACTION_TEXT_COLOUR))
+    this.selectWorldLogText = this.scene.add
+      .text(960, 26, 'Log', { fill: ACTION_TEXT_COLOUR })
+      .setInteractive()
+      .on('pointerdown', () => this.localActionDispatcher({ type: 'changeSidebar', sidebar: 'log' }))
+      .on('pointerover', () => this.selectWorldLogText.setFill(HOVER_ACTION_TEXT_COLOUR))
+      .on('pointerout', () => this.selectWorldLogText.setFill(ACTION_TEXT_COLOUR))
+    this.selectPlayersText = this.scene.add
+      .text(1024, 26, 'Players', { fill: ACTION_TEXT_COLOUR })
+      .setInteractive()
+      .on('pointerdown', () => this.localActionDispatcher({ type: 'changeSidebar', sidebar: 'players' }))
+      .on('pointerover', () => this.selectPlayersText.setFill(HOVER_ACTION_TEXT_COLOUR))
+      .on('pointerout', () => this.selectPlayersText.setFill(ACTION_TEXT_COLOUR))
     this.defeatText = this.scene.add
       .text(462, (mapHeight(map) * HEX_SIZE + DRAWING_OFFSET.y) / 2, 'You have been defeated!', {
         stroke: '#000000',
@@ -180,6 +194,7 @@ export class TextsDisplayObject {
     this.defeatText.setVisible(player.defeated)
     this.victoryText.setVisible(worldState.gameOverInfo?.victor === player.id)
     this.worldLogText.setText(R.takeLast(30, this.worldState.worldLog).join('\n'))
+    this.worldLogText.setVisible(localGameState.sidebar === 'log')
   }
 
   private syncAttackModeText = (unitId: UnitId, attackType: AttackType): void => {

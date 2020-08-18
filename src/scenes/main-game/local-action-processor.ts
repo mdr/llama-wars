@@ -1,4 +1,4 @@
-import { LocalGameState } from '../local-game-state'
+import { LocalGameState, Sidebar } from '../local-game-state'
 import { AttackType, WorldAction } from '../../world/world-actions'
 import { WorldState } from '../../world/world-state'
 import { LocalAction } from './local-action'
@@ -50,6 +50,8 @@ export class LocalActionProcessor {
         return this.handleCompleteAttack(action.unitId, action.hex, action.attackType)
       case 'selectHex':
         return this.handleSelectHex(action.hex)
+      case 'changeSidebar':
+        return this.handleChangeSidebar(action.sidebar)
       default:
         throw new UnreachableCaseError(action)
     }
@@ -173,4 +175,8 @@ export class LocalActionProcessor {
       return { newLocalGameState: this.localGameState.setSelectedHex(hex) }
     }
   }
+
+  private handleChangeSidebar = (sidebar: Sidebar): Option<LocalActionResult> => ({
+    newLocalGameState: this.localGameState.copy({ sidebar }),
+  })
 }

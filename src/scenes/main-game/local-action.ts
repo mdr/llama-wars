@@ -2,6 +2,7 @@ import { HexDirection } from '../../world/hex-direction'
 import { Hex } from '../../world/hex'
 import { UnitId } from '../../world/unit'
 import { AttackType } from '../../world/world-actions'
+import { Sidebar } from '../local-game-state'
 
 export interface GoLocalAction {
   type: 'go'
@@ -52,6 +53,11 @@ export interface SelectHexLocalAction {
   hex: Hex
 }
 
+export interface ChangeSidebarAction {
+  type: 'changeSidebar'
+  sidebar: Sidebar
+}
+
 export type LocalAction =
   | GoLocalAction
   | GoHexAction
@@ -63,3 +69,4 @@ export type LocalAction =
   | CompleteMoveLocalAction
   | CompleteAttackLocalAction
   | SelectHexLocalAction
+  | ChangeSidebarAction
