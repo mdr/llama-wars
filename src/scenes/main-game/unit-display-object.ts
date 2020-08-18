@@ -7,6 +7,7 @@ import { playTween } from '../../util/phaser/tween-utils'
 import assert = require('assert')
 import { PlayerId } from '../../world/player'
 import { AnimationSpeed } from './display-objects'
+import { randomIntInclusive } from '../../util/random-util'
 
 const HEALTH_BAR_WIDTH = 50
 const HEALTH_BAR_HEIGHT = 12
@@ -156,6 +157,9 @@ export class UnitDisplayObject {
   }
 
   public runEatAnimation = async (): Promise<void> => {
+    if (randomIntInclusive(1, 3) === 1) {
+      this.image.toggleFlipX()
+    }
     this.image.anims.play('llama-eat')
   }
 

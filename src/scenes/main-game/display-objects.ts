@@ -99,7 +99,7 @@ export class DisplayObjects {
   }
 
   private scheduleEatingAnimation = (): void => {
-    const times = [2000, 3000, 5000]
+    const times = [4000, 5000, 7000]
     const delay = randomElement(times)
     setTimeout(() => {
       const unitDisplayObjects = Array.from(this.unitDisplayObjects.values())
@@ -107,7 +107,7 @@ export class DisplayObjects {
         const randomUnit = randomElement(unitDisplayObjects)
         fireAndForget(() => randomUnit.runEatAnimation())
       }
-      setTimeout(() => this.scheduleEatingAnimation(), 2000)
+      this.scheduleEatingAnimation()
     }, delay)
   }
 
