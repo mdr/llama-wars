@@ -21,6 +21,17 @@ export interface RejoinRequest {
   playerId: PlayerId
 }
 
+export interface RejoinedResponse {
+  type: 'rejoined'
+  worldState: any
+}
+
+export interface UnableToRejoinResponse {
+  type: 'unableToRejoin'
+}
+
+export type RejoinResponse = RejoinedResponse | UnableToRejoinResponse
+
 export interface WorldActionRequest {
   type: 'worldAction'
   action: any
@@ -28,11 +39,6 @@ export interface WorldActionRequest {
 }
 
 export type ClientRequest = JoinRequest | RejoinRequest | WorldActionRequest
-
-export interface RejoinedResponse {
-  type: 'rejoined'
-  worldState: any
-}
 
 export interface WorldEventMessage {
   type: 'worldEvent'

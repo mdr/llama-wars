@@ -1,11 +1,11 @@
 import { v4 as uuid } from 'uuid'
 import {
-  BroadcastMessage2,
+  BroadcastMessage,
   PeerId,
   RequestId,
-  RequestMessage2,
-  ResponseMessage2,
-  ServerToClientMessage2,
+  RequestMessage,
+  ResponseMessage,
+  ServerToClientMessage,
 } from './peer-server'
 import { UnreachableCaseError } from '../util/unreachable-case-error'
 import { Option } from '../util/types'
@@ -26,7 +26,7 @@ export class PeerClient {
     connection.on('data', this.handleConnectionData)
   }
 
-  private handleConnectionData = (message: ServerToClientMessage2): void => {
+  private handleConnectionData = (message: ServerToClientMessage): void => {
     // console.log('CLIENT: received message')
     // console.log(message)
     switch (message.type) {
@@ -58,7 +58,7 @@ export class PeerClient {
 
   public sendRequest = (request: any): Promise<any> =>
     new Promise<any>((resolve: Resolve<any>) => {
-      const requestMessage: RequestMessage2 = {
+      const requestMessage: RequestMessage = {
         type: 'request',
         id: uuid(),
         request: request,
@@ -69,7 +69,7 @@ export class PeerClient {
       this.outstandingRequests.set(requestMessage.id, resolve)
     })
 
-  private handleResponse = (message: ResponseMessage2): void => {
+  private handleResponse = (message: ResponseMessage): void => {
     const requestId = message.responseTo
     const resolve: Option<Resolve<any>> = this.outstandingRequests.get(requestId)
     if (resolve) {
@@ -97,7 +97,7 @@ export class PeerClient {
     }
   }
 
-  private handleBroadcast = (message: BroadcastMessage2): void => {
+  private handleBroadcast = (message: BroadcastMessage): void => {
     this.notifyListeners(message.body)
   }
 }

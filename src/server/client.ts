@@ -1,9 +1,8 @@
 import {
-  JoinedResponse,
   JoinRequest,
   JoinResponse,
-  RejoinedResponse,
   RejoinRequest,
+  RejoinResponse,
   WorldActionRequest,
   WorldEventMessage,
 } from './messages'
@@ -54,10 +53,17 @@ export class Client {
     return new Client(peerClient)
   }
 
-  public rejoin = async (playerId: PlayerId): Promise<WorldState> => {
-    const rejoinRequest: RejoinRequest = { type: 'rejoin', playerId }
-    const rejoinedResponse: RejoinedResponse = await this.peerClient.sendRequest(rejoinRequest)
-    return WorldState.fromJson(rejoinedResponse.worldState)
+  public rejoin = async (playerId: PlayerId): Promise<Option<WorldState>> => {
+    const request: RejoinRequest = { type: 'rejoin', playerId }
+    const response: RejoinResponse = await this.peerClient.sendRequest(request)
+    switch (response.type) {
+      case 'rejoined':
+        return WorldState.fromJson(response.worldState)
+      case 'unableToRejoin':
+        return undefined
+      default:
+        throw new UnreachableCaseError(response)
+    }
   }
 
   public join = async (): Promise<Option<{ playerId: PlayerId; worldState: WorldState }>> => {

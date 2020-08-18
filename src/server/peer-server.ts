@@ -5,26 +5,26 @@ export type PeerId = string
 
 export type RequestId = string
 
-export interface RequestMessage2 {
+export interface RequestMessage {
   type: 'request'
   id: RequestId
   request: any
 }
 
-export type ClientToServerMessage2 = RequestMessage2
+export type ClientToServerMessage = RequestMessage
 
-export interface ResponseMessage2 {
+export interface ResponseMessage {
   type: 'response'
   responseTo: RequestId
   response: any
 }
 
-export interface BroadcastMessage2 {
+export interface BroadcastMessage {
   type: 'broadcast'
   body: any
 }
 
-export type ServerToClientMessage2 = ResponseMessage2 | BroadcastMessage2
+export type ServerToClientMessage = ResponseMessage | BroadcastMessage
 
 export class PeerServer {
   private readonly peer: Peer
@@ -45,15 +45,17 @@ export class PeerServer {
   }
 
   public broadcast = (message: any): void => {
-    const broadcastMessage: BroadcastMessage2 = { type: 'broadcast', body: message }
-    for (const connection of this.connections) connection.send(broadcastMessage)
+    const broadcastMessage: BroadcastMessage = { type: 'broadcast', body: message }
+    for (const connection of this.connections) {
+      connection.send(broadcastMessage)
+    }
   }
 
-  private handleConnectionData = (connection: Peer.DataConnection) => (message: ClientToServerMessage2): void => {
+  private handleConnectionData = (connection: Peer.DataConnection) => (message: ClientToServerMessage): void => {
     // console.log('SERVER: received new message from ' + connection.peer)
     // console.log(message)
     const response = this.handleMessage(message.request)
-    const responseMessage: ResponseMessage2 = {
+    const responseMessage: ResponseMessage = {
       type: 'response',
       responseTo: message.id,
       response,

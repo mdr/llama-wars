@@ -1,7 +1,7 @@
 import * as R from 'ramda'
 import { WorldEventListener, WorldStateOwner } from './world-state-owner'
 import { PlayerAddedWorldEvent, WorldEvent, WorldEventId } from '../world/world-events'
-import { ClientRequest, JoinResponse, RejoinRequest, WorldEventMessage } from './messages'
+import { ClientRequest, JoinResponse, RejoinRequest, RejoinResponse, WorldEventMessage } from './messages'
 import { deserialiseFromJson, serialiseToJson } from '../util/json-serialisation'
 import { UnreachableCaseError } from '../util/unreachable-case-error'
 import { HOST_PLAYER_ID, PlayerId } from '../world/player'
@@ -75,15 +75,12 @@ export class Server {
     }
   }
 
-  private handleClientRejoin = (message: RejoinRequest): any => {
+  private handleClientRejoin = (message: RejoinRequest): RejoinResponse => {
     const worldState = this.worldState
-    if (worldState.isValidPlayerId(message.playerId))
-      return {
-        type: 'rejoined',
-        worldState: worldState.toJson(),
-      }
-    else {
-      // TODO: tell the client no
+    if (worldState.isValidPlayerId(message.playerId)) {
+      return { type: 'rejoined', worldState: worldState.toJson() }
+    } else {
+      return { type: 'unableToRejoin' }
     }
   }
 
