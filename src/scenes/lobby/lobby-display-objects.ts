@@ -7,7 +7,7 @@ import { PLAYER_TINTS } from '../colours'
 
 interface PlayerObjects {
   nameText: Phaser.GameObjects.Text
-  llama: Phaser.GameObjects.Image
+  llama: Phaser.GameObjects.Sprite
 }
 
 export class LobbyDisplayObjects {
@@ -36,6 +36,12 @@ export class LobbyDisplayObjects {
     } else {
       this.waitingForHostText = this.scene.add.text(100, 0, 'Waiting for host to start the game...')
     }
+    this.scene.anims.create({
+      key: 'llama-walk',
+      frames: [{ key: 'llama-1' } as any, { key: 'llama-2' }, { key: 'llama-3' }, { key: 'llama-4' }],
+      frameRate: 8,
+      repeat: -1,
+    })
   }
 
   private handleStartGame = () => {
@@ -100,10 +106,12 @@ export class LobbyDisplayObjects {
       .setInteractive()
       .on('pointerdown', () => this.handlePlayerTextClick(player, nameText))
     const llama = this.scene.add
-      .image(70, 0, 'llama')
+      .sprite(70, 0, 'llama-1')
       .setScale(0.6)
       .setTint(PLAYER_TINTS[player.id - 1])
-    this.playerObjects.set(player.id, { nameText, llama })
+      .play('llama-walk')
+    const playerObjects: PlayerObjects = { nameText, llama }
+    this.playerObjects.set(player.id, playerObjects)
   }
 
   private handlePlayerTextClick = (player: Player, playerText: Phaser.GameObjects.Text): void => {

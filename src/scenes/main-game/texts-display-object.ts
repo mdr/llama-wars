@@ -49,7 +49,7 @@ export class TextsDisplayObject {
     this.localActionDispatcher = localActionDispatcher
     const map = this.worldState.map
     this.scene.add
-      .image(36, 32, 'llama')
+      .image(36, 32, 'llama-2')
       .setScale(0.8)
       .setTint(PLAYER_TINTS[localGameState.playerId - 1])
     this.playerText = this.scene.add.text(70, 20, '')

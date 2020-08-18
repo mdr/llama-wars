@@ -138,8 +138,12 @@ export class BootScene extends Phaser.Scene {
   }
 
   private loadAssets() {
-    // Source: https://opengameart.org/content/hex-tileset-pack
-    this.load.image('llama', 'assets/sprites/llama_14.png')
+    // Source: https://opengameart.org/content/lpc-style-farm-animals
+    this.load.image('llama-1', 'assets/sprites/llama_15.png')
+    this.load.image('llama-2', 'assets/sprites/llama_14.png')
+    this.load.image('llama-3', 'assets/sprites/llama_13.png')
+    this.load.image('llama-4', 'assets/sprites/llama_12.png')
+
     // https://opengameart.org/content/hourglass-icon
     this.load.image('hourglass', 'assets/sprites/Hourglass.png')
     // https://opengameart.org/content/grass-textures-tiles

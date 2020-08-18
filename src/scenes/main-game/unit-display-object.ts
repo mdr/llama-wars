@@ -16,13 +16,13 @@ const HEALTH_BAR_OFFSET = { x: -25, y: -40 }
 export class UnitDisplayObject {
   private readonly scene: Phaser.Scene
   private unit: Unit
-  private readonly image: Phaser.GameObjects.Image
+  private readonly image: Phaser.GameObjects.Sprite
   private readonly healthBarGraphics: Phaser.GameObjects.Graphics
 
   constructor(scene: Phaser.Scene, unit: Unit) {
     this.scene = scene
     this.unit = unit
-    this.image = scene.add.image(0, 0, 'llama').setScale(0.8).setTint(this.getPlayerTint(this.unit.playerId))
+    this.image = scene.add.sprite(0, 0, 'llama-2').setScale(0.8).setTint(this.getPlayerTint(this.unit.playerId))
     this.healthBarGraphics = scene.add.graphics()
   }
 
@@ -69,6 +69,7 @@ export class UnitDisplayObject {
     const MOVE_ANIMATION_DURATION = 500
     const beforeCoords = hexCenter(from)
     const afterCoords = hexCenter(to)
+    this.image.anims.play('llama-walk')
     this.image.setFlipX(afterCoords.x < beforeCoords.x)
     const tween1 = this.scene.tweens.create({
       targets: this.image,
@@ -83,6 +84,8 @@ export class UnitDisplayObject {
       ease: 'Cubic',
     })
     await Promise.all([playTween(tween1), playTween(tween2)])
+    const frame = this.image.anims.currentAnim.frames[1]
+    this.image.anims.stopOnFrame(frame)
   }
 
   public runDeathAnimation = async (): Promise<void> => {
@@ -150,6 +153,7 @@ export class UnitDisplayObject {
     const beforeCoords = hexCenter(from)
     const afterCoords = hexCenter(to)
     this.image.setFlipX(afterCoords.x < beforeCoords.x)
+    this.image.anims.play('llama-walk')
     const tween1 = this.scene.tweens.create({
       targets: this.image,
       ...calculateTweenXY(beforeCoords, afterCoords, IMAGE_OFFSET),
@@ -165,6 +169,8 @@ export class UnitDisplayObject {
       yoyo: true,
     })
     await Promise.all([playTween(tween1), playTween(tween2)])
+    const frame = this.image.anims.currentAnim.frames[1]
+    this.image.anims.stopOnFrame(frame)
   }
 
   public destroy = (): void => {

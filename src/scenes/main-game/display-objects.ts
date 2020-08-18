@@ -12,6 +12,7 @@ import { Option } from '../../util/types'
 import { AudioKeys } from '../asset-keys'
 import { randomElement } from '../../util/random-util'
 import { AttackType } from '../../world/world-actions'
+import { fireAndForget } from '../../util/async-util'
 
 export interface MoveAnimationSpec {
   type: 'move'
@@ -68,6 +69,12 @@ export class DisplayObjects {
       this.localGameState,
       this.localActionDispatcher,
     )
+    this.scene.anims.create({
+      key: 'llama-walk',
+      frames: [{ key: 'llama-1' } as any, { key: 'llama-2' }, { key: 'llama-3' }, { key: 'llama-4' }],
+      frameRate: 8,
+      repeat: -1,
+    })
   }
 
   public handlePointerMove = (point: Point): void => this.mapDisplayObject?.handlePointerMove(point)
@@ -252,7 +259,11 @@ export class DisplayObjects {
       simultaneousAnimations.push(defenderDisplayObject.runDeathAnimation())
     }
     await Promise.all(simultaneousAnimations)
-    if (attacker.damage > 0) attackerDisplayObject.runDamageAnimation(attacker.location, attacker.damage)
-    if (defender.damage > 0) defenderDisplayObject.runDamageAnimation(defender.location, defender.damage)
+    if (attacker.damage > 0) {
+      fireAndForget(() => attackerDisplayObject.runDamageAnimation(attacker.location, attacker.damage))
+    }
+    if (defender.damage > 0) {
+      fireAndForget(() => defenderDisplayObject.runDamageAnimation(defender.location, defender.damage))
+    }
   }
 }
