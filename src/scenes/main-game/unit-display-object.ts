@@ -6,6 +6,7 @@ import { addPoints, distanceBetweenPoints, Point } from '../point'
 import { playTween } from '../../util/phaser/tween-utils'
 import assert = require('assert')
 import { PlayerId } from '../../world/player'
+import { AnimationSpeed } from './display-objects'
 
 const HEALTH_BAR_WIDTH = 50
 const HEALTH_BAR_HEIGHT = 12
@@ -65,8 +66,8 @@ export class UnitDisplayObject {
     )
   }
 
-  public runMoveAnimation = async (from: Hex, to: Hex): Promise<void> => {
-    const MOVE_ANIMATION_DURATION = 500
+  public runMoveAnimation = async (from: Hex, to: Hex, speed: AnimationSpeed): Promise<void> => {
+    const duration = this.scaleSpeed(500, speed)
     const beforeCoords = hexCenter(from)
     const afterCoords = hexCenter(to)
     this.image.anims.play('llama-walk')
@@ -74,13 +75,13 @@ export class UnitDisplayObject {
     const tween1 = this.scene.tweens.create({
       targets: this.image,
       ...calculateTweenXY(beforeCoords, afterCoords, IMAGE_OFFSET),
-      duration: MOVE_ANIMATION_DURATION,
+      duration: duration,
       ease: 'Cubic',
     })
     const tween2 = this.scene.tweens.create({
       targets: this.healthBarGraphics,
       ...calculateTweenXY(beforeCoords, afterCoords, HEALTH_BAR_OFFSET),
-      duration: MOVE_ANIMATION_DURATION,
+      duration: duration,
       ease: 'Cubic',
     })
     await Promise.all([playTween(tween1), playTween(tween2)])
@@ -88,21 +89,25 @@ export class UnitDisplayObject {
     this.image.anims.stopOnFrame(frame)
   }
 
-  public runDeathAnimation = async (): Promise<void> => {
+  private scaleSpeed = (duration: number, speed: AnimationSpeed) => (speed === 'normal' ? duration : duration / 4)
+
+  public runDeathAnimation = async (speed: AnimationSpeed): Promise<void> => {
+    const duration = this.scaleSpeed(1000, speed)
     const tween = this.scene.tweens.create({
       targets: [this.image, this.healthBarGraphics],
       alpha: { from: 1, to: 0 },
-      duration: 1000,
+      duration,
       ease: 'Cubic',
     })
     await playTween(tween)
   }
 
-  public runSpitAnimation = async (from: Hex, to: Hex): Promise<void> => {
+  public runSpitAnimation = async (from: Hex, to: Hex, speed: AnimationSpeed): Promise<void> => {
     const fromPoint = hexCenter(from)
     const toPoint = hexCenter(to)
     const distance = distanceBetweenPoints(fromPoint, toPoint)
     const image = this.scene.add.image(fromPoint.x, fromPoint.y, 'spit').setScale(0.8)
+    const duration = this.scaleSpeed(distance * 4, speed)
     const tween = this.scene.tweens.create({
       targets: image,
       x: {
@@ -113,14 +118,14 @@ export class UnitDisplayObject {
         from: fromPoint.y,
         to: toPoint.y,
       },
-      duration: distance * 4,
+      duration: duration,
       ease: 'Quad',
     })
     await playTween(tween)
     image.destroy()
   }
 
-  public runDamageAnimation = async (location: Hex, damage: number): Promise<void> => {
+  public runDamageAnimation = async (location: Hex, damage: number, speed: AnimationSpeed): Promise<void> => {
     const locationPoint = hexCenter(location)
     const text = this.scene.add
       .text(locationPoint.x, locationPoint.y, damage.toString(), {
@@ -130,41 +135,43 @@ export class UnitDisplayObject {
       })
       .setFontSize(26)
       .setOrigin(0.5)
+    const duration = this.scaleSpeed(2000, speed)
     const tween1 = this.scene.tweens.create({
       targets: text,
       y: {
         from: locationPoint.y - 50,
         to: locationPoint.y - 75,
       },
-      duration: 2000,
+      duration,
       ease: 'Linear',
     })
     const tween2 = this.scene.tweens.create({
       targets: text,
       alpha: { from: 1, to: 0 },
-      duration: 2000,
+      duration,
       ease: 'Cubic.in',
     })
     await Promise.all([playTween(tween1), playTween(tween2)])
     text.destroy()
   }
 
-  public runAttackAnimation = async (from: Hex, to: Hex): Promise<void> => {
+  public runAttackAnimation = async (from: Hex, to: Hex, speed: AnimationSpeed): Promise<void> => {
     const beforeCoords = hexCenter(from)
     const afterCoords = hexCenter(to)
     this.image.setFlipX(afterCoords.x < beforeCoords.x)
     this.image.anims.play('llama-walk')
+    const duration = this.scaleSpeed(400, speed)
     const tween1 = this.scene.tweens.create({
       targets: this.image,
       ...calculateTweenXY(beforeCoords, afterCoords, IMAGE_OFFSET),
-      duration: 400,
+      duration,
       ease: 'Cubic',
       yoyo: true,
     })
     const tween2 = this.scene.tweens.create({
       targets: this.healthBarGraphics,
       ...calculateTweenXY(beforeCoords, afterCoords, HEALTH_BAR_OFFSET),
-      duration: 400,
+      duration,
       ease: 'Cubic',
       yoyo: true,
     })

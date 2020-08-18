@@ -12,9 +12,8 @@ import { UnreachableCaseError } from '../util/unreachable-case-error'
 import { Option } from '../util/types'
 import Peer = require('peerjs')
 import { newPeer } from './peer-utils'
+import { Reject, Resolve } from '../util/async-util'
 
-type Resolve<T> = (value?: T | PromiseLike<T>) => void
-type Reject = (reason?: any) => void
 interface ResolveAndReject<T> {
   resolve: Resolve<T>
   reject: Reject
@@ -51,9 +50,15 @@ export class PeerClient {
   }
 
   public static connect = (peerId: PeerId): Promise<PeerClient> =>
-    new Promise<PeerClient>((resolve) => {
+    new Promise<PeerClient>((resolve: Resolve<any>, reject: Reject) => {
       const peer = newPeer()
-      peer.on('error', (err) => console.log(err))
+      let resolved = false
+      peer.on('error', (err) => {
+        console.log(err)
+        if (!resolved) {
+          reject(err)
+        }
+      })
       peer.on('open', () => {
         // console.log('CLIENT: open')
         const connection = peer.connect(peerId, { reliable: true })
@@ -61,6 +66,7 @@ export class PeerClient {
           // console.log('CLIENT: connection open')
           const client = new PeerClient(connection)
           resolve(client)
+          resolved = true
         })
       })
     })

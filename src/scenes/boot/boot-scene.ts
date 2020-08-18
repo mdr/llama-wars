@@ -8,9 +8,9 @@ import { Server } from '../../server/server'
 import { PlayerId } from '../../world/player'
 import { Client } from '../../server/client'
 import { LOBBY_SCENE_KEY, LobbySceneData } from '../lobby/lobby-scene'
-import FileConfig = Phaser.Types.Loader.FileConfig
 import { WorldState } from '../../world/world-state'
 import { getUrlInfo, setUrlInfo, UrlInfo } from './url-info'
+import FileConfig = Phaser.Types.Loader.FileConfig
 
 export const BOOT_SCENE_KEY = 'Boot'
 
@@ -96,7 +96,14 @@ export class BootScene extends Phaser.Scene {
   }
 
   private joinOrRestoreClient = async (gameId: GameId, playerId: Option<PlayerId>): Promise<void> => {
-    const client = await Client.connect(gameId)
+    let client
+    try {
+      client = await Client.connect(gameId)
+    } catch (e) {
+      this.showMessage('Unable to join game, could not connect to server.')
+      console.error(e)
+      return
+    }
     if (playerId) {
       this.rejoinAsClient(client, gameId, playerId)
     } else {
@@ -111,12 +118,16 @@ export class BootScene extends Phaser.Scene {
       setUrlInfo({ gameId, playerId })
       this.joinGame(worldState, client, playerId)
     } else {
-      const { width, height } = this.game.scale.gameSize
-      this.add
-        .text(width / 2, height / 2, 'Unable to join game as it has already started.')
-        .setOrigin(0.5)
-        .setFontSize(24)
+      this.showMessage('Unable to join game as it has already started.')
     }
+  }
+
+  private showMessage = (message: string): void => {
+    const { width, height } = this.game.scale.gameSize
+    this.add
+      .text(width / 2, height / 2, message)
+      .setOrigin(0.5)
+      .setFontSize(24)
   }
 
   private rejoinAsClient = async (client: Client, gameId: GameId, playerId: PlayerId): Promise<void> => {

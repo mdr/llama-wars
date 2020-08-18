@@ -16,6 +16,7 @@ import { WorldEvent } from '../world/world-events'
 import { WorldEventListener } from './world-state-owner'
 import { Option } from '../util/types'
 import { UnreachableCaseError } from '../util/unreachable-case-error'
+import { withTimeout } from '../util/async-util'
 
 export class Client {
   private readonly peerClient: PeerClient
@@ -49,7 +50,7 @@ export class Client {
   }
 
   public static connect = async (gameId: GameId): Promise<Client> => {
-    const peerClient = await PeerClient.connect(gameId)
+    const peerClient = await withTimeout(5000)(PeerClient.connect(gameId))
     return new Client(peerClient)
   }
 

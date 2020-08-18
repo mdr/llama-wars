@@ -14,6 +14,8 @@ import { randomElement } from '../../util/random-util'
 import { AttackType } from '../../world/world-actions'
 import { fireAndForget } from '../../util/async-util'
 
+export type AnimationSpeed = 'normal' | 'quick'
+
 export interface MoveAnimationSpec {
   type: 'move'
   unitId: UnitId
@@ -163,7 +165,8 @@ export class DisplayObjects {
       while (this.animations.length > 0) {
         const { animationsToPerformNow, animationsToPerformLater } = this.sequenceAnimations()
         this.animations = animationsToPerformLater
-        await Promise.all(animationsToPerformNow.map(this.runAnimation))
+        const speed = animationsToPerformLater.length === 0 ? 'normal' : 'quick'
+        await Promise.all(animationsToPerformNow.map((animation) => this.runAnimation(animation, speed)))
         for (const animation of animationsToPerformNow) {
           this.releaseUnitsFromBeingAnimatedWhereNoLongerNeeded(animation)
         }
@@ -212,27 +215,27 @@ export class DisplayObjects {
     }
   }
 
-  private runAnimation = async (animation: AnimationSpec): Promise<void> => {
+  private runAnimation = async (animation: AnimationSpec, speed: AnimationSpeed): Promise<void> => {
     switch (animation.type) {
       case 'move':
-        await this.runMoveAnimation(animation)
+        await this.runMoveAnimation(animation, speed)
         break
       case 'combat':
-        await this.runCombatAnimation(animation)
+        await this.runCombatAnimation(animation, speed)
         break
       default:
         throw new UnreachableCaseError(animation)
     }
   }
 
-  private runMoveAnimation = async (animation: MoveAnimationSpec): Promise<void> => {
+  private runMoveAnimation = async (animation: MoveAnimationSpec, speed: AnimationSpeed): Promise<void> => {
     const displayObject = this.animatedUnitDisplayObjects.get(animation.unitId)
     if (!displayObject) throw `Unexpected missing display object for unit ${animation.unitId}`
     this.scene.sound.play(AudioKeys.WALK)
-    await displayObject.runMoveAnimation(animation.from, animation.to)
+    await displayObject.runMoveAnimation(animation.from, animation.to, speed)
   }
 
-  private runCombatAnimation = async (animation: CombatAnimationSpec): Promise<void> => {
+  private runCombatAnimation = async (animation: CombatAnimationSpec, speed: AnimationSpeed): Promise<void> => {
     const { attacker, defender } = animation
     const attackerDisplayObject = this.animatedUnitDisplayObjects.get(attacker.unitId)
     if (!attackerDisplayObject) throw `Unexpected missing display object for unit ${attacker.unitId}`
@@ -248,22 +251,22 @@ export class DisplayObjects {
     }
     const simultaneousAnimations: Promise<void>[] = []
     if (animation.attackType === 'melee') {
-      simultaneousAnimations.push(attackerDisplayObject.runAttackAnimation(attacker.location, defender.location))
+      simultaneousAnimations.push(attackerDisplayObject.runAttackAnimation(attacker.location, defender.location, speed))
     } else {
-      simultaneousAnimations.push(attackerDisplayObject.runSpitAnimation(attacker.location, defender.location))
+      simultaneousAnimations.push(attackerDisplayObject.runSpitAnimation(attacker.location, defender.location, speed))
     }
     if (attacker.killed) {
-      simultaneousAnimations.push(attackerDisplayObject.runDeathAnimation())
+      simultaneousAnimations.push(attackerDisplayObject.runDeathAnimation(speed))
     }
     if (defender.killed) {
-      simultaneousAnimations.push(defenderDisplayObject.runDeathAnimation())
+      simultaneousAnimations.push(defenderDisplayObject.runDeathAnimation(speed))
     }
     await Promise.all(simultaneousAnimations)
     if (attacker.damage > 0) {
-      fireAndForget(() => attackerDisplayObject.runDamageAnimation(attacker.location, attacker.damage))
+      fireAndForget(() => attackerDisplayObject.runDamageAnimation(attacker.location, attacker.damage, speed))
     }
     if (defender.damage > 0) {
-      fireAndForget(() => defenderDisplayObject.runDamageAnimation(defender.location, defender.damage))
+      fireAndForget(() => defenderDisplayObject.runDamageAnimation(defender.location, defender.damage, speed))
     }
   }
 }
