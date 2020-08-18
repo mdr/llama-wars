@@ -121,7 +121,11 @@ export class BootScene extends Phaser.Scene {
 
   private rejoinAsClient = async (client: Client, gameId: GameId, playerId: PlayerId): Promise<void> => {
     const worldState = await client.rejoin(playerId)
-    this.joinGame(worldState, client, playerId)
+    if (worldState) {
+      this.joinGame(worldState, client, playerId)
+    } else {
+      // TODO: inform client
+    }
   }
 
   private joinGame = (worldState: WorldState, client: Client, playerId: number) => {

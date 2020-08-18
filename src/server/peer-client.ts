@@ -1,6 +1,7 @@
 import { v4 as uuid } from 'uuid'
 import {
   BroadcastMessage,
+  ErrorResponseMessage,
   PeerId,
   RequestId,
   RequestMessage,
@@ -13,12 +14,17 @@ import Peer = require('peerjs')
 import { newPeer } from './peer-utils'
 
 type Resolve<T> = (value?: T | PromiseLike<T>) => void
+type Reject = (reason?: any) => void
+interface ResolveAndReject<T> {
+  resolve: Resolve<T>
+  reject: Reject
+}
 
 export type PeerListener = (message: any) => void
 
 export class PeerClient {
   private readonly connection: Peer.DataConnection
-  private readonly outstandingRequests: Map<RequestId, Resolve<any>> = new Map()
+  private readonly outstandingRequests: Map<RequestId, ResolveAndReject<any>> = new Map()
   private readonly listeners: PeerListener[] = []
 
   constructor(connection: Peer.DataConnection) {
@@ -32,6 +38,9 @@ export class PeerClient {
     switch (message.type) {
       case 'response':
         this.handleResponse(message)
+        break
+      case 'errorResponse':
+        this.handleErrorResponse(message)
         break
       case 'broadcast':
         this.handleBroadcast(message)
@@ -57,7 +66,7 @@ export class PeerClient {
     })
 
   public sendRequest = (request: any): Promise<any> =>
-    new Promise<any>((resolve: Resolve<any>) => {
+    new Promise<any>((resolve: Resolve<any>, reject: Reject) => {
       const requestMessage: RequestMessage = {
         type: 'request',
         id: uuid(),
@@ -66,17 +75,28 @@ export class PeerClient {
       // console.log('CLIENT: sending request')
       // console.log(requestMessage)
       this.connection.send(requestMessage)
-      this.outstandingRequests.set(requestMessage.id, resolve)
+      this.outstandingRequests.set(requestMessage.id, { resolve, reject })
     })
 
   private handleResponse = (message: ResponseMessage): void => {
     const requestId = message.responseTo
-    const resolve: Option<Resolve<any>> = this.outstandingRequests.get(requestId)
-    if (resolve) {
-      resolve(message.response)
+    const resolveAndReject: Option<ResolveAndReject<any>> = this.outstandingRequests.get(requestId)
+    if (resolveAndReject) {
+      resolveAndReject.resolve(message.response)
       this.outstandingRequests.delete(requestId)
     } else {
       console.log(`CLIENT: response received for unknown request ${requestId}`)
+    }
+  }
+
+  private handleErrorResponse = (message: ErrorResponseMessage): void => {
+    const requestId = message.responseTo
+    const resolveAndReject: Option<ResolveAndReject<any>> = this.outstandingRequests.get(requestId)
+    if (resolveAndReject) {
+      resolveAndReject.reject('Error received from server')
+      this.outstandingRequests.delete(requestId)
+    } else {
+      console.log(`CLIENT: error response received for unknown request ${requestId}`)
     }
   }
 

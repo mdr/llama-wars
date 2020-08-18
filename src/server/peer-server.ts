@@ -19,12 +19,17 @@ export interface ResponseMessage {
   response: any
 }
 
+export interface ErrorResponseMessage {
+  type: 'errorResponse'
+  responseTo: RequestId
+}
+
 export interface BroadcastMessage {
   type: 'broadcast'
   body: any
 }
 
-export type ServerToClientMessage = ResponseMessage | BroadcastMessage
+export type ServerToClientMessage = ResponseMessage | ErrorResponseMessage | BroadcastMessage
 
 export class PeerServer {
   private readonly peer: Peer
@@ -54,7 +59,17 @@ export class PeerServer {
   private handleConnectionData = (connection: Peer.DataConnection) => (message: ClientToServerMessage): void => {
     // console.log('SERVER: received new message from ' + connection.peer)
     // console.log(message)
-    const response = this.handleMessage(message.request)
+    let response
+    try {
+      response = this.handleMessage(message.request)
+    } catch (e) {
+      const errorResponseMessage: ErrorResponseMessage = {
+        type: 'errorResponse',
+        responseTo: message.id,
+      }
+      connection.send(errorResponseMessage)
+      throw e
+    }
     const responseMessage: ResponseMessage = {
       type: 'response',
       responseTo: message.id,

@@ -18,6 +18,14 @@ const LLAMA_NAMES = [
   'Alfonso',
   'Rose',
   'Lorenzo',
+  'Rita',
+  'Anton',
+  'Bernard',
+  'Cassie',
+  'Francesca',
+  'Milly',
+  'Carlos',
+  'Ricardo',
 ]
 
 export class WorldGenerator {
