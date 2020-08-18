@@ -10,12 +10,9 @@ import {
   SELECTED_TILE_BORDER_COLOUR,
   TARGETABLE_TILE_BORDER_COLOUR,
 } from '../colours'
-import { Unit } from '../../world/unit'
-import { Option } from '../../util/types'
 import { LocalGameState } from '../local-game-state'
-import Polygon = Phaser.GameObjects.Polygon
-import { canAttackOccur } from '../../server/attack-world-action-handler'
 import { CombinedState } from '../combined-state-methods'
+import Polygon = Phaser.GameObjects.Polygon
 
 type TileState = 'default' | 'selected' | 'targetable'
 
@@ -92,7 +89,7 @@ export class MapDisplayObject {
   }
 
   private calculateTileState = (hex: Hex): TileState => {
-    const { playerId, selectedHex, mode } = this.localGameState
+    const { selectedHex, mode } = this.localGameState
     if (selectedHex && selectedHex.equals(hex)) {
       return 'selected'
     }
@@ -103,11 +100,9 @@ export class MapDisplayObject {
       }
     }
     if (mode.type === 'attack') {
-      if (selectedHex && canAttackOccur(mode.attackType, hex, selectedHex)) {
-        const unit = this.findUnitInLocation(hex)
-        if (unit && unit.playerId !== playerId) {
-          return 'targetable'
-        }
+      const unit = this.worldState.getUnitById(mode.unitId)
+      if (selectedHex && this.combinedState.unitCanAttackHex(unit, hex, mode.attackType)) {
+        return 'targetable'
       }
     }
     return 'default'
@@ -134,8 +129,6 @@ export class MapDisplayObject {
         return TARGETABLE_TILE_BORDER_COLOUR
     }
   }
-
-  private findUnitInLocation = (hex: Hex): Option<Unit> => this.worldState.findUnitInLocation(hex)
 
   public handlePointerMove(pointerPoint: Point): void {
     const hex = fromPoint(multiplyPoint(subtractPoints(pointerPoint, DRAWING_OFFSET), 1 / HEX_SIZE))
