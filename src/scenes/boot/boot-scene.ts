@@ -177,6 +177,8 @@ export class BootScene extends Phaser.Scene {
     this.load.image('spit', 'assets/sprites/puddle_light_blue.png')
     // https://opengameart.org/content/world-map-tiles
     this.load.image('mountain', 'assets/sprites/mountains_outer.png')
+    // https://opengameart.org/content/game-icons-0
+    this.load.image('crown', 'assets/sprites/crown.png')
 
     // https://opengameart.org/content/37-hitspunches
     this.load.audio(AudioKeys.ATTACK_1, 'assets/audio/hit14.mp3.mp3')

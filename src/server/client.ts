@@ -18,6 +18,8 @@ import { Option } from '../util/types'
 import { UnreachableCaseError } from '../util/unreachable-case-error'
 import { withTimeout } from '../util/async-util'
 
+const TIMEOUT = 5000
+
 export class Client {
   private readonly peerClient: PeerClient
   private readonly listeners: WorldEventListener[] = []
@@ -50,13 +52,13 @@ export class Client {
   }
 
   public static connect = async (gameId: GameId): Promise<Client> => {
-    const peerClient = await withTimeout(5000)(PeerClient.connect(gameId))
+    const peerClient = await withTimeout(TIMEOUT)(PeerClient.connect(gameId))
     return new Client(peerClient)
   }
 
   public rejoin = async (playerId: PlayerId): Promise<Option<WorldState>> => {
     const request: RejoinRequest = { type: 'rejoin', playerId }
-    const response: RejoinResponse = await this.peerClient.sendRequest(request)
+    const response: RejoinResponse = await this.sendRequest(request)
     switch (response.type) {
       case 'rejoined':
         return WorldState.fromJson(response.worldState)
@@ -69,7 +71,7 @@ export class Client {
 
   public join = async (): Promise<Option<{ playerId: PlayerId; worldState: WorldState }>> => {
     const request: JoinRequest = { type: 'join' }
-    const response: JoinResponse = await this.peerClient.sendRequest(request)
+    const response: JoinResponse = await this.sendRequest(request)
     switch (response.type) {
       case 'joined':
         const playerId = response.playerId
@@ -82,12 +84,14 @@ export class Client {
     }
   }
 
+  private sendRequest = async (request: any): Promise<any> => withTimeout(TIMEOUT)(this.peerClient.sendRequest(request))
+
   public sendAction = async (playerId: PlayerId, action: WorldAction): Promise<void> => {
-    const message: WorldActionRequest = {
+    const request: WorldActionRequest = {
       type: 'worldAction',
       action: serialiseToJson(action),
       playerId: playerId,
     }
-    await this.peerClient.sendRequest(message)
+    await this.sendRequest(request)
   }
 }

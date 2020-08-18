@@ -17,6 +17,7 @@ export class LobbyDisplayObjects {
   private readonly onChangePlayerName: (name: string) => void
 
   private readonly playerObjects: Map<PlayerId, PlayerObjects> = new Map()
+  private readonly hostCrown: Phaser.GameObjects.Image
   private readonly startGameButton?: MenuButton
   private readonly waitingForHostText?: Phaser.GameObjects.Text
 
@@ -42,6 +43,7 @@ export class LobbyDisplayObjects {
       frameRate: 8,
       repeat: -1,
     })
+    this.hostCrown = this.scene.add.image(330, 0, 'crown').setScale(0.6)
   }
 
   private handleStartGame = () => {
@@ -54,6 +56,9 @@ export class LobbyDisplayObjects {
     let y = 100
     const sortedPlayers = R.sortBy((player) => player.id, worldState.players)
     for (const player of sortedPlayers) {
+      if (player.id === HOST_PLAYER_ID) {
+        this.hostCrown.setY(y + 5)
+      }
       const { nameText, llama } = this.getPlayerObjects(player.id)
       nameText.setText(player.name).setY(y)
       llama.setY(y + 10)

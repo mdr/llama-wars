@@ -138,6 +138,7 @@ export class WorldState {
     units: this.units.map((unit) => unit.toJson()),
     players: this.players.map((player) => player.toJson()),
     gameOverInfo: this.gameOverInfo,
+    worldLog: this.worldLog,
   })
 
   public static fromJson = (json: any): WorldState =>
@@ -147,6 +148,7 @@ export class WorldState {
       units: json.units.map((unit: any) => Unit.fromJson(unit)),
       players: json.players.map((unit: any) => Player.fromJson(unit)),
       gameOverInfo: json.gameOverInfo,
+      worldLog: json.worldLog,
     })
 
   public isValidPlayerId = (playerId: PlayerId): boolean => R.any((player) => player.id === playerId, this.players)
