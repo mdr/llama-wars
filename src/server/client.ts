@@ -17,12 +17,18 @@ import { WorldEventListener } from './world-state-owner'
 import { Option } from '../util/types'
 import { UnreachableCaseError } from '../util/unreachable-case-error'
 import { withTimeout } from '../util/async-util'
+import { INITIAL_WORLD_STATE } from '../world/initial-world-state'
 
 const TIMEOUT = 5000
 
 export class Client {
   private readonly peerClient: PeerClient
   private readonly listeners: WorldEventListener[] = []
+  private _worldState: WorldState = INITIAL_WORLD_STATE
+
+  public get worldState(): WorldState {
+    return this._worldState
+  }
 
   public addListener = (listener: WorldEventListener): void => {
     this.listeners.push(listener)
@@ -48,6 +54,7 @@ export class Client {
 
   private handleWorldEventMessage = (message: WorldEventMessage): void => {
     const event = deserialiseFromJson(message.event)
+    this._worldState = this._worldState.applyEvent(event)
     this.notifyListeners(event)
   }
 
@@ -61,7 +68,9 @@ export class Client {
     const response: RejoinResponse = await this.sendRequest(request)
     switch (response.type) {
       case 'rejoined':
-        return WorldState.fromJson(response.worldState)
+        const worldState = WorldState.fromJson(response.worldState)
+        this._worldState = worldState
+        return worldState
       case 'unableToRejoin':
         return undefined
       default:
@@ -76,6 +85,7 @@ export class Client {
       case 'joined':
         const playerId = response.playerId
         const worldState = WorldState.fromJson(response.worldState)
+        this._worldState = worldState
         return { playerId, worldState }
       case 'unableToJoin':
         return undefined

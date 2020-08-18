@@ -11,17 +11,15 @@ import { WorldEventListener } from '../../server/world-state-owner'
 
 export class CreatedLobbyScene {
   private readonly scene: Phaser.Scene
-  private worldState: WorldState
   private readonly serverOrClient: Server | Client
   private readonly playerId: PlayerId
   private readonly lobbyDisplayObjects: LobbyDisplayObjects
   private listener?: WorldEventListener
 
-  constructor(scene: Phaser.Scene, serverOrClient: Server | Client, playerId: PlayerId, worldState: WorldState) {
+  constructor(scene: Phaser.Scene, serverOrClient: Server | Client, playerId: PlayerId) {
     this.scene = scene
     this.serverOrClient = serverOrClient
     this.playerId = playerId
-    this.worldState = worldState
     this.scene.sound.pauseOnBlur = false
     this.scene.sound.add(AudioKeys.CLICK)
     this.scene.sound.add(AudioKeys.NEW_TURN)
@@ -44,7 +42,6 @@ export class CreatedLobbyScene {
   }
 
   private handleWorldEvent = (event: WorldEvent, client: Client): void => {
-    this.worldState = this.worldState.applyEvent(event)
     switch (event.type) {
       case 'gameStarted':
         this.scene.sound.play(AudioKeys.NEW_TURN)
@@ -64,7 +61,6 @@ export class CreatedLobbyScene {
   }
 
   private handleWorldEvent2 = (event: WorldEvent, server: Server): void => {
-    this.worldState = this.worldState.applyEvent(event)
     switch (event.type) {
       case 'gameStarted':
         this.scene.sound.play(AudioKeys.NEW_TURN)
@@ -82,10 +78,11 @@ export class CreatedLobbyScene {
         this.sync()
     }
   }
+
   private launchGameScene = (): void => {
     const sceneData: GameSceneData = {
       serverOrClient: this.serverOrClient,
-      worldState: this.worldState,
+      worldState: this.serverOrClient.worldState,
       playerId: this.playerId,
     }
     this.scene.scene.start(GAME_SCENE_KEY, sceneData)
@@ -101,7 +98,7 @@ export class CreatedLobbyScene {
     }
   }
 
-  public sync = (): void => this.lobbyDisplayObjects.sync(this.worldState)
+  public sync = (): void => this.lobbyDisplayObjects.sync(this.serverOrClient.worldState)
 
   private actAsServer = (server: Server): void => {
     this.listener = (event) => this.handleWorldEvent2(event, server)

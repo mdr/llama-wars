@@ -5,7 +5,7 @@ import { MAIN_MENU_SCENE_KEY } from '../main-menu/main-menu-scene'
 import { Option } from '../../util/types'
 import { openWorldEventDb, WorldEventDb } from '../../db/world-event-db'
 import { Server } from '../../server/server'
-import { PlayerId } from '../../world/player'
+import { HOST_PLAYER_ID, PlayerId } from '../../world/player'
 import { Client } from '../../server/client'
 import { LOBBY_SCENE_KEY, LobbySceneData } from '../lobby/lobby-scene'
 import { WorldState } from '../../world/world-state'
@@ -144,7 +144,7 @@ export class BootScene extends Phaser.Scene {
       const sceneData: GameSceneData = { serverOrClient: client, worldState, playerId }
       this.scene.start(GAME_SCENE_KEY, sceneData)
     } else {
-      const sceneData: LobbySceneData = { serverOrClient: client, worldState, playerId }
+      const sceneData: LobbySceneData = { serverOrClient: client, playerId }
       this.scene.start(LOBBY_SCENE_KEY, sceneData)
     }
   }
@@ -153,10 +153,10 @@ export class BootScene extends Phaser.Scene {
     const server = await Server.restoreGame(worldEventDb, gameId)
     const worldState = server.worldState
     if (worldState.gameHasStarted) {
-      const sceneData: GameSceneData = { serverOrClient: server, worldState: worldState, playerId: 1 }
+      const sceneData: GameSceneData = { serverOrClient: server, worldState: worldState, playerId: HOST_PLAYER_ID }
       this.scene.start(GAME_SCENE_KEY, sceneData)
     } else {
-      const sceneData: LobbySceneData = { serverOrClient: server, worldState: worldState, playerId: 1 }
+      const sceneData: LobbySceneData = { serverOrClient: server, playerId: HOST_PLAYER_ID }
       this.scene.start(LOBBY_SCENE_KEY, sceneData)
     }
   }
