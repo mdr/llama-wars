@@ -130,7 +130,8 @@ export class TextsDisplayObject {
       .setFontSize(42)
       .setVisible(false)
       .setDepth(100)
-    this.worldLogText = this.scene.add.text(960, 50, '')
+    this.worldLogText = this.scene.add.text(960, 50, '').setWordWrapWidth(470).setFontSize(14)
+
     this.hostCrown = this.scene.add.image(1235, 0, 'crown').setScale(0.6)
     for (const player of worldState.getSortedPlayers()) {
       const nameText = this.scene.add
@@ -148,8 +149,8 @@ export class TextsDisplayObject {
       const playerObjects: PlayerObjects = { nameText, llama }
       this.playerObjects.set(player.id, playerObjects)
     }
-    // new UiBorderDisplayObject(scene, { topLeft: point(950, 20), width: 500, height: 600 })
-    new UiBorderDisplayObject(scene, { topLeft: point(10, 46), width: 890, height: 470 })
+    new UiBorderDisplayObject(scene, { topLeft: point(950, 20), width: 500, height: 620 })
+    new UiBorderDisplayObject(scene, { topLeft: point(10, 520), width: 930, height: 120 })
   }
 
   private handleActionTextClick = (): void => {
@@ -220,7 +221,7 @@ export class TextsDisplayObject {
     }
     this.defeatText.setVisible(player.defeated)
     this.victoryText.setVisible(worldState.gameOverInfo?.victor === player.id)
-    this.worldLogText.setText(R.takeLast(30, this.worldState.worldLog).join('\n'))
+    this.worldLogText.setText(R.takeLast(20, this.worldState.worldLog).join('\n'))
     this.worldLogText.setVisible(localGameState.sidebar === 'log')
     let y = 65
     for (const player of worldState.getSortedPlayers()) {

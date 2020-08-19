@@ -9,80 +9,65 @@ const THICKNESS = 4
 
 export class UiBorderDisplayObject {
   private readonly scene: Phaser.Scene
-  private readonly topLeftImage: Phaser.GameObjects.Image
-  private readonly topImages: Phaser.GameObjects.Image[] = []
-  private readonly leftImages: Phaser.GameObjects.Image[] = []
-  private readonly topRightImage: Phaser.GameObjects.Image
-  private readonly bottomLeftImage: Phaser.GameObjects.Image
-  private readonly bottomRightImage: Phaser.GameObjects.Image
+  private readonly images: Phaser.GameObjects.Image[] = []
+  private readonly topLeft: Point
+  private readonly width: number
+  private readonly height: number
 
   constructor(scene: Phaser.Scene, { topLeft, width, height }: { topLeft: Point; width: number; height: number }) {
     this.scene = scene
-    // const img = this.scene.add.image(topLeft.x, topLeft.y, ImageKeys.BORDER_VERTICAL).setOrigin(0, 0)
-    this.topLeftImage = this.scene.add.image(topLeft.x, topLeft.y, ImageKeys.BORDER_TOP_LEFT).setOrigin(0, 0)
-    this.topRightImage = this.scene.add
-      .image(topLeft.x + width - CORNER_WIDTH, topLeft.y, ImageKeys.BORDER_TOP_RIGHT)
-      .setOrigin(0, 0)
-    this.bottomLeftImage = this.scene.add
-      .image(topLeft.x, topLeft.y + height - CORNER_HEIGHT, ImageKeys.BORDER_BOTTOM_LEFT)
-      .setOrigin(0, 0)
-    this.bottomRightImage = this.scene.add
-      .image(topLeft.x + width - CORNER_WIDTH, topLeft.y + height - CORNER_HEIGHT, ImageKeys.BORDER_BOTTOM_RIGHT)
-      .setOrigin(0, 0)
-    {
-      const verticalHeight = height - 2 * CORNER_HEIGHT
-      const wholeCopies = Math.floor(verticalHeight / VERTICAL_IMAGE_HEIGHT)
-      const excessHeight = verticalHeight % VERTICAL_IMAGE_HEIGHT
-      for (let i = 0; i <= wholeCopies; i++) {
-        const leftVerticalImage = this.scene.add
-          .image(topLeft.x, topLeft.y + CORNER_WIDTH + i * VERTICAL_IMAGE_HEIGHT, ImageKeys.BORDER_VERTICAL)
-          .setOrigin(0, 0)
-        if (i === wholeCopies) {
-          leftVerticalImage.setCrop(0, 0, 5, excessHeight)
-        }
-        const rightVerticalImage = this.scene.add
-          .image(
-            topLeft.x + width - THICKNESS,
-            topLeft.y + CORNER_WIDTH + i * VERTICAL_IMAGE_HEIGHT,
-            ImageKeys.BORDER_VERTICAL,
-          )
-          .setOrigin(0, 0)
-        if (i === wholeCopies) {
-          rightVerticalImage.setCrop(0, 0, 5, excessHeight)
-        }
-        this.leftImages.push(leftVerticalImage)
-        this.leftImages.push(rightVerticalImage)
-      }
-    }
+    this.topLeft = topLeft
+    this.width = width
+    this.height = height
+    this.createCorners()
+    this.createVerticalSections()
+    this.createHorizontalSections()
+  }
 
-    {
-      const horizontalWidth = width - 2 * CORNER_WIDTH
-      const wholeCopies = Math.floor(horizontalWidth / HORIZONTAL_IMAGE_WIDTH)
-      const excessWidth = horizontalWidth % HORIZONTAL_IMAGE_WIDTH
-      for (let i = 0; i <= wholeCopies; i++) {
-        const topHorizontalImage = this.scene.add
-          .image(topLeft.x + CORNER_WIDTH + i * HORIZONTAL_IMAGE_WIDTH, topLeft.y, ImageKeys.BORDER_HORIZONTAL)
-          .setOrigin(0, 0)
-        if (i === wholeCopies) {
-          topHorizontalImage.setCrop(0, 0, excessWidth, 5)
-        }
-        const bottomHorizontalImage = this.scene.add
-          .image(
-            topLeft.x + CORNER_WIDTH + i * HORIZONTAL_IMAGE_WIDTH,
-            topLeft.y + height - THICKNESS,
-            ImageKeys.BORDER_HORIZONTAL,
-          )
-          .setOrigin(0, 0)
-        if (i === wholeCopies) {
-          bottomHorizontalImage.setCrop(0, 0, excessWidth, 5)
-        }
-        this.topImages.push(bottomHorizontalImage)
-        this.topImages.push(topHorizontalImage)
+  private createHorizontalSections() {
+    const horizontalWidth = this.width - 2 * CORNER_WIDTH
+    const wholeCopies = Math.floor(horizontalWidth / HORIZONTAL_IMAGE_WIDTH)
+    const excessWidth = horizontalWidth % HORIZONTAL_IMAGE_WIDTH
+    for (let i = 0; i <= wholeCopies; i++) {
+      const x = this.topLeft.x + CORNER_WIDTH + i * HORIZONTAL_IMAGE_WIDTH
+      const yTop = this.topLeft.y
+      const yBottom = this.topLeft.y + this.height - THICKNESS
+      const topHorizontalImage = this.scene.add.image(x, yTop, ImageKeys.BORDER_HORIZONTAL).setOrigin(0, 0)
+      const bottomHorizontalImage = this.scene.add.image(x, yBottom, ImageKeys.BORDER_HORIZONTAL).setOrigin(0, 0)
+      if (i === wholeCopies) {
+        topHorizontalImage.setCrop(0, 0, excessWidth, 5)
+        bottomHorizontalImage.setCrop(0, 0, excessWidth, 5)
       }
+      this.images.push(bottomHorizontalImage, topHorizontalImage)
     }
   }
 
-  public sync = (): void => {
-    return
+  private createVerticalSections() {
+    const verticalHeight = this.height - 2 * CORNER_HEIGHT
+    const wholeCopies = Math.floor(verticalHeight / VERTICAL_IMAGE_HEIGHT)
+    const excessHeight = verticalHeight % VERTICAL_IMAGE_HEIGHT
+    for (let i = 0; i <= wholeCopies; i++) {
+      const y = this.topLeft.y + CORNER_WIDTH + i * VERTICAL_IMAGE_HEIGHT
+      const xLeft = this.topLeft.x
+      const xRight = this.topLeft.x + this.width - THICKNESS
+      const leftVerticalImage = this.scene.add.image(xLeft, y, ImageKeys.BORDER_VERTICAL).setOrigin(0, 0)
+      const rightVerticalImage = this.scene.add.image(xRight, y, ImageKeys.BORDER_VERTICAL).setOrigin(0, 0)
+      if (i === wholeCopies) {
+        leftVerticalImage.setCrop(0, 0, 5, excessHeight)
+        rightVerticalImage.setCrop(0, 0, 5, excessHeight)
+      }
+      this.images.push(leftVerticalImage, rightVerticalImage)
+    }
+  }
+
+  private createCorners() {
+    const { x, y } = this.topLeft
+    const x2 = x + this.width - CORNER_WIDTH
+    const y2 = y + this.height - CORNER_HEIGHT
+    const topLeftImage = this.scene.add.image(x, y, ImageKeys.BORDER_TOP_LEFT).setOrigin(0, 0)
+    const topRightImage = this.scene.add.image(x2, y, ImageKeys.BORDER_TOP_RIGHT).setOrigin(0, 0)
+    const bottomLeftImage = this.scene.add.image(x, y2, ImageKeys.BORDER_BOTTOM_LEFT).setOrigin(0, 0)
+    const bottomRightImage = this.scene.add.image(x2, y2, ImageKeys.BORDER_BOTTOM_RIGHT).setOrigin(0, 0)
+    this.images.push(topLeftImage, topRightImage, bottomLeftImage, bottomRightImage)
   }
 }
