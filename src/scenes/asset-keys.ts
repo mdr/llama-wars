@@ -12,6 +12,12 @@ export const ImageKeys = {
   SPIT: 'spit',
   MOUNTAIN: 'mountain',
   CROWN: 'crown',
+  BORDER_TOP_LEFT: 'border-top-left',
+  BORDER_BOTTOM_LEFT: 'border-bottom-left',
+  BORDER_TOP_RIGHT: 'border-top-right',
+  BORDER_BOTTOM_RIGHT: 'border-bottom-right',
+  BORDER_HORIZONTAL: 'border-horizontal',
+  BORDER_VERTICAL: 'border-vertical',
 }
 
 export const AudioKeys = {

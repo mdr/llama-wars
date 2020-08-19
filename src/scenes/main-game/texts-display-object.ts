@@ -6,13 +6,14 @@ import { hexWidth, mapHeight } from '../hex-geometry'
 import { ACTION_TEXT_COLOUR, HOVER_ACTION_TEXT_COLOUR, PLAYER_TINTS } from '../colours'
 import { DRAWING_OFFSET, HEX_SIZE } from './game-scene'
 import { UnreachableCaseError } from '../../util/unreachable-case-error'
-import { Point } from '../point'
+import { point, Point } from '../point'
 import { Unit, UnitId } from '../../world/unit'
 import { CombinedState } from '../combined-state-methods'
 import { LocalAction } from './local-action'
 import { HOST_PLAYER_ID, PlayerId } from '../../world/player'
 import { AudioKeys, ImageKeys } from '../asset-keys'
 import { AttackType } from '../../world/world-actions'
+import { UiBorderDisplayObject } from './ui-border-display-object'
 
 export type LocalActionDispatcher = (action: LocalAction) => void
 
@@ -58,8 +59,8 @@ export class TextsDisplayObject {
     this.localActionDispatcher = localActionDispatcher
     const map = this.worldState.map
     this.scene.add
-      .image(36, 32, 'llama-2')
-      .setScale(0.8)
+      .image(40, 28, ImageKeys.LLAMA_2)
+      .setScale(0.6)
       .setTint(PLAYER_TINTS[localGameState.playerId - 1])
     this.playerText = this.scene.add.text(70, 20, '')
     this.hourglass = this.scene.add.image(875, 30, 'hourglass').setVisible(false)
@@ -147,6 +148,8 @@ export class TextsDisplayObject {
       const playerObjects: PlayerObjects = { nameText, llama }
       this.playerObjects.set(player.id, playerObjects)
     }
+    // new UiBorderDisplayObject(scene, { topLeft: point(950, 20), width: 500, height: 600 })
+    new UiBorderDisplayObject(scene, { topLeft: point(10, 46), width: 890, height: 470 })
   }
 
   private handleActionTextClick = (): void => {

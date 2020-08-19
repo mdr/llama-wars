@@ -171,6 +171,14 @@ export class BootScene extends Phaser.Scene {
     this.load.image(ImageKeys.LLAMA_EAT_3, 'assets/sprites/llama-eat/llama_eat_14.png')
     this.load.image(ImageKeys.LLAMA_EAT_4, 'assets/sprites/llama-eat/llama_eat_15.png')
 
+    // https://opengameart.org/content/rpg-gui-construction-kit-v10
+    this.load.image(ImageKeys.BORDER_TOP_LEFT, 'assets/sprites/border/border-top-left.png')
+    this.load.image(ImageKeys.BORDER_TOP_RIGHT, 'assets/sprites/border/border-top-right.png')
+    this.load.image(ImageKeys.BORDER_BOTTOM_LEFT, 'assets/sprites/border/border-bottom-left.png')
+    this.load.image(ImageKeys.BORDER_BOTTOM_RIGHT, 'assets/sprites/border/border-bottom-right.png')
+    this.load.image(ImageKeys.BORDER_HORIZONTAL, 'assets/sprites/border/border-horizontal.png')
+    this.load.image(ImageKeys.BORDER_VERTICAL, 'assets/sprites/border/border-vertical.png')
+
     // https://opengameart.org/content/hourglass-icon
     this.load.image(ImageKeys.HOURGLASS, 'assets/sprites/Hourglass.png')
     // https://opengameart.org/content/grass-textures-tiles
