@@ -43,6 +43,7 @@ export class TextsDisplayObject {
   private readonly playerObjects: Map<PlayerId, PlayerObjects> = new Map()
   private readonly hostCrown: Phaser.GameObjects.Image
   private readonly endTurnButton: Phaser.GameObjects.Image
+  private readonly chatText: Phaser.GameObjects.Text
 
   private get combinedState(): CombinedState {
     return new CombinedState(this.worldState, this.localGameState)
@@ -144,7 +145,25 @@ export class TextsDisplayObject {
       .setVisible(false)
       .setDepth(100)
     this.worldLogText = this.scene.add.text(960, 50, '').setWordWrapWidth(470).setFontSize(14)
-
+    this.chatText = this.scene.add
+      .text(960, 600, 'Chat...', {
+        fill: '#FFFFFF',
+        fixedWidth: 478,
+        backgroundColor: '#333333',
+      })
+      .setFontSize(18)
+      .setPadding(0, 0, 0, 0)
+      .setInteractive()
+      .on('pointerdown', () => {
+        this.chatText.setText('')
+        const plugin = this.scene.plugins.get('rexTextEdit') as any
+        plugin.edit(this.chatText, {
+          onClose: () => {
+            this.localActionDispatcher({ type: 'chat', message: this.chatText.text })
+            this.chatText.setText('Chat...')
+          },
+        })
+      })
     this.hostCrown = this.scene.add.image(1235, 0, 'crown').setScale(0.6)
     for (const player of worldState.getSortedPlayers()) {
       const nameText = this.scene.add

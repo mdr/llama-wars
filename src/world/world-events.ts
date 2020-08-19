@@ -88,6 +88,13 @@ export interface GameOverWorldEvent {
   victor?: PlayerId
 }
 
+export interface ChatWorldEvent {
+  id: WorldEventId
+  type: 'chat'
+  playerId: PlayerId
+  message: string
+}
+
 export type WorldEvent =
   | InitialiseWorldEvent
   | PlayerAddedWorldEvent
@@ -99,3 +106,4 @@ export type WorldEvent =
   | PlayerDefeatedWorldEvent
   | NewTurnWorldEvent
   | GameOverWorldEvent
+  | ChatWorldEvent

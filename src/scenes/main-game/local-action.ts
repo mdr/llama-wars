@@ -58,6 +58,11 @@ export interface ChangeSidebarAction {
   sidebar: Sidebar
 }
 
+export interface ChatAction {
+  type: 'chat'
+  message: string
+}
+
 export type LocalAction =
   | GoLocalAction
   | GoHexAction
@@ -70,3 +75,4 @@ export type LocalAction =
   | CompleteAttackLocalAction
   | SelectHexLocalAction
   | ChangeSidebarAction
+  | ChatAction

@@ -52,6 +52,8 @@ export class LocalActionProcessor {
         return this.handleSelectHex(action.hex)
       case 'changeSidebar':
         return this.handleChangeSidebar(action.sidebar)
+      case 'chat':
+        return this.handleChat(action.message)
       default:
         throw new UnreachableCaseError(action)
     }
@@ -179,4 +181,6 @@ export class LocalActionProcessor {
   private handleChangeSidebar = (sidebar: Sidebar): Option<LocalActionResult> => ({
     newLocalGameState: this.localGameState.copy({ sidebar }),
   })
+
+  private handleChat = (message: string): LocalActionResult => ({ worldAction: { type: 'chat', message } })
 }

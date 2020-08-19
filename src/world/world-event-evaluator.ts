@@ -1,6 +1,7 @@
 import * as R from 'ramda'
 import { WorldState } from './world-state'
 import {
+  ChatWorldEvent,
   CombatWorldEvent,
   GameOverWorldEvent,
   GameStartedWorldEvent,
@@ -38,6 +39,8 @@ export const applyEvent = (state: WorldState, event: WorldEvent): WorldState => 
       return handleNewTurn(state)
     case 'gameOver':
       return handleGameOver(state, event)
+    case 'chat':
+      return handleChat(state, event)
     default:
       throw new UnreachableCaseError(event)
   }
@@ -195,3 +198,6 @@ const handleGameOver = (state: WorldState, event: GameOverWorldEvent): WorldStat
   }
   return newState
 }
+
+const handleChat = (state: WorldState, event: ChatWorldEvent): WorldState =>
+  state.addWorldLog(`[${state.getPlayer(event.playerId).name}] ${event.message}`)

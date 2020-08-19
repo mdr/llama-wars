@@ -46,6 +46,11 @@ export interface EndTurnWorldAction {
   turn: number
 }
 
+export interface ChatWorldAction {
+  type: 'chat'
+  message: string
+}
+
 export type WorldAction =
   | InitialiseWorldAction
   | AddPlayerWorldAction
@@ -54,3 +59,4 @@ export type WorldAction =
   | MoveUnitWorldAction
   | AttackWorldAction
   | EndTurnWorldAction
+  | ChatWorldAction

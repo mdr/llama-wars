@@ -3,12 +3,14 @@ import { WorldState } from '../world/world-state'
 import {
   AttackWorldAction,
   ChangePlayerNameWorldAction,
+  ChatWorldAction,
   EndTurnWorldAction,
   InitialiseWorldAction,
   MoveUnitWorldAction,
   WorldAction,
 } from '../world/world-actions'
 import {
+  ChatWorldEvent,
   GameStartedWorldEvent,
   InitialiseWorldEvent,
   NewTurnWorldEvent,
@@ -70,6 +72,8 @@ export class WorldActionHandler {
         return this.handleMoveUnit(action)
       case 'endTurn':
         return this.handleEndTurn(action)
+      case 'chat':
+        return this.handleChat(action)
     }
   }
 
@@ -162,4 +166,8 @@ export class WorldActionHandler {
     }
     return player
   }
+
+  private handleChat = (action: ChatWorldAction): [ChatWorldEvent] => [
+    { id: this.nextWorldEventId, type: 'chat', playerId: this.playerId, message: action.message },
+  ]
 }
