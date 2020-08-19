@@ -18,6 +18,8 @@ export const ImageKeys = {
   BORDER_BOTTOM_RIGHT: 'border-bottom-right',
   BORDER_HORIZONTAL: 'border-horizontal',
   BORDER_VERTICAL: 'border-vertical',
+  BLANK_BUTTON: 'blank-button',
+  BLANK_BUTTON_PRESSED: 'blank-button-pressed',
 }
 
 export const AudioKeys = {

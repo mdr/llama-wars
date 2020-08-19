@@ -42,6 +42,7 @@ export class TextsDisplayObject {
   private readonly selectPlayersText: Phaser.GameObjects.Text
   private readonly playerObjects: Map<PlayerId, PlayerObjects> = new Map()
   private readonly hostCrown: Phaser.GameObjects.Image
+  private readonly endTurnButton: Phaser.GameObjects.Image
 
   private get combinedState(): CombinedState {
     return new CombinedState(this.worldState, this.localGameState)
@@ -94,12 +95,24 @@ export class TextsDisplayObject {
       .on('pointerdown', this.handleActionText3Click)
       .on('pointerover', () => this.actionText3.setFill(HOVER_ACTION_TEXT_COLOUR))
       .on('pointerout', () => this.actionText3.setFill(ACTION_TEXT_COLOUR))
-    this.endTurnText = this.scene.add
-      .text(700, mapHeight(map) * HEX_SIZE + DRAWING_OFFSET.y, '', { fill: ACTION_TEXT_COLOUR })
+    this.endTurnButton = this.scene.add
+      .image(650 + 520, mapHeight(map) * HEX_SIZE + DRAWING_OFFSET.y + 44 + 72, 'blank-button')
       .setInteractive()
-      .on('pointerdown', () => this.localActionDispatcher({ type: 'endTurn' }))
-      .on('pointerover', () => this.endTurnText.setFill(HOVER_ACTION_TEXT_COLOUR))
-      .on('pointerout', () => this.endTurnText.setFill(ACTION_TEXT_COLOUR))
+      .on('pointerdown', () => this.endTurnButton.setTexture(ImageKeys.BLANK_BUTTON_PRESSED))
+      .on('pointerup', () => {
+        this.endTurnButton.setTexture(ImageKeys.BLANK_BUTTON)
+        this.localActionDispatcher({ type: 'endTurn' })
+        this.scene.sound.play(AudioKeys.CLICK)
+      })
+      .on('pointerout', () => this.endTurnButton.setTexture(ImageKeys.BLANK_BUTTON))
+      .setOrigin(0, 0)
+    this.endTurnText = this.scene.add
+      .text(790 + 520, mapHeight(map) * HEX_SIZE + DRAWING_OFFSET.y + 68 + 72, '', {
+        fill: '#ffffff',
+      })
+      .setOrigin(0.5)
+      .setShadow(2, 2, '#000000')
+
     this.selectWorldLogText = this.scene.add
       .text(960, 26, 'Log', { fill: ACTION_TEXT_COLOUR })
       .setInteractive()
@@ -214,11 +227,13 @@ export class TextsDisplayObject {
       default:
         throw new UnreachableCaseError(mode)
     }
-    if (player.endedTurn) {
-      this.endTurnText.setText('Waiting for next turn...')
+    const canAct = worldState.canPlayerAct(player.id)
+    if (canAct) {
+      this.endTurnText.setText('End Turn')
     } else {
-      this.endTurnText.setText('End Turn (Shift + Enter)')
+      this.endTurnText.setText('Waiting for next turn...')
     }
+    this.endTurnButton.setVisible(canAct)
     this.defeatText.setVisible(player.defeated)
     this.victoryText.setVisible(worldState.gameOverInfo?.victor === player.id)
     this.worldLogText.setText(R.takeLast(20, this.worldState.worldLog).join('\n'))

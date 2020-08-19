@@ -178,6 +178,8 @@ export class BootScene extends Phaser.Scene {
     this.load.image(ImageKeys.BORDER_BOTTOM_RIGHT, 'assets/sprites/border/border-bottom-right.png')
     this.load.image(ImageKeys.BORDER_HORIZONTAL, 'assets/sprites/border/border-horizontal.png')
     this.load.image(ImageKeys.BORDER_VERTICAL, 'assets/sprites/border/border-vertical.png')
+    this.load.image(ImageKeys.BLANK_BUTTON, 'assets/sprites/blank-button.png')
+    this.load.image(ImageKeys.BLANK_BUTTON_PRESSED, 'assets/sprites/blank-button-pressed.png')
 
     // https://opengameart.org/content/hourglass-icon
     this.load.image(ImageKeys.HOURGLASS, 'assets/sprites/Hourglass.png')
