@@ -52,7 +52,7 @@ export class CombinedState {
       this.unitCouldPotentiallyAttack(unit) &&
       targetUnit !== undefined &&
       targetUnit.playerId !== this.localGameState.playerId &&
-      canAttackOccur(attackType, unit.location, location)
+      canAttackOccur(attackType, this.worldState.map, unit.location, location)
     )
       return targetUnit
   }

@@ -132,7 +132,7 @@ const handleCombat = (state: WorldState, event: CombatWorldEvent): WorldState =>
     )
 
   if (attackerUnit.playerId === defenderUnit.playerId) throw new Error(`Invalid combat with self`)
-  if (!canAttackOccur(event.attackType, attacker.location, defender.location))
+  if (!canAttackOccur(event.attackType, state.map, attacker.location, defender.location))
     throw new Error(
       `Invalid combat of type ${event.attackType} between hexes ${attacker.location} to ${defender.location}`,
     )

@@ -6,13 +6,15 @@ import { Unit } from '../world/unit'
 import { PlayerId } from '../world/player'
 import { randomIntInclusive } from '../util/random-util'
 import { Hex } from '../world/hex'
+import { WorldMap } from '../world/world-map'
 
-export const canAttackOccur = (attackType: AttackType, from: Hex, to: Hex): boolean => {
+export const canAttackOccur = (attackType: AttackType, map: WorldMap, from: Hex, to: Hex): boolean => {
   switch (attackType) {
     case 'melee':
       return from.isAdjacentTo(to)
     case 'spit':
-      return from.distanceTo(to) <= 2
+      const blockedByMountains = R.all(map.isMountain, R.intersection(from.neighbours(), to.neighbours()))
+      return !blockedByMountains && from.distanceTo(to) <= 2
   }
 }
 
@@ -79,7 +81,7 @@ export class AttackWorldActionHandler {
     if (defender.playerId === this.playerId) throw `Cannot attack own unit`
     if (!defender.location.equals(action.defender.location)) throw `Defender not in expected location`
 
-    if (!canAttackOccur(action.attackType, attacker.location, defender.location))
+    if (!canAttackOccur(action.attackType, this.worldState.map, attacker.location, defender.location))
       throw `Invalid unit attack of type ${action.attackType} between hexes ${attacker.location} to ${defender.location} too far apart`
     return { attacker, defender }
   }
