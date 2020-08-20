@@ -1,9 +1,9 @@
 import { HOST_PLAYER_ID, Player, PlayerId } from '../../world/player'
-import { MenuButton } from '../../ui/menu-button'
 import * as R from 'ramda'
 import { WorldState } from '../../world/world-state'
 import { AudioKeys, ImageKeys } from '../asset-keys'
 import { PLAYER_TINTS } from '../colours'
+import { PrimaryButton } from '../../ui/primary-button'
 
 interface PlayerObjects {
   nameText: Phaser.GameObjects.Text
@@ -18,7 +18,7 @@ export class LobbyDisplayObjects {
 
   private readonly playerObjects: Map<PlayerId, PlayerObjects> = new Map()
   private readonly hostCrown: Phaser.GameObjects.Image
-  private readonly startGameButton?: MenuButton
+  private readonly startGameButton?: PrimaryButton
   private readonly waitingForHostText?: Phaser.GameObjects.Text
 
   constructor(
@@ -31,9 +31,9 @@ export class LobbyDisplayObjects {
     this.playerId = playerId
     this.onStartGame = onStartGame
     this.onChangePlayerName = onChangePlayerName
-    this.scene.add.text(100, 50, 'Llama Wars', { fill: '#FFFFFF' }).setFontSize(24)
+    this.scene.add.text(155, 50, 'Llama Wars', { fill: '#FFFFFF' }).setFontSize(26)
     if (playerId === HOST_PLAYER_ID) {
-      this.startGameButton = new MenuButton(this.scene, 100, 0, 'Start Game', this.handleStartGame)
+      this.startGameButton = new PrimaryButton(this.scene, 100, 0, 'Start Game', this.handleStartGame)
     } else {
       this.waitingForHostText = this.scene.add.text(100, 0, 'Waiting for host to start the game...')
     }
@@ -48,7 +48,7 @@ export class LobbyDisplayObjects {
       frameRate: 8,
       repeat: -1,
     })
-    this.hostCrown = this.scene.add.image(330, 0, 'crown').setScale(0.6)
+    this.hostCrown = this.scene.add.image(370, 0, 'crown').setScale(0.6)
   }
 
   private handleStartGame = () => {
@@ -106,7 +106,7 @@ export class LobbyDisplayObjects {
 
   private createObjectsForPlayer(player: Player) {
     const nameText = this.scene.add
-      .text(100, 0, player.name, {
+      .text(140, 0, player.name, {
         fill: '#FFFFFF',
         fixedWidth: 200,
         backgroundColor: player.id === this.playerId ? '#333333' : '#000000',
@@ -116,7 +116,7 @@ export class LobbyDisplayObjects {
       .setInteractive()
       .on('pointerdown', () => this.handlePlayerTextClick(player, nameText))
     const llama = this.scene.add
-      .sprite(70, 0, ImageKeys.LLAMA_EAT_1)
+      .sprite(110, 0, ImageKeys.LLAMA_EAT_1)
       .setScale(0.6)
       .setTint(PLAYER_TINTS[player.id - 1])
       .play('llama-walk')

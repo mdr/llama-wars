@@ -25,8 +25,15 @@ export class PrimaryButton {
       .setShadow(2, 2, '#000000')
   }
 
-  public setVisible = (visible: boolean): void => {
+  public setVisible = (visible: boolean): this => {
     this.endTurnButton.setVisible(visible)
     this.endTurnText.setVisible(visible)
+    return this
+  }
+
+  public setY = (y: number): this => {
+    this.endTurnButton.setY(y)
+    this.endTurnText.setY(y + this.endTurnButton.height / 2)
+    return this
   }
 }
