@@ -14,6 +14,7 @@ import { HOST_PLAYER_ID, PlayerId } from '../../world/player'
 import { AudioKeys, ImageKeys } from '../asset-keys'
 import { AttackType } from '../../world/world-actions'
 import { UiBorderDisplayObject } from './ui-border-display-object'
+import { PrimaryButton } from '../../ui/primary-button'
 
 export type LocalActionDispatcher = (action: LocalAction) => void
 
@@ -42,7 +43,7 @@ export class TextsDisplayObject {
   private readonly selectPlayersText: Phaser.GameObjects.Text
   private readonly playerObjects: Map<PlayerId, PlayerObjects> = new Map()
   private readonly hostCrown: Phaser.GameObjects.Image
-  private readonly endTurnButton: Phaser.GameObjects.Image
+  private readonly endTurnButton: PrimaryButton
   private readonly chatText: Phaser.GameObjects.Text
 
   private get combinedState(): CombinedState {
@@ -96,23 +97,19 @@ export class TextsDisplayObject {
       .on('pointerdown', this.handleActionText3Click)
       .on('pointerover', () => this.actionText3.setFill(HOVER_ACTION_TEXT_COLOUR))
       .on('pointerout', () => this.actionText3.setFill(ACTION_TEXT_COLOUR))
-    this.endTurnButton = this.scene.add
-      .image(650 + 520, mapHeight(map) * HEX_SIZE + DRAWING_OFFSET.y + 44 + 72, 'blank-button')
-      .setInteractive()
-      .on('pointerdown', () => this.endTurnButton.setTexture(ImageKeys.BLANK_BUTTON_PRESSED))
-      .on('pointerup', () => {
-        this.endTurnButton.setTexture(ImageKeys.BLANK_BUTTON)
-        this.localActionDispatcher({ type: 'endTurn' })
-        this.scene.sound.play(AudioKeys.CLICK)
-      })
-      .on('pointerout', () => this.endTurnButton.setTexture(ImageKeys.BLANK_BUTTON))
-      .setOrigin(0, 0)
     this.endTurnText = this.scene.add
       .text(790 + 520, mapHeight(map) * HEX_SIZE + DRAWING_OFFSET.y + 68 + 72, '', {
         fill: '#ffffff',
       })
       .setOrigin(0.5)
       .setShadow(2, 2, '#000000')
+    this.endTurnButton = new PrimaryButton(
+      this.scene,
+      650 + 520,
+      mapHeight(map) * HEX_SIZE + DRAWING_OFFSET.y + 44 + 72,
+      'End Turn',
+      () => this.localActionDispatcher({ type: 'endTurn' }),
+    )
 
     this.selectWorldLogText = this.scene.add
       .text(960, 26, 'Log', { fill: ACTION_TEXT_COLOUR })

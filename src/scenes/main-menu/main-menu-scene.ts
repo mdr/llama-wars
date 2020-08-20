@@ -8,6 +8,7 @@ import { LOBBY_SCENE_KEY, LobbySceneData } from '../lobby/lobby-scene'
 import { AudioKeys } from '../asset-keys'
 import { HOST_PLAYER_ID } from '../../world/player'
 import { setUrlInfo } from '../boot/url-info'
+import { PrimaryButton } from '../../ui/primary-button'
 
 export const MAIN_MENU_SCENE_KEY = 'MainMenu'
 
@@ -26,7 +27,7 @@ export class MainMenuScene extends Phaser.Scene {
     this.add.text(100, 50, 'Llama Wars', { fill: '#FFFFFF' }).setFontSize(24)
     this.sound.pauseOnBlur = false
     this.sound.add(AudioKeys.CLICK)
-    new MenuButton(this, 100, 150, 'Host Game', () => {
+    new PrimaryButton(this, 100, 150, 'Host Game', () => {
       this.sound.play(AudioKeys.CLICK)
       this.handleHostGame()
     })
