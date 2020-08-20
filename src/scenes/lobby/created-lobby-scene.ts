@@ -34,7 +34,7 @@ export class CreatedLobbyScene {
   }
 
   private makeLobbyDisplayObjects = (scene: Phaser.Scene, playerId: PlayerId) =>
-    new LobbyDisplayObjects(scene, playerId, this.handleStartGame, this.handleChangePlayerName)
+    new LobbyDisplayObjects(scene, playerId, this.handleStartGame, this.handleChangePlayerName, this.handleKickPlayer)
 
   private actAsClient = (client: Client): void => {
     this.listener = (event: WorldEvent) => this.handleWorldEvent(event, client)
@@ -69,9 +69,8 @@ export class CreatedLobbyScene {
 
   private handleChangePlayerName = (name: string): void => this.dispatchAction({ type: 'changePlayerName', name })
 
-  private dispatchAction = (action: WorldAction): void => {
+  private dispatchAction = (action: WorldAction): void =>
     fireAndForget(() => this.serverOrClient.sendAction(this.playerId, action))
-  }
 
   public sync = (): void => this.lobbyDisplayObjects.sync(this.serverOrClient.worldState)
 
@@ -81,4 +80,8 @@ export class CreatedLobbyScene {
   }
 
   private handleStartGame = () => this.dispatchAction({ type: 'startGame' })
+
+  private handleKickPlayer = (playerId: PlayerId) => {
+    this.dispatchAction({ type: 'kickPlayer', playerId })
+  }
 }

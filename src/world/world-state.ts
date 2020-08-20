@@ -129,7 +129,7 @@ export class WorldState {
   public addPlayer = (player: Player): WorldState => this.copy({ players: R.append(player, this.players) })
 
   public removePlayer = (playerId: number): WorldState =>
-    this.copy({ players: this.players.filter((player) => player.id === playerId) })
+    this.copy({ players: this.players.filter((player) => player.id !== playerId) })
 
   public toJson = (): any => ({
     turn: this.turn,

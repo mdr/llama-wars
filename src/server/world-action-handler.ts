@@ -48,7 +48,7 @@ export class WorldActionHandler {
       return []
     } else {
       const newWorldState = this.worldState.applyEvents(events)
-      if (newWorldState.canAnyPlayerAct() || newWorldState.units.length === 0) {
+      if (newWorldState.turn === 0 || newWorldState.canAnyPlayerAct() || newWorldState.units.length === 0) {
         return events
       } else {
         const nextWorldEventId = lastEvent.id + 1
@@ -186,6 +186,9 @@ export class WorldActionHandler {
     }
     if (playerId === HOST_PLAYER_ID) {
       throw new Error(`Cannot kick host`)
+    }
+    if (this.playerId !== HOST_PLAYER_ID) {
+      throw new Error(`Only the host can kick players`)
     }
     return [{ id: this.nextWorldEventId, type: 'playerKicked', playerId }]
   }

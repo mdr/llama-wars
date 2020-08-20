@@ -203,7 +203,7 @@ const handleGameOver = (state: WorldState, event: GameOverWorldEvent): WorldStat
 }
 
 const handlePlayerKicked = (state: WorldState, event: PlayerKickedWorldEvent): WorldState => {
-  const playerId = event.id
+  const { playerId } = event
   const player = state.findPlayer(playerId)
   if (!player) {
     throw new Error(`No player with ID ${playerId}`)

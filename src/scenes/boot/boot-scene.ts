@@ -193,6 +193,10 @@ export class BootScene extends Phaser.Scene {
     // https://opengameart.org/content/game-icons-0
     this.load.image(ImageKeys.CROWN, 'assets/sprites/crown.png')
 
+    // https://opengameart.org/content/250-hud-and-interface-icons-unknown-horizons
+    this.load.image(ImageKeys.DELETE_BUTTON_1, 'assets/sprites/delete-button-1.png')
+    this.load.image(ImageKeys.DELETE_BUTTON_2, 'assets/sprites/delete-button-2.png')
+
     // https://opengameart.org/content/37-hitspunches
     this.load.audio(AudioKeys.ATTACK_1, 'assets/audio/hit14.mp3.mp3')
     this.load.audio(AudioKeys.ATTACK_2, 'assets/audio/hit17.mp3.mp3')

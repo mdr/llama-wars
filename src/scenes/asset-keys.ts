@@ -20,6 +20,8 @@ export const ImageKeys = {
   BORDER_VERTICAL: 'border-vertical',
   BLANK_BUTTON: 'blank-button',
   BLANK_BUTTON_PRESSED: 'blank-button-pressed',
+  DELETE_BUTTON_1: 'delete-button-1',
+  DELETE_BUTTON_2: 'delete-button-2',
 }
 
 export const AudioKeys = {

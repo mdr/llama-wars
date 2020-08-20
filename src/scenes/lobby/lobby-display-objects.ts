@@ -8,6 +8,7 @@ import { PrimaryButton } from '../../ui/primary-button'
 interface PlayerObjects {
   nameText: Phaser.GameObjects.Text
   llama: Phaser.GameObjects.Sprite
+  kickButton?: Phaser.GameObjects.Image
 }
 
 export class LobbyDisplayObjects {
@@ -15,6 +16,7 @@ export class LobbyDisplayObjects {
   private readonly playerId: PlayerId
   private readonly onStartGame: VoidFunction
   private readonly onChangePlayerName: (name: string) => void
+  private readonly onKickPlayer: (playerId: PlayerId) => void
 
   private readonly playerObjects: Map<PlayerId, PlayerObjects> = new Map()
   private readonly hostCrown: Phaser.GameObjects.Image
@@ -26,11 +28,13 @@ export class LobbyDisplayObjects {
     playerId: PlayerId,
     onStartGame: VoidFunction,
     onChangePlayerName: (name: string) => void,
+    onKickPlayer: (playerId: PlayerId) => void,
   ) {
     this.scene = scene
     this.playerId = playerId
     this.onStartGame = onStartGame
     this.onChangePlayerName = onChangePlayerName
+    this.onKickPlayer = onKickPlayer
     this.scene.add.text(155, 50, 'Llama Wars', { fill: '#FFFFFF' }).setFontSize(26)
     if (playerId === HOST_PLAYER_ID) {
       this.startGameButton = new PrimaryButton(this.scene, 100, 0, 'Start Game', this.handleStartGame)
@@ -64,9 +68,10 @@ export class LobbyDisplayObjects {
       if (player.id === HOST_PLAYER_ID) {
         this.hostCrown.setY(y + 5)
       }
-      const { nameText, llama } = this.getPlayerObjects(player.id)
+      const { nameText, llama, kickButton } = this.getPlayerObjects(player.id)
       nameText.setText(player.name).setY(y)
       llama.setY(y + 10)
+      kickButton?.setY(y + 15)
       y += 50
     }
     if (this.startGameButton) {
@@ -91,9 +96,10 @@ export class LobbyDisplayObjects {
 
     const surplusPlayerIds = R.difference(currentPlayerIds, requiredPlayerIds)
     for (const playerId of surplusPlayerIds) {
-      const { nameText, llama } = this.getPlayerObjects(playerId)
+      const { nameText, llama, kickButton } = this.getPlayerObjects(playerId)
       nameText.destroy()
       llama.destroy()
+      kickButton?.destroy()
       this.playerObjects.delete(playerId)
     }
 
@@ -104,7 +110,7 @@ export class LobbyDisplayObjects {
     }
   }
 
-  private createObjectsForPlayer(player: Player) {
+  private createObjectsForPlayer = (player: Player) => {
     const nameText = this.scene.add
       .text(140, 0, player.name, {
         fill: '#FFFFFF',
@@ -120,7 +126,20 @@ export class LobbyDisplayObjects {
       .setScale(0.6)
       .setTint(PLAYER_TINTS[player.id - 1])
       .play('llama-walk')
-    const playerObjects: PlayerObjects = { nameText, llama }
+
+    const kickButton =
+      player.id === HOST_PLAYER_ID || this.playerId !== HOST_PLAYER_ID
+        ? undefined
+        : this.scene.add
+            .image(370, 0, ImageKeys.DELETE_BUTTON_1)
+            .setInteractive()
+            .on('pointerout', () => kickButton?.setTexture(ImageKeys.DELETE_BUTTON_1))
+            .on('pointerover', () => kickButton?.setTexture(ImageKeys.DELETE_BUTTON_2))
+            .on('pointerup', () => {
+              this.scene.sound.play(AudioKeys.CLICK)
+              this.onKickPlayer(player.id)
+            })
+    const playerObjects: PlayerObjects = { nameText, llama, kickButton }
     this.playerObjects.set(player.id, playerObjects)
   }
 
