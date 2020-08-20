@@ -18,6 +18,7 @@ import { Option } from '../util/types'
 import { UnreachableCaseError } from '../util/unreachable-case-error'
 import { withTimeout } from '../util/async-util'
 import { INITIAL_WORLD_STATE } from '../world/initial-world-state'
+import { findName } from '../scenes/local-storage/local'
 
 const TIMEOUT = 5000
 
@@ -87,7 +88,8 @@ export class Client {
   }
 
   public join = async (): Promise<Option<{ playerId: PlayerId; worldState: WorldState }>> => {
-    const request: JoinRequest = { type: 'join' }
+    const name = findName()
+    const request: JoinRequest = { type: 'join', name }
     const response: JoinResponse = await this.sendRequest(request)
     switch (response.type) {
       case 'joined':

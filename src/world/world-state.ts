@@ -116,6 +116,9 @@ export class WorldState {
     return this.replacePlayer(playerId, modify(player))
   }
 
+  public setPlayerName = (playerId: PlayerId, name: string) =>
+    this.updatePlayer(playerId, (player) => player.copy({ name }))
+
   public replacePlayer = (playerId: PlayerId, player: Player): WorldState => {
     assert(playerId === player.id)
     return this.copy({

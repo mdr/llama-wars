@@ -2,6 +2,7 @@ import { Hex } from './hex'
 import { UnitId } from './unit'
 import { WorldState } from './world-state'
 import { PlayerId } from './player'
+import { Option } from '../util/types'
 
 export interface InitialiseWorldAction {
   type: 'initialise'
@@ -10,6 +11,7 @@ export interface InitialiseWorldAction {
 
 export interface AddPlayerWorldAction {
   type: 'addPlayer'
+  name: Option<string>
 }
 
 export interface ChangePlayerNameWorldAction {

@@ -1,7 +1,9 @@
 import { PlayerId } from '../world/player'
+import { Option } from '../util/types'
 
 export interface JoinRequest {
   type: 'join'
+  name: Option<string>
 }
 
 export interface JoinedResponse {

@@ -61,14 +61,14 @@ const handlePlayerAdded = (state: WorldState, event: PlayerAddedWorldEvent): Wor
     throw new Error(`Player ID already in use`)
   }
   const { playerId } = event
-  const player = new Player({ id: playerId, name: `Player ${playerId}` })
+  const player = new Player({ id: playerId, name: event.name })
   return state.addPlayer(player)
 }
 
 const handlePlayerChangedName = (state: WorldState, event: PlayerChangedNameWorldEvent): WorldState => {
   const { playerId, name } = event
   getPlayer(state, playerId)
-  return state.updatePlayer(playerId, (player) => player.copy({ name }))
+  return state.setPlayerName(playerId, name)
 }
 
 const getPlayer = (state: WorldState, playerId: PlayerId): Player => {

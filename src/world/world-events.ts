@@ -16,6 +16,7 @@ export interface PlayerAddedWorldEvent {
   id: WorldEventId
   type: 'playerAdded'
   playerId: PlayerId
+  name: string
 }
 
 export interface PlayerChangedNameWorldEvent {

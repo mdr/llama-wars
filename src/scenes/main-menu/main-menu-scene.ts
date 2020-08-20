@@ -8,6 +8,7 @@ import { AudioKeys } from '../asset-keys'
 import { HOST_PLAYER_ID } from '../../world/player'
 import { setUrlInfo } from '../boot/url-info'
 import { PrimaryButton } from '../../ui/primary-button'
+import { findName } from '../local-storage/local'
 
 export const MAIN_MENU_SCENE_KEY = 'MainMenu'
 
@@ -33,8 +34,13 @@ export class MainMenuScene extends Phaser.Scene {
     const worldEventDb = await openWorldEventDb()
     const gameId: GameId = uuid()
     const playerId = HOST_PLAYER_ID
-    const server = new Server(worldEventDb, gameId, INITIAL_WORLD_STATE, 0)
-    server.handleAction(playerId, { type: 'initialise', state: INITIAL_WORLD_STATE })
+    let worldState = INITIAL_WORLD_STATE
+    const name = findName()
+    if (name) {
+      worldState = worldState.setPlayerName(playerId, name)
+    }
+    const server = new Server(worldEventDb, gameId, worldState, 0)
+    server.handleAction(playerId, { type: 'initialise', state: worldState })
     setUrlInfo({ gameId })
     const sceneData: LobbySceneData = { serverOrClient: server }
     this.scene.start(LOBBY_SCENE_KEY, sceneData)

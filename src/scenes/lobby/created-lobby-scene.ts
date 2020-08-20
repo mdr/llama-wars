@@ -8,6 +8,7 @@ import { LobbyDisplayObjects } from './lobby-display-objects'
 import { WorldAction } from '../../world/world-actions'
 import { WorldEventListener } from '../../server/world-state-owner'
 import { fireAndForget } from '../../util/async-util'
+import { storeName } from '../local-storage/local'
 
 export class CreatedLobbyScene {
   private readonly scene: Phaser.Scene
@@ -67,7 +68,10 @@ export class CreatedLobbyScene {
     this.scene.scene.start(GAME_SCENE_KEY, sceneData)
   }
 
-  private handleChangePlayerName = (name: string): void => this.dispatchAction({ type: 'changePlayerName', name })
+  private handleChangePlayerName = (name: string): void => {
+    storeName(name)
+    this.dispatchAction({ type: 'changePlayerName', name })
+  }
 
   private dispatchAction = (action: WorldAction): void =>
     fireAndForget(() => this.serverOrClient.sendAction(this.playerId, action))

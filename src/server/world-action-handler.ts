@@ -1,6 +1,7 @@
 import * as R from 'ramda'
 import { WorldState } from '../world/world-state'
 import {
+  AddPlayerWorldAction,
   AttackWorldAction,
   ChangePlayerNameWorldAction,
   ChatWorldAction,
@@ -63,7 +64,7 @@ export class WorldActionHandler {
       case 'initialise':
         return this.handleInitialise(action)
       case 'addPlayer':
-        return this.handleAddPlayer()
+        return this.handleAddPlayer(action)
       case 'changePlayerName':
         return this.handleChangePlayerName(action)
       case 'startGame':
@@ -88,10 +89,11 @@ export class WorldActionHandler {
     return [{ id: this.nextWorldEventId, type: 'initialise', state: action.state }]
   }
 
-  private handleAddPlayer = (): [PlayerAddedWorldEvent] => {
+  private handleAddPlayer = (action: AddPlayerWorldAction): [PlayerAddedWorldEvent] => {
     const existingPlayerIds = this.worldState.getPlayerIds()
     const playerId = R.apply(Math.max, existingPlayerIds) + 1
-    return [{ id: this.nextWorldEventId, type: 'playerAdded', playerId }]
+    const name = action.name ?? `Player ${playerId}`
+    return [{ id: this.nextWorldEventId, type: 'playerAdded', playerId, name }]
   }
 
   private handleChangePlayerName = (action: ChangePlayerNameWorldAction): [PlayerChangedNameWorldEvent] => {

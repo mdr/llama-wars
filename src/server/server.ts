@@ -11,6 +11,7 @@ import { GameId } from '../scenes/main-game/game-scene'
 import { INITIAL_WORLD_STATE } from '../world/initial-world-state'
 import { WorldState } from '../world/world-state'
 import { PeerServer } from './peer-server'
+import { Option } from '../util/types'
 
 export class Server {
   private readonly worldStateOwner: WorldStateOwner
@@ -67,11 +68,11 @@ export class Server {
     )
   }
 
-  private handleClientJoin = (): JoinResponse => {
+  private handleClientJoin = (name: Option<string>): JoinResponse => {
     if (this.worldState.gameHasStarted) {
       return { type: 'unableToJoin' }
     } else {
-      const addPlayerAction: AddPlayerWorldAction = { type: 'addPlayer' }
+      const addPlayerAction: AddPlayerWorldAction = { type: 'addPlayer', name }
       const playerAddedEvent = <PlayerAddedWorldEvent>this.handleAction(this.playerId, addPlayerAction)[0]
       return {
         type: 'joined',
@@ -94,7 +95,7 @@ export class Server {
     console.log(message)
     switch (message.type) {
       case 'join':
-        return this.handleClientJoin()
+        return this.handleClientJoin(message.name)
       case 'rejoin':
         return this.handleClientRejoin(message)
       case 'worldAction':
