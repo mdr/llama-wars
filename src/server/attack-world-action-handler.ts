@@ -70,19 +70,36 @@ export class AttackWorldActionHandler {
   private validateAttack = (action: AttackWorldAction): { attacker: Unit; defender: Unit } => {
     const attackerId = action.attacker.unitId
     const attacker = this.worldState.findUnitById(attackerId)
-    if (!attacker) throw `No unit found with ID ${attackerId}`
-    if (attacker.playerId !== this.playerId) throw `Cannot control another player's unit: ${attacker.id}`
-    if (attacker.actionPoints.current < 1) throw `Not enough action points to attack`
-    if (!attacker.location.equals(action.attacker.location)) throw `Attacker not in expected location`
+    if (!attacker) {
+      throw new Error(`No unit found with ID ${attackerId}`)
+    }
+    if (attacker.playerId !== this.playerId) {
+      throw new Error(`Cannot control another player's unit: ${attacker.id}`)
+    }
+    if (attacker.actionPoints.current < 1) {
+      throw new Error(`Not enough action points to attack`)
+    }
+    if (!attacker.location.equals(action.attacker.location)) {
+      throw new Error(`Attacker not in expected location`)
+    }
 
     const defenderId = action.defender.unitId
     const defender = this.worldState.findUnitById(defenderId)
-    if (!defender) throw `No unit found with ID ${defenderId}`
-    if (defender.playerId === this.playerId) throw `Cannot attack own unit`
-    if (!defender.location.equals(action.defender.location)) throw `Defender not in expected location`
+    if (!defender) {
+      throw new Error(`No unit found with ID ${defenderId}`)
+    }
+    if (defender.playerId === this.playerId) {
+      throw new Error(`Cannot attack own unit`)
+    }
+    if (!defender.location.equals(action.defender.location)) {
+      throw new Error(`Defender not in expected location`)
+    }
 
-    if (!canAttackOccur(action.attackType, this.worldState.map, attacker.location, defender.location))
-      throw `Invalid unit attack of type ${action.attackType} between hexes ${attacker.location} to ${defender.location} too far apart`
+    if (!canAttackOccur(action.attackType, this.worldState.map, attacker.location, defender.location)) {
+      throw new Error(
+        `Invalid unit attack of type ${action.attackType} between hexes ${attacker.location} to ${defender.location} too far apart`,
+      )
+    }
     return { attacker, defender }
   }
 

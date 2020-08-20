@@ -60,10 +60,6 @@ export class WorldState {
     worldLog?: string[]
   } = {}): WorldState => new WorldState({ turn, map, units, players, gameOverInfo: toOption(gameOverInfo), worldLog })
 
-  public get isGameOver(): boolean {
-    return this.gameOverInfo !== undefined
-  }
-
   public get gameHasStarted(): boolean {
     return this.turn > 0
   }
@@ -131,6 +127,9 @@ export class WorldState {
   }
 
   public addPlayer = (player: Player): WorldState => this.copy({ players: R.append(player, this.players) })
+
+  public removePlayer = (playerId: number): WorldState =>
+    this.copy({ players: this.players.filter((player) => player.id === playerId) })
 
   public toJson = (): any => ({
     turn: this.turn,

@@ -6,6 +6,7 @@ import {
   ChatWorldAction,
   EndTurnWorldAction,
   InitialiseWorldAction,
+  KickPlayerWorldAction,
   MoveUnitWorldAction,
   WorldAction,
 } from '../world/world-actions'
@@ -17,6 +18,7 @@ import {
   PlayerAddedWorldEvent,
   PlayerChangedNameWorldEvent,
   PlayerEndedTurnWorldEvent,
+  PlayerKickedWorldEvent,
   UnitMovedWorldEvent,
   WorldEvent,
 } from '../world/world-events'
@@ -74,12 +76,14 @@ export class WorldActionHandler {
         return this.handleEndTurn(action)
       case 'chat':
         return this.handleChat(action)
+      case 'kickPlayer':
+        return this.handleKickPlayer(action)
     }
   }
 
   private handleInitialise = (action: InitialiseWorldAction): [InitialiseWorldEvent] => {
     if (this.nextWorldEventId > 0) {
-      throw `Can only initialise as the first event`
+      throw new Error(`Can only initialise as the first event`)
     }
     return [{ id: this.nextWorldEventId, type: 'initialise', state: action.state }]
   }
@@ -97,10 +101,10 @@ export class WorldActionHandler {
 
   private handleStartGame = (): [GameStartedWorldEvent] => {
     if (this.worldState.gameHasStarted) {
-      throw `Cannot start an already-started game`
+      throw new Error(`Cannot start an already-started game`)
     }
     if (this.playerId !== HOST_PLAYER_ID) {
-      throw `Cannot start the game unless the host`
+      throw new Error(`Cannot start the game unless the host`)
     }
     const worldGenerator = new WorldGenerator(this.worldState)
     const units = worldGenerator.generateUnits()
@@ -115,20 +119,23 @@ export class WorldActionHandler {
     const { unitId, to } = action
     const unit = this.worldState.findUnitById(unitId)
     if (!unit) {
-      throw `No unit found with ID ${unitId}`
+      throw new Error(`No unit found with ID ${unitId}`)
     }
     const from = unit.location
     if (!from.isAdjacentTo(to)) {
-      throw `Invalid unit movement between non-adjacent hexes ${from} to ${to}`
+      throw new Error(`Invalid unit movement between non-adjacent hexes ${from} to ${to}`)
     }
     if (!this.worldState.map.isInBounds(to)) {
-      throw `Invalid unit movement to out-of-bounds hex ${to}`
+      throw new Error(`Invalid unit movement to out-of-bounds hex ${to}`)
     }
     if (this.worldState.findUnitInLocation(to)) {
-      throw `Invalid unit movement to already-occupied hex`
+      throw new Error(`Invalid unit movement to already-occupied hex`)
     }
     if (unit.actionPoints.current < 1) {
-      throw `Not enough action points to move`
+      throw new Error(`Not enough action points to move`)
+    }
+    if (unit.playerId !== this.playerId) {
+      throw new Error(`Cannot move another player's unit`)
     }
     return [
       {
@@ -145,11 +152,11 @@ export class WorldActionHandler {
 
   private handleEndTurn = (action: EndTurnWorldAction): WorldEvent[] => {
     if (action.turn !== this.worldState.turn) {
-      throw `Cannot end a turn that's not the current turn`
+      throw new Error(`Cannot end a turn that's not the current turn`)
     }
     const player = this.getPlayer()
     if (player.endedTurn) {
-      throw `Player has already ended their turn`
+      throw new Error(`Player has already ended their turn`)
     }
     const playerEndedTurnAction: PlayerEndedTurnWorldEvent = {
       id: this.nextWorldEventId,
@@ -162,7 +169,7 @@ export class WorldActionHandler {
   private getPlayer = (): Player => {
     const player = this.worldState.findPlayer(this.playerId)
     if (!player) {
-      throw `No player with ID ${this.playerId}`
+      throw new Error(`No player with ID ${this.playerId}`)
     }
     return player
   }
@@ -170,4 +177,16 @@ export class WorldActionHandler {
   private handleChat = (action: ChatWorldAction): [ChatWorldEvent] => [
     { id: this.nextWorldEventId, type: 'chat', playerId: this.playerId, message: action.message },
   ]
+
+  private handleKickPlayer = (action: KickPlayerWorldAction): [PlayerKickedWorldEvent] => {
+    const playerId = action.playerId
+    const player = this.worldState.findPlayer(playerId)
+    if (!player) {
+      throw new Error(`No player with ID ${playerId}`)
+    }
+    if (playerId === HOST_PLAYER_ID) {
+      throw new Error(`Cannot kick host`)
+    }
+    return [{ id: this.nextWorldEventId, type: 'playerKicked', playerId }]
+  }
 }

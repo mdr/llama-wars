@@ -10,11 +10,12 @@ import {
   PlayerChangedNameWorldEvent,
   PlayerDefeatedWorldEvent,
   PlayerEndedTurnWorldEvent,
+  PlayerKickedWorldEvent,
   UnitMovedWorldEvent,
   WorldEvent,
 } from './world-events'
 import { UnreachableCaseError } from '../util/unreachable-case-error'
-import { Player, PlayerId } from './player'
+import { HOST_PLAYER_ID, Player, PlayerId } from './player'
 import { canAttackOccur } from '../server/attack-world-action-handler'
 
 export const applyEvent = (state: WorldState, event: WorldEvent): WorldState => {
@@ -41,6 +42,8 @@ export const applyEvent = (state: WorldState, event: WorldEvent): WorldState => 
       return handleGameOver(state, event)
     case 'chat':
       return handleChat(state, event)
+    case 'playerKicked':
+      return handlePlayerKicked(state, event)
     default:
       throw new UnreachableCaseError(event)
   }
@@ -197,6 +200,18 @@ const handleGameOver = (state: WorldState, event: GameOverWorldEvent): WorldStat
     newState = newState.addWorldLog(`There are no winners in war.`)
   }
   return newState
+}
+
+const handlePlayerKicked = (state: WorldState, event: PlayerKickedWorldEvent): WorldState => {
+  const playerId = event.id
+  const player = state.findPlayer(playerId)
+  if (!player) {
+    throw new Error(`No player with ID ${playerId}`)
+  }
+  if (playerId === HOST_PLAYER_ID) {
+    throw new Error(`Cannot kick host`)
+  }
+  return state.removePlayer(playerId)
 }
 
 const handleChat = (state: WorldState, event: ChatWorldEvent): WorldState =>

@@ -1,6 +1,7 @@
 import { Hex } from './hex'
 import { UnitId } from './unit'
 import { WorldState } from './world-state'
+import { PlayerId } from './player'
 
 export interface InitialiseWorldAction {
   type: 'initialise'
@@ -51,6 +52,11 @@ export interface ChatWorldAction {
   message: string
 }
 
+export interface KickPlayerWorldAction {
+  type: 'kickPlayer'
+  playerId: PlayerId
+}
+
 export type WorldAction =
   | InitialiseWorldAction
   | AddPlayerWorldAction
@@ -60,3 +66,4 @@ export type WorldAction =
   | AttackWorldAction
   | EndTurnWorldAction
   | ChatWorldAction
+  | KickPlayerWorldAction

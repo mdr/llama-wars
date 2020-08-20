@@ -95,6 +95,12 @@ export interface ChatWorldEvent {
   message: string
 }
 
+export interface PlayerKickedWorldEvent {
+  id: WorldEventId
+  type: 'playerKicked'
+  playerId: PlayerId
+}
+
 export type WorldEvent =
   | InitialiseWorldEvent
   | PlayerAddedWorldEvent
@@ -107,3 +113,4 @@ export type WorldEvent =
   | NewTurnWorldEvent
   | GameOverWorldEvent
   | ChatWorldEvent
+  | PlayerKickedWorldEvent
