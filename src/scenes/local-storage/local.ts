@@ -1,5 +1,8 @@
 import { Option } from '../../util/types'
 
-export const storeName = (name: string) => window.localStorage.setItem('playerName', name)
+const PLAYER_NAME_KEY = 'playerName'
 
-export const findName = (): Option<string> => window.localStorage.getItem('playerName') ?? undefined
+export const LocalStorage = {
+  storeName: (name: string) => window.localStorage.setItem(PLAYER_NAME_KEY, name),
+  findName: (): Option<string> => window.localStorage.getItem(PLAYER_NAME_KEY) ?? undefined,
+}

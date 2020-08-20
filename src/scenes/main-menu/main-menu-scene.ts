@@ -8,7 +8,7 @@ import { AudioKeys } from '../asset-keys'
 import { HOST_PLAYER_ID } from '../../world/player'
 import { setUrlInfo } from '../boot/url-info'
 import { PrimaryButton } from '../../ui/primary-button'
-import { findName } from '../local-storage/local'
+import { LocalStorage } from '../local-storage/local'
 
 export const MAIN_MENU_SCENE_KEY = 'MainMenu'
 
@@ -35,7 +35,7 @@ export class MainMenuScene extends Phaser.Scene {
     const gameId: GameId = uuid()
     const playerId = HOST_PLAYER_ID
     let worldState = INITIAL_WORLD_STATE
-    const name = findName()
+    const name = LocalStorage.findName()
     if (name) {
       worldState = worldState.setPlayerName(playerId, name)
     }
