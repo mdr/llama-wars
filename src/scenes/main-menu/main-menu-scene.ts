@@ -1,5 +1,4 @@
 import { v4 as uuid } from 'uuid'
-import { MenuButton } from '../../ui/menu-button'
 import { GameId } from '../main-game/game-scene'
 import { Server } from '../../server/server'
 import { openWorldEventDb } from '../../db/world-event-db'
