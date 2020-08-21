@@ -3,7 +3,7 @@ import * as R from 'ramda'
 import { WorldState } from '../../world/world-state'
 import { LocalGameState } from '../local-game-state'
 import { hexWidth, mapHeight } from '../hex-geometry'
-import { ACTION_TEXT_COLOUR, HOVER_ACTION_TEXT_COLOUR, PLAYER_TINTS } from '../colours'
+import { ACTION_TEXT_COLOUR, getPlayerTint, HOVER_ACTION_TEXT_COLOUR } from '../colours'
 import { DRAWING_OFFSET, HEX_SIZE } from './game-scene'
 import { UnreachableCaseError } from '../../util/unreachable-case-error'
 import { point, Point } from '../point'
@@ -61,10 +61,7 @@ export class TextsDisplayObject {
     this.localGameState = localGameState
     this.localActionDispatcher = localActionDispatcher
     const map = this.worldState.map
-    this.scene.add
-      .image(40, 28, ImageKeys.LLAMA_2)
-      .setScale(0.6)
-      .setTint(PLAYER_TINTS[localGameState.playerId - 1])
+    this.scene.add.image(40, 28, ImageKeys.LLAMA_2).setScale(0.6).setTint(getPlayerTint(localGameState.playerId))
     this.playerText = this.scene.add.text(70, 20, '')
     this.hourglass = this.scene.add.image(875, 30, 'hourglass').setVisible(false)
 
@@ -171,10 +168,7 @@ export class TextsDisplayObject {
         })
         .setFontSize(18)
         .setPadding(0, 0, 0, 0)
-      const llama = this.scene.add
-        .sprite(975, 0, ImageKeys.LLAMA_EAT_1)
-        .setScale(0.6)
-        .setTint(PLAYER_TINTS[player.id - 1])
+      const llama = this.scene.add.sprite(975, 0, ImageKeys.LLAMA_EAT_1).setScale(0.6).setTint(getPlayerTint(player.id))
       const playerObjects: PlayerObjects = { nameText, llama }
       this.playerObjects.set(player.id, playerObjects)
     }

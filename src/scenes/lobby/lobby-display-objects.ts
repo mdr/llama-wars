@@ -2,8 +2,8 @@ import { HOST_PLAYER_ID, Player, PlayerId } from '../../world/player'
 import * as R from 'ramda'
 import { WorldState } from '../../world/world-state'
 import { AudioKeys, ImageKeys } from '../asset-keys'
-import { PLAYER_TINTS } from '../colours'
 import { PrimaryButton } from '../../ui/primary-button'
+import { getPlayerTint } from '../colours'
 
 interface PlayerObjects {
   nameText: Phaser.GameObjects.Text
@@ -124,7 +124,7 @@ export class LobbyDisplayObjects {
     const llama = this.scene.add
       .sprite(110, 0, ImageKeys.LLAMA_EAT_1)
       .setScale(0.6)
-      .setTint(PLAYER_TINTS[player.id - 1])
+      .setTint(getPlayerTint(player.id))
       .play('llama-walk')
 
     const kickButton =
