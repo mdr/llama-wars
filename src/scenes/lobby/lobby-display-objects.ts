@@ -1,9 +1,11 @@
-import { HOST_PLAYER_ID, Player, PlayerId } from '../../world/player'
 import * as R from 'ramda'
+
+import { HOST_PLAYER_ID, Player, PlayerId } from '../../world/player'
 import { WorldState } from '../../world/world-state'
 import { AudioKeys, ImageKeys } from '../asset-keys'
 import { PrimaryButton } from '../../ui/primary-button'
 import { getPlayerTint } from '../colours'
+import { AnimationKeys, LLAMA_WALK } from '../animations'
 
 interface PlayerObjects {
   nameText: Phaser.GameObjects.Text
@@ -37,49 +39,17 @@ export class LobbyDisplayObjects {
     this.onKickPlayer = onKickPlayer
     this.scene.add.text(155, 50, 'Llama Wars', { fill: '#FFFFFF' }).setFontSize(26)
     if (playerId === HOST_PLAYER_ID) {
-      this.startGameButton = new PrimaryButton(this.scene, 100, 0, 'Start Game', this.handleStartGame)
+      this.startGameButton = new PrimaryButton(this.scene, 100, 0, 'Start Game', this.handleStartGameButtonPressed)
     } else {
       this.waitingForHostText = this.scene.add.text(100, 0, 'Waiting for host to start the game...')
     }
-    this.scene.anims.create({
-      key: 'llama-walk',
-      frames: [
-        { key: ImageKeys.LLAMA_1 } as any,
-        { key: ImageKeys.LLAMA_2 },
-        { key: ImageKeys.LLAMA_3 },
-        { key: ImageKeys.LLAMA_4 },
-      ],
-      frameRate: 8,
-      repeat: -1,
-    })
+    this.scene.anims.create(LLAMA_WALK)
     this.hostCrown = this.scene.add.image(370, 0, 'crown').setScale(0.6)
   }
 
-  private handleStartGame = () => {
+  private handleStartGameButtonPressed = (): void => {
     this.scene.sound.play(AudioKeys.CLICK)
     this.onStartGame()
-  }
-
-  public sync = (worldState: WorldState): void => {
-    this.createAndDestroyPlayerObjects(worldState)
-    let y = 100
-    const sortedPlayers = worldState.getSortedPlayers()
-    for (const player of sortedPlayers) {
-      if (player.id === HOST_PLAYER_ID) {
-        this.hostCrown.setY(y + 5)
-      }
-      const { nameText, llama, kickButton } = this.getPlayerObjects(player.id)
-      nameText.setText(player.name).setY(y)
-      llama.setY(y + 10)
-      kickButton?.setY(y + 15)
-      y += 50
-    }
-    if (this.startGameButton) {
-      this.startGameButton.setY(y)
-    }
-    if (this.waitingForHostText) {
-      this.waitingForHostText.setY(y)
-    }
   }
 
   private getPlayerObjects = (playerId: PlayerId): PlayerObjects => {
@@ -111,6 +81,23 @@ export class LobbyDisplayObjects {
   }
 
   private createObjectsForPlayer = (player: Player) => {
+    const nameText = this.createNameText(player)
+    const llama = this.createLlama(player)
+
+    const kickButton =
+      this.playerId === HOST_PLAYER_ID && player.id !== this.playerId ? this.createKickButton(player.id) : undefined
+    const playerObjects: PlayerObjects = { nameText, llama, kickButton }
+    this.playerObjects.set(player.id, playerObjects)
+  }
+
+  private createLlama = (player: Player): Phaser.GameObjects.Sprite =>
+    this.scene.add
+      .sprite(110, 0, ImageKeys.LLAMA_EAT_1)
+      .setScale(0.6)
+      .setTint(getPlayerTint(player.id))
+      .play(AnimationKeys.LLAMA_WALK)
+
+  private createNameText = (player: Player): Phaser.GameObjects.Text => {
     const nameText = this.scene.add
       .text(140, 0, player.name, {
         fill: '#FFFFFF',
@@ -120,35 +107,53 @@ export class LobbyDisplayObjects {
       .setFontSize(18)
       .setPadding(0, 0, 0, 0)
       .setInteractive()
-      .on('pointerdown', () => this.handlePlayerTextClick(player, nameText))
-    const llama = this.scene.add
-      .sprite(110, 0, ImageKeys.LLAMA_EAT_1)
-      .setScale(0.6)
-      .setTint(getPlayerTint(player.id))
-      .play('llama-walk')
-
-    const kickButton =
-      player.id === HOST_PLAYER_ID || this.playerId !== HOST_PLAYER_ID
-        ? undefined
-        : this.scene.add
-            .image(370, 0, ImageKeys.DELETE_BUTTON_1)
-            .setInteractive()
-            .on('pointerout', () => kickButton?.setTexture(ImageKeys.DELETE_BUTTON_1))
-            .on('pointerover', () => kickButton?.setTexture(ImageKeys.DELETE_BUTTON_2))
-            .on('pointerup', () => {
-              this.scene.sound.play(AudioKeys.CLICK)
-              this.onKickPlayer(player.id)
-            })
-    const playerObjects: PlayerObjects = { nameText, llama, kickButton }
-    this.playerObjects.set(player.id, playerObjects)
+      .on('pointerdown', () => this.handlePlayerTextClick(player.id, nameText))
+    return nameText
   }
 
-  private handlePlayerTextClick = (player: Player, playerText: Phaser.GameObjects.Text): void => {
-    if (player.id === this.playerId) {
+  private createKickButton = (playerId: PlayerId): Phaser.GameObjects.Image => {
+    const kickButton = this.scene.add
+      .image(370, 0, ImageKeys.DELETE_BUTTON_1)
+      .setInteractive()
+      .on('pointerout', () => kickButton.setTexture(ImageKeys.DELETE_BUTTON_1))
+      .on('pointerover', () => kickButton.setTexture(ImageKeys.DELETE_BUTTON_2))
+      .on('pointerup', () => this.handleKickButtonPressed(playerId))
+    return kickButton
+  }
+
+  private handleKickButtonPressed = (playerId: number): void => {
+    this.scene.sound.play(AudioKeys.CLICK)
+    this.onKickPlayer(playerId)
+  }
+
+  private handlePlayerTextClick = (playerId: PlayerId, playerText: Phaser.GameObjects.Text): void => {
+    if (playerId === this.playerId) {
       const plugin = this.scene.plugins.get('rexTextEdit') as any
       plugin.edit(playerText, {
         onClose: () => this.onChangePlayerName(playerText.text),
       })
+    }
+  }
+
+  public sync = (worldState: WorldState): void => {
+    this.createAndDestroyPlayerObjects(worldState)
+    let y = 100
+    const sortedPlayers = worldState.getSortedPlayers()
+    for (const player of sortedPlayers) {
+      if (player.id === HOST_PLAYER_ID) {
+        this.hostCrown.setY(y + 5)
+      }
+      const { nameText, llama, kickButton } = this.getPlayerObjects(player.id)
+      nameText.setText(player.name).setY(y)
+      llama.setY(y + 10)
+      kickButton?.setY(y + 15)
+      y += 50
+    }
+    if (this.startGameButton) {
+      this.startGameButton.setY(y)
+    }
+    if (this.waitingForHostText) {
+      this.waitingForHostText.setY(y)
     }
   }
 }

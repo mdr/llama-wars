@@ -6,41 +6,15 @@ import { WorldState } from '../../world/world-state'
 import { LocalGameState } from '../local-game-state'
 import { Point } from '../point'
 import * as R from 'ramda'
-import { Hex } from '../../world/hex'
 import { UnreachableCaseError } from '../../util/unreachable-case-error'
 import { Option } from '../../util/types'
-import { AudioKeys, ImageKeys } from '../asset-keys'
+import { AudioKeys } from '../asset-keys'
 import { randomElement } from '../../util/random-util'
-import { AttackType } from '../../world/world-actions'
 import { fireAndForget } from '../../util/async-util'
+import { LLAMA_EAT, LLAMA_WALK } from '../animations'
+import { AnimationSpec, CombatAnimationSpec, MoveAnimationSpec } from './animation-spec'
 
 export type AnimationSpeed = 'normal' | 'quick'
-
-export interface MoveAnimationSpec {
-  type: 'move'
-  unitId: UnitId
-  from: Hex
-  to: Hex
-}
-
-export interface CombatAnimationSpec {
-  type: 'combat'
-  attackType: AttackType
-  attacker: {
-    unitId: UnitId
-    location: Hex
-    damage: number
-    killed: boolean
-  }
-  defender: {
-    unitId: UnitId
-    location: Hex
-    damage: number
-    killed: boolean
-  }
-}
-
-export type AnimationSpec = MoveAnimationSpec | CombatAnimationSpec
 
 export class DisplayObjects {
   private readonly scene: Phaser.Scene
@@ -71,30 +45,8 @@ export class DisplayObjects {
       this.localGameState,
       this.localActionDispatcher,
     )
-    this.scene.anims.create({
-      key: 'llama-walk',
-      frames: [
-        { key: ImageKeys.LLAMA_1 } as any,
-        { key: ImageKeys.LLAMA_2 },
-        { key: ImageKeys.LLAMA_3 },
-        { key: ImageKeys.LLAMA_4 },
-      ],
-      frameRate: 8,
-      repeat: -1,
-    })
-    this.scene.anims.create({
-      key: 'llama-eat',
-      frames: [
-        { key: ImageKeys.LLAMA_EAT_1 } as any,
-        { key: ImageKeys.LLAMA_EAT_2 },
-        { key: ImageKeys.LLAMA_EAT_3 },
-        { key: ImageKeys.LLAMA_EAT_4 },
-        { key: ImageKeys.LLAMA_EAT_3 },
-        { key: ImageKeys.LLAMA_EAT_4 },
-      ],
-      frameRate: 4,
-      yoyo: true,
-    })
+    this.scene.anims.create(LLAMA_WALK)
+    this.scene.anims.create(LLAMA_EAT)
     this.scheduleEatingAnimation()
   }
 

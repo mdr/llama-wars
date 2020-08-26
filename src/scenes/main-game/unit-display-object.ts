@@ -7,6 +7,7 @@ import { playTween } from '../../util/phaser/tween-utils'
 import { AnimationSpeed } from './display-objects'
 import { randomIntInclusive } from '../../util/random-util'
 import assert = require('assert')
+import { AnimationKeys } from '../animations'
 
 const HEALTH_BAR_WIDTH = 50
 const HEALTH_BAR_HEIGHT = 12
@@ -67,7 +68,7 @@ export class UnitDisplayObject {
     const duration = this.scaleSpeed(500, speed)
     const beforeCoords = hexCenter(from)
     const afterCoords = hexCenter(to)
-    this.image.anims.play('llama-walk')
+    this.image.anims.play(AnimationKeys.LLAMA_WALK)
     this.image.setFlipX(afterCoords.x < beforeCoords.x)
     const tween1 = this.scene.tweens.create({
       targets: this.image,
@@ -156,14 +157,14 @@ export class UnitDisplayObject {
     if (randomIntInclusive(1, 3) === 1) {
       this.image.toggleFlipX()
     }
-    this.image.anims.play('llama-eat')
+    this.image.anims.play(AnimationKeys.LLAMA_EAT)
   }
 
   public runAttackAnimation = async (from: Hex, to: Hex, speed: AnimationSpeed): Promise<void> => {
     const beforeCoords = hexCenter(from)
     const afterCoords = hexCenter(to)
     this.image.setFlipX(afterCoords.x < beforeCoords.x)
-    this.image.anims.play('llama-walk')
+    this.image.anims.play(AnimationKeys.LLAMA_WALK)
     const duration = this.scaleSpeed(400, speed)
     const tween1 = this.scene.tweens.create({
       targets: this.image,

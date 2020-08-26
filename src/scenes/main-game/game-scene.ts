@@ -22,9 +22,10 @@ import { WorldAction } from '../../world/world-actions'
 import { INITIAL_WORLD_STATE } from '../../world/initial-world-state'
 import { Client } from '../../server/client'
 import { Server } from '../../server/server'
-import { AnimationSpec, DisplayObjects } from './display-objects'
+import { DisplayObjects } from './display-objects'
 import { PlayerId } from '../../world/player'
 import Pointer = Phaser.Input.Pointer
+import { AnimationSpec } from './animation-spec'
 
 export const GAME_SCENE_KEY = 'Game'
 
