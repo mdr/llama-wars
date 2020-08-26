@@ -21,9 +21,9 @@ export const canAttackOccur = (attackType: AttackType, map: WorldMap, from: Hex,
 export class AttackWorldActionHandler {
   private readonly worldState: WorldState
   private readonly playerId: PlayerId
-  private readonly nextWorldEventId: number
+  private readonly nextWorldEventId: WorldEventId
 
-  constructor(worldState: WorldState, playerId: PlayerId, nextWorldEventId: number) {
+  constructor(worldState: WorldState, playerId: PlayerId, nextWorldEventId: WorldEventId) {
     this.worldState = worldState
     this.playerId = playerId
     this.nextWorldEventId = nextWorldEventId

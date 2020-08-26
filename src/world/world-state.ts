@@ -89,7 +89,7 @@ export class WorldState {
 
   public findUnitById = (unitId: UnitId): Option<Unit> => R.find((unit) => unit.id === unitId, this.units)
 
-  public getUnitById = (unitId: number): Unit => {
+  public getUnitById = (unitId: UnitId): Unit => {
     const unit = this.findUnitById(unitId)
     if (!unit) {
       throw `No unit found with ID ${unitId}`
@@ -131,7 +131,7 @@ export class WorldState {
 
   public addPlayer = (player: Player): WorldState => this.copy({ players: R.append(player, this.players) })
 
-  public removePlayer = (playerId: number): WorldState =>
+  public removePlayer = (playerId: PlayerId): WorldState =>
     this.copy({ players: this.players.filter((player) => player.id !== playerId) })
 
   public toJson = (): any => ({
@@ -155,7 +155,7 @@ export class WorldState {
 
   public isValidPlayerId = (playerId: PlayerId): boolean => R.any((player) => player.id === playerId, this.players)
 
-  public gameOver = (victor: Option<number>): WorldState => this.copy({ gameOverInfo: just({ victor }) })
+  public gameOver = (victor: Option<PlayerId>): WorldState => this.copy({ gameOverInfo: just({ victor }) })
 
   public applyEvent = (event: WorldEvent): WorldState => applyEvent(this, event)
 

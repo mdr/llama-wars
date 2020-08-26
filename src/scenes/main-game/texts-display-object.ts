@@ -2,19 +2,17 @@ import * as R from 'ramda'
 
 import { WorldState } from '../../world/world-state'
 import { LocalGameState } from '../local-game-state'
-import { hexWidth, mapHeight } from '../hex-geometry'
+import { mapHeight } from '../hex-geometry'
 import { ACTION_TEXT_COLOUR, getPlayerTint, HOVER_ACTION_TEXT_COLOUR } from '../colours'
 import { DRAWING_OFFSET, HEX_SIZE } from './game-scene'
-import { UnreachableCaseError } from '../../util/unreachable-case-error'
 import { point, Point } from '../point'
-import { Unit, UnitId } from '../../world/unit'
 import { CombinedState } from '../combined-state-methods'
 import { LocalAction } from './local-action'
 import { HOST_PLAYER_ID, PlayerId } from '../../world/player'
-import { AudioKeys, ImageKeys } from '../asset-keys'
-import { AttackType } from '../../world/world-actions'
+import { ImageKeys } from '../asset-keys'
 import { UiBorderDisplayObject } from './ui-border-display-object'
 import { PrimaryButton } from '../../ui/primary-button'
+import { SelectionInfoDisplayObject } from './selection-info-display-object'
 
 export type LocalActionDispatcher = (action: LocalAction) => void
 
@@ -29,10 +27,6 @@ export class TextsDisplayObject {
   private localGameState: LocalGameState
   private readonly localActionDispatcher: LocalActionDispatcher
 
-  private readonly selectionText: Phaser.GameObjects.Text
-  private readonly actionText: Phaser.GameObjects.Text
-  private readonly actionText2: Phaser.GameObjects.Text
-  private readonly actionText3: Phaser.GameObjects.Text
   private readonly endTurnText: Phaser.GameObjects.Text
   private readonly playerText: Phaser.GameObjects.Text
   private readonly hourglass: Phaser.GameObjects.Image
@@ -45,6 +39,7 @@ export class TextsDisplayObject {
   private readonly hostCrown: Phaser.GameObjects.Image
   private readonly endTurnButton: PrimaryButton
   private readonly chatText: Phaser.GameObjects.Text
+  private readonly selectionInfo: SelectionInfoDisplayObject
 
   private get combinedState(): CombinedState {
     return new CombinedState(this.worldState, this.localGameState)
@@ -61,39 +56,11 @@ export class TextsDisplayObject {
     this.localGameState = localGameState
     this.localActionDispatcher = localActionDispatcher
     const map = this.worldState.map
+    this.selectionInfo = new SelectionInfoDisplayObject(scene, worldState, localGameState, localActionDispatcher)
     this.scene.add.image(40, 28, ImageKeys.LLAMA_2).setScale(0.6).setTint(getPlayerTint(localGameState.playerId))
     this.playerText = this.scene.add.text(70, 20, '')
     this.hourglass = this.scene.add.image(875, 30, 'hourglass').setVisible(false)
 
-    this.selectionText = this.scene.add.text(
-      DRAWING_OFFSET.x - hexWidth(HEX_SIZE) / 2,
-      mapHeight(map) * HEX_SIZE + DRAWING_OFFSET.y,
-      '',
-    )
-    this.actionText = this.scene.add
-      .text(DRAWING_OFFSET.x - hexWidth(HEX_SIZE) / 2, mapHeight(map) * HEX_SIZE + DRAWING_OFFSET.y + 25, '', {
-        fill: ACTION_TEXT_COLOUR,
-      })
-      .setInteractive()
-      .on('pointerdown', this.handleActionTextClick)
-      .on('pointerover', () => this.actionText.setFill(HOVER_ACTION_TEXT_COLOUR))
-      .on('pointerout', () => this.actionText.setFill(ACTION_TEXT_COLOUR))
-    this.actionText2 = this.scene.add
-      .text(DRAWING_OFFSET.x - hexWidth(HEX_SIZE) / 2, mapHeight(map) * HEX_SIZE + DRAWING_OFFSET.y + 50, '', {
-        fill: ACTION_TEXT_COLOUR,
-      })
-      .setInteractive()
-      .on('pointerdown', this.handleActionText2Click)
-      .on('pointerover', () => this.actionText2.setFill(HOVER_ACTION_TEXT_COLOUR))
-      .on('pointerout', () => this.actionText2.setFill(ACTION_TEXT_COLOUR))
-    this.actionText3 = this.scene.add
-      .text(DRAWING_OFFSET.x - hexWidth(HEX_SIZE) / 2, mapHeight(map) * HEX_SIZE + DRAWING_OFFSET.y + 75, '', {
-        fill: ACTION_TEXT_COLOUR,
-      })
-      .setInteractive()
-      .on('pointerdown', this.handleActionText3Click)
-      .on('pointerover', () => this.actionText3.setFill(HOVER_ACTION_TEXT_COLOUR))
-      .on('pointerout', () => this.actionText3.setFill(ACTION_TEXT_COLOUR))
     this.endTurnText = this.scene.add
       .text(790 + 520, mapHeight(map) * HEX_SIZE + DRAWING_OFFSET.y + 68 + 72, '', {
         fill: '#ffffff',
@@ -173,45 +140,9 @@ export class TextsDisplayObject {
       this.playerObjects.set(player.id, playerObjects)
     }
     new UiBorderDisplayObject(scene, { topLeft: point(950, 20), width: 500, height: 620 })
-    new UiBorderDisplayObject(scene, { topLeft: point(10, 520), width: 930, height: 120 })
   }
 
-  private handleActionTextClick = (): void => {
-    const mode = this.localGameState.mode
-    switch (mode.type) {
-      case 'selectHex':
-        this.scene.sound.play(AudioKeys.CLICK)
-        this.localActionDispatcher({ type: 'enterMoveMode' })
-        break
-      case 'moveUnit':
-      case 'attack':
-        this.scene.sound.play(AudioKeys.CLICK)
-        this.localActionDispatcher({ type: 'abort' })
-        break
-      default:
-        throw new UnreachableCaseError(mode)
-    }
-  }
-
-  private handleActionText2Click = (): void => {
-    if (this.localGameState.mode.type === 'selectHex') {
-      this.scene.sound.play(AudioKeys.CLICK)
-      this.localActionDispatcher({ type: 'enterAttackMode', attackType: 'melee' })
-    }
-  }
-
-  private handleActionText3Click = (): void => {
-    if (this.localGameState.mode.type === 'selectHex') {
-      this.scene.sound.play(AudioKeys.CLICK)
-      this.localActionDispatcher({ type: 'enterAttackMode', attackType: 'spit' })
-    }
-  }
-
-  public hasClickHandlerFor = (point: Point): boolean => {
-    for (const gameObject of [this.endTurnText, this.actionText, this.actionText2, this.actionText3])
-      if (gameObject.getBounds().contains(point.x, point.y)) return true
-    return false
-  }
+  public hasClickHandlerFor = (point: Point): boolean => this.selectionInfo.hasClickHandlerFor(point)
 
   public syncScene = (worldState: WorldState, localGameState: LocalGameState): void => {
     this.worldState = worldState
@@ -219,30 +150,13 @@ export class TextsDisplayObject {
     const player = this.combinedState.getCurrentPlayer()
     this.hourglass.setVisible(localGameState.actionsOutstandingWithServer > 0)
     this.playerText.setText(`${player.name} - Turn ${this.worldState.turn}`)
-    this.selectionText.setText('')
-    this.actionText.setText('')
-    this.actionText2.setText('')
-    this.actionText3.setText('')
-    const mode = this.localGameState.mode
-    switch (mode.type) {
-      case 'selectHex':
-        this.syncSelectHexModeText()
-        break
-      case 'moveUnit':
-        this.syncMoveUnitModeText(mode.unitId)
-        break
-      case 'attack':
-        this.syncAttackModeText(mode.unitId, mode.attackType)
-        break
-      default:
-        throw new UnreachableCaseError(mode)
-    }
     const canAct = worldState.canPlayerAct(player.id)
     if (canAct) {
       this.endTurnText.setText('End Turn')
     } else {
       this.endTurnText.setText('Waiting for next turn...')
     }
+    this.selectionInfo.syncScene(worldState, localGameState)
     this.endTurnButton.setVisible(canAct)
     this.defeatText.setVisible(player.defeated)
     this.victoryText.setVisible(worldState.gameOverInfo?.victor === player.id)
@@ -265,36 +179,6 @@ export class TextsDisplayObject {
       y += 50
     }
     this.hostCrown.setVisible(localGameState.sidebar === 'players')
-  }
-
-  private syncAttackModeText = (unitId: UnitId, attackType: AttackType): void => {
-    const unit = this.worldState.getUnitById(unitId)
-    this.selectionText.setText(this.describeUnit(unit))
-    this.actionText.setText(`Click unit to ${attackType === 'melee' ? 'attack' : 'spit'} (or ESC to cancel)`)
-  }
-
-  private syncMoveUnitModeText = (unitId: UnitId): void => {
-    const unit = this.worldState.getUnitById(unitId)
-    this.selectionText.setText(this.describeUnit(unit))
-    this.actionText.setText('Click tile to move to (or ESC to cancel)')
-  }
-
-  private syncSelectHexModeText = (): void => {
-    const selectedUnit = this.combinedState.findSelectedUnit()
-    if (selectedUnit) {
-      this.selectionText.setText(this.describeUnit(selectedUnit))
-      if (this.combinedState.unitCouldPotentiallyMove(selectedUnit)) this.actionText.setText('Move (m)')
-      if (this.combinedState.unitCouldPotentiallyAttack(selectedUnit)) this.actionText2.setText('Attack (a)')
-      if (this.combinedState.unitCouldPotentiallyAttack(selectedUnit)) this.actionText3.setText('Spit (s)')
-    }
-  }
-
-  private getPlayerName = (playerId: PlayerId): string => this.worldState.getPlayer(playerId).name
-
-  private describeUnit = (unit: Unit): string => {
-    const { name, playerId, hitPoints, actionPoints } = unit
-    const playerName = this.getPlayerName(playerId)
-    return `${name} - Llama warrior - ${playerName} - HP ${hitPoints.current}/${hitPoints.max} - actions ${actionPoints.current}/${actionPoints.max}`
   }
 
   private getPlayerObjects = (playerId: PlayerId): PlayerObjects => {

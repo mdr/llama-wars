@@ -22,6 +22,7 @@ import {
   PlayerKickedWorldEvent,
   UnitMovedWorldEvent,
   WorldEvent,
+  WorldEventId,
 } from '../world/world-events'
 import { HOST_PLAYER_ID, Player, PlayerId } from '../world/player'
 import { WorldGenerator } from './world-generator'
@@ -30,9 +31,9 @@ import { AttackWorldActionHandler } from './attack-world-action-handler'
 export class WorldActionHandler {
   private readonly worldState: WorldState
   private readonly playerId: PlayerId
-  private readonly nextWorldEventId: number
+  private readonly nextWorldEventId: WorldEventId
 
-  constructor(worldState: WorldState, playerId: PlayerId, nextWorldEventId: number) {
+  constructor(worldState: WorldState, playerId: PlayerId, nextWorldEventId: WorldEventId) {
     this.worldState = worldState
     this.playerId = playerId
     this.nextWorldEventId = nextWorldEventId
