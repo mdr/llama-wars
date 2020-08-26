@@ -15,12 +15,16 @@ export const HOVER_TILE_COLOUR = colourNumber('#ccffbe')
 export const SELECTED_TILE_BORDER_COLOUR = colourNumber('#fffd08')
 export const TARGETABLE_TILE_BORDER_COLOUR = colourNumber('#9df1e7')
 
-export const ACTION_TEXT_COLOUR = '#cccc00'
-export const HOVER_ACTION_TEXT_COLOUR = '#ffff00'
+const PLAYER_TINTS: ColourNumber[] = [
+  '#ffbbbb',
+  '#bbbbff',
+  '#bbffbb',
+  '#bbffff',
+  '#ffffbb',
+  '#ffbbff',
+  '#ffffff',
+  '#bbbbbb',
+].map(colourNumber)
 
-const PLAYER_TINTS = ['#ffbbbb', '#bbbbff', '#bbffbb', '#bbffff', '#ffffbb', '#ffbbff', '#ffffff', '#bbbbbb'].map(
-  colourNumber,
-)
-
-export const getPlayerTint = (playerId: PlayerId) =>
+export const getPlayerTint = (playerId: PlayerId): ColourNumber =>
   PLAYER_TINTS[(PLAYER_TINTS.length + playerId - 1) % PLAYER_TINTS.length]

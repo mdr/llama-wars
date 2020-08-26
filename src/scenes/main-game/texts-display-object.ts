@@ -3,7 +3,7 @@ import * as R from 'ramda'
 import { WorldState } from '../../world/world-state'
 import { LocalGameState } from '../local-game-state'
 import { mapHeight } from '../hex-geometry'
-import { ACTION_TEXT_COLOUR, getPlayerTint, HOVER_ACTION_TEXT_COLOUR } from '../colours'
+import { getPlayerTint } from '../colours'
 import { DRAWING_OFFSET, HEX_SIZE } from './game-scene'
 import { point, Point } from '../point'
 import { CombinedState } from '../combined-state-methods'
@@ -13,6 +13,7 @@ import { ImageKeys } from '../asset-keys'
 import { UiBorderDisplayObject } from './ui-border-display-object'
 import { PrimaryButton } from '../../ui/primary-button'
 import { SelectionInfoDisplayObject } from './selection-info-display-object'
+import { ACTION_LINK_COLOUR, HOVER_ACTION_LINK_COLOUR } from './link-display-object'
 
 export type LocalActionDispatcher = (action: LocalAction) => void
 
@@ -76,17 +77,17 @@ export class TextsDisplayObject {
     )
 
     this.selectWorldLogText = this.scene.add
-      .text(960, 26, 'Log', { fill: ACTION_TEXT_COLOUR })
+      .text(960, 26, 'Log', { fill: ACTION_LINK_COLOUR })
       .setInteractive()
       .on('pointerdown', () => this.localActionDispatcher({ type: 'changeSidebar', sidebar: 'log' }))
-      .on('pointerover', () => this.selectWorldLogText.setFill(HOVER_ACTION_TEXT_COLOUR))
-      .on('pointerout', () => this.selectWorldLogText.setFill(ACTION_TEXT_COLOUR))
+      .on('pointerover', () => this.selectWorldLogText.setFill(HOVER_ACTION_LINK_COLOUR))
+      .on('pointerout', () => this.selectWorldLogText.setFill(ACTION_LINK_COLOUR))
     this.selectPlayersText = this.scene.add
-      .text(1024, 26, 'Players', { fill: ACTION_TEXT_COLOUR })
+      .text(1024, 26, 'Players', { fill: ACTION_LINK_COLOUR })
       .setInteractive()
       .on('pointerdown', () => this.localActionDispatcher({ type: 'changeSidebar', sidebar: 'players' }))
-      .on('pointerover', () => this.selectPlayersText.setFill(HOVER_ACTION_TEXT_COLOUR))
-      .on('pointerout', () => this.selectPlayersText.setFill(ACTION_TEXT_COLOUR))
+      .on('pointerover', () => this.selectPlayersText.setFill(HOVER_ACTION_LINK_COLOUR))
+      .on('pointerout', () => this.selectPlayersText.setFill(ACTION_LINK_COLOUR))
     this.defeatText = this.scene.add
       .text(462, (mapHeight(map) * HEX_SIZE + DRAWING_OFFSET.y) / 2, 'You have been defeated!', {
         stroke: '#000000',

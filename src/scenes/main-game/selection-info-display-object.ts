@@ -1,8 +1,5 @@
 import { WorldState } from '../../world/world-state'
 import { LocalGameState } from '../local-game-state'
-import { hexWidth } from '../hex-geometry'
-import { ACTION_TEXT_COLOUR, HOVER_ACTION_TEXT_COLOUR } from '../colours'
-import { DRAWING_OFFSET, HEX_SIZE } from './game-scene'
 import { UnreachableCaseError } from '../../util/unreachable-case-error'
 import { Point, point } from '../point'
 import { CombinedState } from '../combined-state-methods'
@@ -13,9 +10,13 @@ import { LocalActionDispatcher } from './texts-display-object'
 import { PlayerId } from '../../world/player'
 import { Unit, UnitId } from '../../world/unit'
 import { AttackType } from '../../world/world-actions'
+import { LinkDisplayObject } from './link-display-object'
 import Scene = Phaser.Scene
 
-export const TMP_Y_OFFSET = 9
+const WIDTH = 930
+const HEIGHT = 120
+const BORDER_PADDING = 12
+const TEXT_SPACING = 25
 
 export class SelectionInfoDisplayObject {
   private readonly scene: Scene
@@ -26,9 +27,9 @@ export class SelectionInfoDisplayObject {
 
   private readonly border: UiBorderDisplayObject
   private readonly selectionText: GameObjects.Text
-  private readonly actionText: GameObjects.Text
-  private readonly actionText2: GameObjects.Text
-  private readonly actionText3: GameObjects.Text
+  private readonly actionLink1: LinkDisplayObject
+  private readonly actionLink2: LinkDisplayObject
+  private readonly actionLink3: LinkDisplayObject
 
   constructor(
     scene: Phaser.Scene,
@@ -40,43 +41,34 @@ export class SelectionInfoDisplayObject {
     this.worldState = worldState
     this.localGameState = localGameState
     this.localActionDispatcher = localActionDispatcher
-    this.border = new UiBorderDisplayObject(scene, { topLeft: point(10, 520), width: 930, height: 120 })
-    this.selectionText = this.scene.add.text(
-      DRAWING_OFFSET.x - hexWidth(HEX_SIZE) / 2,
-      TMP_Y_OFFSET * HEX_SIZE + DRAWING_OFFSET.y,
+    const x = 10
+    const y = 520
+    this.border = new UiBorderDisplayObject(scene, { topLeft: point(x, y), width: WIDTH, height: HEIGHT })
+    const Y_OFFSET = y + BORDER_PADDING
+    const X_OFFSET = x + BORDER_PADDING
+    this.selectionText = this.scene.add.text(X_OFFSET, Y_OFFSET, '')
+    this.actionLink1 = new LinkDisplayObject(scene, X_OFFSET, Y_OFFSET + TEXT_SPACING, '', this.handleActionLink1Click)
+    this.actionLink2 = new LinkDisplayObject(
+      scene,
+      X_OFFSET,
+      Y_OFFSET + TEXT_SPACING * 2,
       '',
+      this.handleActionLink2Click,
     )
-    this.actionText = this.scene.add
-      .text(DRAWING_OFFSET.x - hexWidth(HEX_SIZE) / 2, TMP_Y_OFFSET * HEX_SIZE + DRAWING_OFFSET.y + 25, '', {
-        fill: ACTION_TEXT_COLOUR,
-      })
-      .setInteractive()
-      .on('pointerup', this.handleActionTextClick)
-      .on('pointerover', () => this.actionText.setFill(HOVER_ACTION_TEXT_COLOUR))
-      .on('pointerout', () => this.actionText.setFill(ACTION_TEXT_COLOUR))
-    this.actionText2 = this.scene.add
-      .text(DRAWING_OFFSET.x - hexWidth(HEX_SIZE) / 2, TMP_Y_OFFSET * HEX_SIZE + DRAWING_OFFSET.y + 50, '', {
-        fill: ACTION_TEXT_COLOUR,
-      })
-      .setInteractive()
-      .on('pointerup', this.handleActionText2Click)
-      .on('pointerover', () => this.actionText2.setFill(HOVER_ACTION_TEXT_COLOUR))
-      .on('pointerout', () => this.actionText2.setFill(ACTION_TEXT_COLOUR))
-    this.actionText3 = this.scene.add
-      .text(DRAWING_OFFSET.x - hexWidth(HEX_SIZE) / 2, TMP_Y_OFFSET * HEX_SIZE + DRAWING_OFFSET.y + 75, '', {
-        fill: ACTION_TEXT_COLOUR,
-      })
-      .setInteractive()
-      .on('pointerup', this.handleActionText3Click)
-      .on('pointerover', () => this.actionText3.setFill(HOVER_ACTION_TEXT_COLOUR))
-      .on('pointerout', () => this.actionText3.setFill(ACTION_TEXT_COLOUR))
+    this.actionLink3 = new LinkDisplayObject(
+      scene,
+      X_OFFSET,
+      Y_OFFSET + TEXT_SPACING * 3,
+      '',
+      this.handleActionLink3Click,
+    )
   }
 
   private get combinedState(): CombinedState {
     return new CombinedState(this.worldState, this.localGameState)
   }
 
-  private handleActionTextClick = (): void => {
+  private handleActionLink1Click = (): void => {
     const mode = this.localGameState.mode
     switch (mode.type) {
       case 'selectHex':
@@ -93,14 +85,14 @@ export class SelectionInfoDisplayObject {
     }
   }
 
-  private handleActionText2Click = (): void => {
+  private handleActionLink2Click = (): void => {
     if (this.localGameState.mode.type === 'selectHex') {
       this.scene.sound.play(AudioKeys.CLICK)
       this.localActionDispatcher({ type: 'enterAttackMode', attackType: 'melee' })
     }
   }
 
-  private handleActionText3Click = (): void => {
+  private handleActionLink3Click = (): void => {
     if (this.localGameState.mode.type === 'selectHex') {
       this.scene.sound.play(AudioKeys.CLICK)
       this.localActionDispatcher({ type: 'enterAttackMode', attackType: 'spit' })
@@ -110,10 +102,12 @@ export class SelectionInfoDisplayObject {
   public syncScene = (worldState: WorldState, localGameState: LocalGameState): void => {
     this.worldState = worldState
     this.localGameState = localGameState
-    this.selectionText.setText('')
-    this.actionText.setText('')
-    this.actionText2.setText('')
-    this.actionText3.setText('')
+    const visible = this.combinedState.findSelectedUnit() !== undefined
+    this.border.setVisible(visible)
+    this.selectionText.setText('').setVisible(visible)
+    this.actionLink1.setText('').setVisible(visible)
+    this.actionLink2.setText('').setVisible(visible)
+    this.actionLink3.setText('').setVisible(visible)
     const mode = this.localGameState.mode
     switch (mode.type) {
       case 'selectHex':
@@ -133,13 +127,13 @@ export class SelectionInfoDisplayObject {
   private syncAttackModeText = (unitId: UnitId, attackType: AttackType): void => {
     const unit = this.worldState.getUnitById(unitId)
     this.selectionText.setText(this.describeUnit(unit))
-    this.actionText.setText(`Click unit to ${attackType === 'melee' ? 'attack' : 'spit at'} (or ESC to cancel)`)
+    this.actionLink1.setText(`Click unit to ${attackType === 'melee' ? 'attack' : 'spit at'} (or ESC to cancel)`)
   }
 
   private syncMoveUnitModeText = (unitId: UnitId): void => {
     const unit = this.worldState.getUnitById(unitId)
     this.selectionText.setText(this.describeUnit(unit))
-    this.actionText.setText('Click tile to move to (or ESC to cancel)')
+    this.actionLink1.setText('Click tile to move to (or ESC to cancel)')
   }
 
   private syncSelectHexModeText = (): void => {
@@ -147,16 +141,17 @@ export class SelectionInfoDisplayObject {
     if (selectedUnit) {
       this.selectionText.setText(this.describeUnit(selectedUnit))
       if (this.combinedState.unitCouldPotentiallyMove(selectedUnit)) {
-        this.actionText.setText('Move (m)')
+        this.actionLink1.setText('Move (m)')
       }
       if (this.combinedState.unitCouldPotentiallyAttack(selectedUnit)) {
-        this.actionText2.setText('Attack (a)')
+        this.actionLink2.setText('Attack (a)')
       }
       if (this.combinedState.unitCouldPotentiallyAttack(selectedUnit)) {
-        this.actionText3.setText('Spit (s)')
+        this.actionLink3.setText('Spit (s)')
       }
     }
   }
+
   private describeUnit = (unit: Unit): string => {
     const { name, playerId, hitPoints, actionPoints } = unit
     const playerName = this.getPlayerName(playerId)
@@ -166,8 +161,8 @@ export class SelectionInfoDisplayObject {
   private getPlayerName = (playerId: PlayerId): string => this.worldState.getPlayer(playerId).name
 
   public hasClickHandlerFor = (point: Point): boolean => {
-    for (const gameObject of [this.actionText, this.actionText2, this.actionText3])
-      if (gameObject.getBounds().contains(point.x, point.y)) return true
+    for (const gameObject of [this.actionLink1, this.actionLink2, this.actionLink3])
+      if (gameObject.containsPoint(point)) return true
     return false
   }
 }

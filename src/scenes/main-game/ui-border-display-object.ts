@@ -70,4 +70,11 @@ export class UiBorderDisplayObject {
     const bottomRightImage = this.scene.add.image(x2, y2, ImageKeys.BORDER_BOTTOM_RIGHT).setOrigin(0, 0)
     this.images.push(topLeftImage, topRightImage, bottomLeftImage, bottomRightImage)
   }
+
+  public setVisible = (visible: boolean): this => {
+    for (const image of this.images) {
+      image.setVisible(visible)
+    }
+    return this
+  }
 }

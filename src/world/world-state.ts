@@ -1,5 +1,6 @@
-import { Hex } from './hex'
 import * as R from 'ramda'
+
+import { Hex } from './hex'
 import { WorldMap } from './world-map'
 import { Unit, UnitId } from './unit'
 import { just, Maybe, Option, toMaybe, toOption } from '../util/types'
@@ -116,7 +117,7 @@ export class WorldState {
     return this.replacePlayer(playerId, modify(player))
   }
 
-  public setPlayerName = (playerId: PlayerId, name: string) =>
+  public setPlayerName = (playerId: PlayerId, name: string): WorldState =>
     this.updatePlayer(playerId, (player) => player.copy({ name }))
 
   public replacePlayer = (playerId: PlayerId, player: Player): WorldState => {
