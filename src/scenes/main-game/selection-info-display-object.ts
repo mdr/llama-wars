@@ -12,9 +12,9 @@ import { Unit, UnitId } from '../../world/unit'
 import { AttackType } from '../../world/world-actions'
 import { LinkDisplayObject } from './link-display-object'
 import Scene = Phaser.Scene
+import { colourNumber } from '../colours'
 
 const WIDTH = 930
-const HEIGHT = 120
 const BORDER_PADDING = 12
 const TEXT_SPACING = 25
 
@@ -25,25 +25,35 @@ export class SelectionInfoDisplayObject {
   private localGameState: LocalGameState
   private readonly localActionDispatcher: LocalActionDispatcher
 
+  private readonly background: GameObjects.Rectangle
   private readonly border: UiBorderDisplayObject
   private readonly selectionText: GameObjects.Text
   private readonly actionLink1: LinkDisplayObject
   private readonly actionLink2: LinkDisplayObject
   private readonly actionLink3: LinkDisplayObject
 
+  public static HEIGHT = 120
+
   constructor(
     scene: Phaser.Scene,
     worldState: WorldState,
     localGameState: LocalGameState,
     localActionDispatcher: LocalActionDispatcher,
+    location: Point,
   ) {
     this.scene = scene
     this.worldState = worldState
     this.localGameState = localGameState
     this.localActionDispatcher = localActionDispatcher
-    const x = 10
-    const y = 520
-    this.border = new UiBorderDisplayObject(scene, { topLeft: point(x, y), width: WIDTH, height: HEIGHT })
+    const { x, y } = location
+    this.background = scene.add
+      .rectangle(x, y, WIDTH, SelectionInfoDisplayObject.HEIGHT, colourNumber('#000000'), 0.8)
+      .setOrigin(0)
+    this.border = new UiBorderDisplayObject(scene, {
+      topLeft: point(x, y),
+      width: WIDTH,
+      height: SelectionInfoDisplayObject.HEIGHT,
+    })
     const Y_OFFSET = y + BORDER_PADDING
     const X_OFFSET = x + BORDER_PADDING
     this.selectionText = this.scene.add.text(X_OFFSET, Y_OFFSET, '')
@@ -103,6 +113,7 @@ export class SelectionInfoDisplayObject {
     this.worldState = worldState
     this.localGameState = localGameState
     const visible = this.combinedState.findSelectedUnit() !== undefined
+    this.background.setVisible(visible)
     this.border.setVisible(visible)
     this.selectionText.setText('').setVisible(visible)
     this.actionLink1.setText('').setVisible(visible)

@@ -3,7 +3,7 @@ import * as R from 'ramda'
 import { WorldState } from '../../world/world-state'
 import { LocalGameState } from '../local-game-state'
 import { mapHeight } from '../hex-geometry'
-import { getPlayerTint } from '../colours'
+import { colourNumber, getPlayerTint } from '../colours'
 import { DRAWING_OFFSET, HEX_SIZE } from './game-scene'
 import { point, Point } from '../point'
 import { CombinedState } from '../combined-state-methods'
@@ -14,6 +14,7 @@ import { UiBorderDisplayObject } from './ui-border-display-object'
 import { PrimaryButton } from '../../ui/primary-button'
 import { SelectionInfoDisplayObject } from './selection-info-display-object'
 import { ACTION_LINK_COLOUR, HOVER_ACTION_LINK_COLOUR } from './link-display-object'
+import { getGameHeight } from '../../helpers'
 
 export type LocalActionDispatcher = (action: LocalAction) => void
 
@@ -41,6 +42,7 @@ export class TextsDisplayObject {
   private readonly endTurnButton: PrimaryButton
   private readonly chatText: Phaser.GameObjects.Text
   private readonly selectionInfo: SelectionInfoDisplayObject
+  private background: Phaser.GameObjects.Rectangle
 
   private get combinedState(): CombinedState {
     return new CombinedState(this.worldState, this.localGameState)
@@ -57,7 +59,17 @@ export class TextsDisplayObject {
     this.localGameState = localGameState
     this.localActionDispatcher = localActionDispatcher
     const map = this.worldState.map
-    this.selectionInfo = new SelectionInfoDisplayObject(scene, worldState, localGameState, localActionDispatcher)
+    this.background = scene.add.rectangle(950, 20, 500, 620, colourNumber('#000000'), 0.8).setOrigin(0)
+    new UiBorderDisplayObject(scene, { topLeft: point(950, 20), width: 500, height: 620 })
+
+    const selectionLocation = { x: 10, y: getGameHeight(this.scene) - SelectionInfoDisplayObject.HEIGHT - 10 }
+    this.selectionInfo = new SelectionInfoDisplayObject(
+      scene,
+      worldState,
+      localGameState,
+      localActionDispatcher,
+      selectionLocation,
+    )
     this.scene.add.image(40, 28, ImageKeys.LLAMA_2).setScale(0.6).setTint(getPlayerTint(localGameState.playerId))
     this.playerText = this.scene.add.text(70, 20, '')
     this.hourglass = this.scene.add.image(875, 30, 'hourglass').setVisible(false)
@@ -140,7 +152,6 @@ export class TextsDisplayObject {
       const playerObjects: PlayerObjects = { nameText, llama }
       this.playerObjects.set(player.id, playerObjects)
     }
-    new UiBorderDisplayObject(scene, { topLeft: point(950, 20), width: 500, height: 620 })
   }
 
   public hasClickHandlerFor = (point: Point): boolean => this.selectionInfo.hasClickHandlerFor(point)
