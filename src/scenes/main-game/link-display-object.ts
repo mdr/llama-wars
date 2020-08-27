@@ -1,20 +1,18 @@
 import { Point } from '../point'
 import { GameObjects } from 'phaser'
-import Scene = Phaser.Scene
 
 export const ACTION_LINK_COLOUR = '#cccc00'
 export const HOVER_ACTION_LINK_COLOUR = '#ffff00'
+const DEFAULT_BACKGROUND_COLOUR = '#00000000'
+const PRESSED_BACKGROUND_COLOUR = '#333333'
 
-export class LinkDisplayObject {
-  private readonly scene: Scene
-  private text: GameObjects.Text
+export class LinkDisplayObject extends GameObjects.Text {
   private readonly onClick: () => void
 
   constructor(scene: Phaser.Scene, x: number, y: number, text: string, onClick: () => void) {
-    this.scene = scene
+    super(scene, x, y, text, {})
     this.onClick = onClick
-    this.text = this.scene.add
-      .text(x, y, text, { fill: ACTION_LINK_COLOUR })
+    this.setDefaultStyle()
       .setInteractive()
       .on('pointerup', this.onClick)
       .on('pointerdown', this.handlePointerDown)
@@ -22,29 +20,20 @@ export class LinkDisplayObject {
       .on('pointerout', this.handlePointerOut)
   }
 
+  private setDefaultStyle = (): this => this.setBackgroundColor(DEFAULT_BACKGROUND_COLOUR).setFill(ACTION_LINK_COLOUR)
+
   private handlePointerOut = (): void => {
-    this.text.setBackgroundColor('#00000000')
-    this.text.setFill(ACTION_LINK_COLOUR)
+    this.setDefaultStyle()
   }
 
   private handlePointerDown = (): void => {
-    this.text.setBackgroundColor('#333333')
+    this.setBackgroundColor(PRESSED_BACKGROUND_COLOUR)
   }
 
   private handlePointerOver = (pointer: Phaser.Input.Pointer): void => {
-    this.text.setBackgroundColor(pointer.isDown ? '#333333' : '#00000000')
-    this.text.setFill(HOVER_ACTION_LINK_COLOUR)
+    this.setBackgroundColor(pointer.isDown ? PRESSED_BACKGROUND_COLOUR : DEFAULT_BACKGROUND_COLOUR)
+    this.setFill(HOVER_ACTION_LINK_COLOUR)
   }
 
-  public setText = (text: string): this => {
-    this.text.setText(text)
-    return this
-  }
-
-  public containsPoint = (point: Point): boolean => this.text.getBounds().contains(point.x, point.y)
-
-  public setVisible = (visible: boolean): this => {
-    this.text.setVisible(visible)
-    return this
-  }
+  public containsPoint = (point: Point): boolean => this.getBounds().contains(point.x, point.y)
 }

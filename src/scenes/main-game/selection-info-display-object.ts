@@ -14,7 +14,6 @@ import { LinkDisplayObject } from './link-display-object'
 import Scene = Phaser.Scene
 import { colourNumber } from '../colours'
 
-const WIDTH = 930
 const BORDER_PADDING = 12
 const TEXT_SPACING = 25
 
@@ -33,6 +32,7 @@ export class SelectionInfoDisplayObject {
   private readonly actionLink3: LinkDisplayObject
 
   public static HEIGHT = 120
+  public static WIDTH = 930
 
   constructor(
     scene: Phaser.Scene,
@@ -47,11 +47,18 @@ export class SelectionInfoDisplayObject {
     this.localActionDispatcher = localActionDispatcher
     const { x, y } = location
     this.background = scene.add
-      .rectangle(x, y, WIDTH, SelectionInfoDisplayObject.HEIGHT, colourNumber('#000000'), 0.8)
+      .rectangle(
+        x,
+        y,
+        SelectionInfoDisplayObject.WIDTH,
+        SelectionInfoDisplayObject.HEIGHT,
+        colourNumber('#000000'),
+        0.8,
+      )
       .setOrigin(0)
     this.border = new UiBorderDisplayObject(scene, {
       topLeft: point(x, y),
-      width: WIDTH,
+      width: SelectionInfoDisplayObject.WIDTH,
       height: SelectionInfoDisplayObject.HEIGHT,
     })
     const Y_OFFSET = y + BORDER_PADDING
@@ -72,6 +79,9 @@ export class SelectionInfoDisplayObject {
       '',
       this.handleActionLink3Click,
     )
+    this.scene.add.existing(this.actionLink1)
+    this.scene.add.existing(this.actionLink2)
+    this.scene.add.existing(this.actionLink3)
   }
 
   private get combinedState(): CombinedState {
