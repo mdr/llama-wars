@@ -61,6 +61,7 @@ export class SelectionInfoDisplayObject {
       width: SelectionInfoDisplayObject.WIDTH,
       height: SelectionInfoDisplayObject.HEIGHT,
     })
+    scene.add.existing(this.border)
     const Y_OFFSET = y + BORDER_PADDING
     const X_OFFSET = x + BORDER_PADDING
     this.selectionText = this.scene.add.text(X_OFFSET, Y_OFFSET, '')

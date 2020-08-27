@@ -60,7 +60,8 @@ export class TextsDisplayObject {
     this.localActionDispatcher = localActionDispatcher
     const map = this.worldState.map
     this.background = scene.add.rectangle(950, 20, 500, 620, colourNumber('#000000'), 0.8).setOrigin(0)
-    new UiBorderDisplayObject(scene, { topLeft: point(950, 20), width: 500, height: 620 })
+    const border = new UiBorderDisplayObject(scene, { topLeft: point(950, 20), width: 500, height: 620 })
+    scene.add.existing(border)
 
     const selectionLocation = { x: 10, y: getGameHeight(this.scene) - SelectionInfoDisplayObject.HEIGHT - 10 }
     this.selectionInfo = new SelectionInfoDisplayObject(
