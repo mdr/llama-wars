@@ -92,7 +92,8 @@ export class TextsDisplayObject {
       .setDepth(100)
 
     // Side panel
-    this.sidePanel = new SidePanelDisplayObject(scene, worldState, localGameState, localActionDispatcher)
+    this.sidePanel = new SidePanelDisplayObject(scene, worldState, localGameState, localActionDispatcher).setDepth(100)
+    scene.add.existing(this.sidePanel)
   }
 
   public syncScene = (worldState: WorldState, localGameState: LocalGameState): void => {

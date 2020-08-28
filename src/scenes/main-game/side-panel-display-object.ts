@@ -17,8 +17,7 @@ interface PlayerObjects {
   llama: Phaser.GameObjects.Image
 }
 
-export class SidePanelDisplayObject {
-  private readonly scene: Phaser.Scene
+export class SidePanelDisplayObject extends Phaser.GameObjects.Container {
   private worldState: WorldState
   private localGameState: LocalGameState
   private readonly localActionDispatcher: LocalActionDispatcher
@@ -40,40 +39,37 @@ export class SidePanelDisplayObject {
     localGameState: LocalGameState,
     localActionDispatcher: LocalActionDispatcher,
   ) {
+    super(scene, 950, 20, [])
     this.scene = scene
     this.worldState = worldState
     this.localGameState = localGameState
     this.localActionDispatcher = localActionDispatcher
 
-    const { x, y } = { x: 950, y: 20 }
     this.background = scene.add
-      .rectangle(x, y, SidePanelDisplayObject.WIDTH, SidePanelDisplayObject.HEIGHT, colourNumber('#000000'), 0.8)
+      .rectangle(0, 0, SidePanelDisplayObject.WIDTH, SidePanelDisplayObject.HEIGHT, colourNumber('#000000'), 0.8)
       .setOrigin(0)
       .setInteractive()
       .on('pointerdown', (pointer: Pointer, x: number, y: number, event: EventData): void => event.stopPropagation())
       .on('pointerup', (pointer: Pointer, x: number, y: number, event: EventData): void => event.stopPropagation())
 
     const border = new UiBorderDisplayObject(scene, {
-      topLeft: point(x, y),
+      topLeft: point(0, 0),
       width: SidePanelDisplayObject.WIDTH,
       height: SidePanelDisplayObject.HEIGHT,
     })
     scene.add.existing(border)
 
-    this.logLink = new LinkDisplayObject(this.scene, x + 10, y + 6, 'Log', () =>
+    this.logLink = new LinkDisplayObject(this.scene, 10, 6, 'Log', () =>
       this.localActionDispatcher({ type: 'changeSidebar', sidebar: 'log' }),
     )
     this.scene.add.existing(this.logLink)
-    this.playersLink = new LinkDisplayObject(this.scene, x + 74, y + 6, 'Players', () =>
+    this.playersLink = new LinkDisplayObject(this.scene, 74, 6, 'Players', () =>
       this.localActionDispatcher({ type: 'changeSidebar', sidebar: 'players' }),
     )
     this.scene.add.existing(this.playersLink)
-    this.worldLogText = this.scene.add
-      .text(x + 10, y + 30, '')
-      .setWordWrapWidth(470)
-      .setFontSize(14)
+    this.worldLogText = this.scene.add.text(10, 30, '').setWordWrapWidth(470).setFontSize(14)
     this.chatText = this.scene.add
-      .text(x + 10, y + SidePanelDisplayObject.HEIGHT - 40, 'Chat...', {
+      .text(10, SidePanelDisplayObject.HEIGHT - 40, 'Chat...', {
         fill: '#FFFFFF',
         fixedWidth: 478,
         backgroundColor: '#333333',
@@ -91,22 +87,29 @@ export class SidePanelDisplayObject {
           },
         })
       })
-    this.hostCrown = this.scene.add.image(x + 285, 0, 'crown').setScale(0.6)
+    this.hostCrown = this.scene.add.image(285, 0, 'crown').setScale(0.6)
+    this.add([
+      this.background,
+      border,
+      this.worldLogText,
+      this.hostCrown,
+      this.logLink,
+      this.playersLink,
+      this.chatText,
+    ])
     for (const player of worldState.getSortedPlayers()) {
       const nameText = this.scene.add
-        .text(x + 65, 0, player.name, {
+        .text(65, 0, player.name, {
           fill: '#FFFFFF',
           fixedWidth: 200,
           fontStyle: player.id === this.localGameState.playerId ? 'bold' : 'normal',
         })
         .setFontSize(18)
         .setPadding(0, 0, 0, 0)
-      const llama = this.scene.add
-        .sprite(x + 25, 0, ImageKeys.LLAMA_EAT_1)
-        .setScale(0.6)
-        .setTint(getPlayerTint(player.id))
+      const llama = this.scene.add.sprite(25, 0, ImageKeys.LLAMA_EAT_1).setScale(0.6).setTint(getPlayerTint(player.id))
       const playerObjects: PlayerObjects = { nameText, llama }
       this.playerObjects.set(player.id, playerObjects)
+      this.add([nameText, llama])
     }
   }
 
