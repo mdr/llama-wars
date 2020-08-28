@@ -3,7 +3,7 @@ import * as R from 'ramda'
 import { WorldState } from '../../world/world-state'
 import { LocalGameState } from '../local-game-state'
 import { colourNumber, getPlayerTint } from '../colours'
-import { point } from '../point'
+import { Point, point } from '../point'
 import { HOST_PLAYER_ID, PlayerId } from '../../world/player'
 import { ImageKeys } from '../asset-keys'
 import { UiBorderDisplayObject } from './ui-border-display-object'
@@ -30,16 +30,17 @@ export class SidePanelDisplayObject extends Phaser.GameObjects.Container {
   private readonly chatText: Phaser.GameObjects.Text
   private readonly background: Phaser.GameObjects.Rectangle
 
-  private static WIDTH = 500
-  private static HEIGHT = 620
+  public static readonly WIDTH = 500
+  public static readonly HEIGHT = 620
 
   constructor(
     scene: Phaser.Scene,
     worldState: WorldState,
     localGameState: LocalGameState,
     localActionDispatcher: LocalActionDispatcher,
+    location: Point,
   ) {
-    super(scene, 950, 20, [])
+    super(scene, location.x, location.y, [])
     this.scene = scene
     this.worldState = worldState
     this.localGameState = localGameState
