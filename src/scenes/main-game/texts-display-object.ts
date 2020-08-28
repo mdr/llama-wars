@@ -4,7 +4,7 @@ import { WorldState } from '../../world/world-state'
 import { LocalGameState } from '../local-game-state'
 import { colourNumber, getPlayerTint } from '../colours'
 import { DRAWING_OFFSET, HEX_SIZE } from './game-scene'
-import { point, Point } from '../point'
+import { point } from '../point'
 import { CombinedState } from '../combined-state-methods'
 import { LocalAction } from './local-action'
 import { HOST_PLAYER_ID, PlayerId } from '../../world/player'
@@ -12,7 +12,7 @@ import { ImageKeys } from '../asset-keys'
 import { UiBorderDisplayObject } from './ui-border-display-object'
 import { PrimaryButton } from '../../ui/primary-button'
 import { SelectionInfoDisplayObject } from './selection-info-display-object'
-import { ACTION_LINK_COLOUR, HOVER_ACTION_LINK_COLOUR } from './link-display-object'
+import { LinkDisplayObject } from './link-display-object'
 import { getGameHeight } from '../../helpers'
 import Pointer = Phaser.Input.Pointer
 import EventData = Phaser.Types.Input.EventData
@@ -36,8 +36,8 @@ export class TextsDisplayObject {
   private readonly defeatText: Phaser.GameObjects.Text
   private readonly victoryText: Phaser.GameObjects.Text
   private readonly worldLogText: Phaser.GameObjects.Text
-  private readonly selectWorldLogText: Phaser.GameObjects.Text
-  private readonly selectPlayersText: Phaser.GameObjects.Text
+  private readonly logLink: Phaser.GameObjects.Text
+  private readonly playersLink: Phaser.GameObjects.Text
   private readonly playerObjects: Map<PlayerId, PlayerObjects> = new Map()
   private readonly hostCrown: Phaser.GameObjects.Image
   private readonly endTurnButton: PrimaryButton
@@ -49,6 +49,9 @@ export class TextsDisplayObject {
     return new CombinedState(this.worldState, this.localGameState)
   }
 
+  private static WIDTH = 500
+  private static HEIGHT = 620
+
   constructor(
     scene: Phaser.Scene,
     worldState: WorldState,
@@ -59,16 +62,8 @@ export class TextsDisplayObject {
     this.worldState = worldState
     this.localGameState = localGameState
     this.localActionDispatcher = localActionDispatcher
-    const { x, y } = { x: 950, y: 20 }
-    this.background = scene.add
-      .rectangle(x, y, 500, 620, colourNumber('#000000'), 0.8)
-      .setOrigin(0)
-      .setInteractive()
-      .on('pointerdown', (pointer: Pointer, x: number, y: number, event: EventData): void => event.stopPropagation())
-      .on('pointerup', (pointer: Pointer, x: number, y: number, event: EventData): void => event.stopPropagation())
 
-    const border = new UiBorderDisplayObject(scene, { topLeft: point(x, y), width: 500, height: 620 })
-    scene.add.existing(border)
+    // Other stuff
 
     const selectionLocation = { x: 10, y: getGameHeight(this.scene) - SelectionInfoDisplayObject.HEIGHT - 10 }
     this.selectionInfo = new SelectionInfoDisplayObject(
@@ -98,18 +93,6 @@ export class TextsDisplayObject {
     ).setDepth(100)
     this.scene.add.existing(this.endTurnButton)
 
-    this.selectWorldLogText = this.scene.add
-      .text(960, 26, 'Log', { fill: ACTION_LINK_COLOUR })
-      .setInteractive()
-      .on('pointerdown', () => this.localActionDispatcher({ type: 'changeSidebar', sidebar: 'log' }))
-      .on('pointerover', () => this.selectWorldLogText.setFill(HOVER_ACTION_LINK_COLOUR))
-      .on('pointerout', () => this.selectWorldLogText.setFill(ACTION_LINK_COLOUR))
-    this.selectPlayersText = this.scene.add
-      .text(1024, 26, 'Players', { fill: ACTION_LINK_COLOUR })
-      .setInteractive()
-      .on('pointerdown', () => this.localActionDispatcher({ type: 'changeSidebar', sidebar: 'players' }))
-      .on('pointerover', () => this.selectPlayersText.setFill(HOVER_ACTION_LINK_COLOUR))
-      .on('pointerout', () => this.selectPlayersText.setFill(ACTION_LINK_COLOUR))
     this.defeatText = this.scene.add
       .text(462, (9 * HEX_SIZE + DRAWING_OFFSET.y) / 2, 'You have been defeated!', {
         stroke: '#000000',
@@ -128,9 +111,38 @@ export class TextsDisplayObject {
       .setFontSize(42)
       .setVisible(false)
       .setDepth(100)
-    this.worldLogText = this.scene.add.text(960, 50, '').setWordWrapWidth(470).setFontSize(14)
+
+    // Side panel
+
+    const { x, y } = { x: 950, y: 20 }
+    this.background = scene.add
+      .rectangle(x, y, TextsDisplayObject.WIDTH, TextsDisplayObject.HEIGHT, colourNumber('#000000'), 0.8)
+      .setOrigin(0)
+      .setInteractive()
+      .on('pointerdown', (pointer: Pointer, x: number, y: number, event: EventData): void => event.stopPropagation())
+      .on('pointerup', (pointer: Pointer, x: number, y: number, event: EventData): void => event.stopPropagation())
+
+    const border = new UiBorderDisplayObject(scene, {
+      topLeft: point(x, y),
+      width: TextsDisplayObject.WIDTH,
+      height: TextsDisplayObject.HEIGHT,
+    })
+    scene.add.existing(border)
+
+    this.logLink = new LinkDisplayObject(this.scene, x + 10, y + 6, 'Log', () =>
+      this.localActionDispatcher({ type: 'changeSidebar', sidebar: 'log' }),
+    )
+    this.scene.add.existing(this.logLink)
+    this.playersLink = new LinkDisplayObject(this.scene, x + 74, y + 6, 'Players', () =>
+      this.localActionDispatcher({ type: 'changeSidebar', sidebar: 'players' }),
+    )
+    this.scene.add.existing(this.playersLink)
+    this.worldLogText = this.scene.add
+      .text(x + 10, y + 30, '')
+      .setWordWrapWidth(470)
+      .setFontSize(14)
     this.chatText = this.scene.add
-      .text(960, 600, 'Chat...', {
+      .text(x + 10, y + TextsDisplayObject.HEIGHT - 40, 'Chat...', {
         fill: '#FFFFFF',
         fixedWidth: 478,
         backgroundColor: '#333333',
@@ -148,17 +160,20 @@ export class TextsDisplayObject {
           },
         })
       })
-    this.hostCrown = this.scene.add.image(1235, 0, 'crown').setScale(0.6)
+    this.hostCrown = this.scene.add.image(x + 285, 0, 'crown').setScale(0.6)
     for (const player of worldState.getSortedPlayers()) {
       const nameText = this.scene.add
-        .text(1005, 0, player.name, {
+        .text(950 + 65, 0, player.name, {
           fill: '#FFFFFF',
           fixedWidth: 200,
           fontStyle: player.id === this.localGameState.playerId ? 'bold' : 'normal',
         })
         .setFontSize(18)
         .setPadding(0, 0, 0, 0)
-      const llama = this.scene.add.sprite(975, 0, ImageKeys.LLAMA_EAT_1).setScale(0.6).setTint(getPlayerTint(player.id))
+      const llama = this.scene.add
+        .sprite(950 + 25, 0, ImageKeys.LLAMA_EAT_1)
+        .setScale(0.6)
+        .setTint(getPlayerTint(player.id))
       const playerObjects: PlayerObjects = { nameText, llama }
       this.playerObjects.set(player.id, playerObjects)
     }
@@ -180,6 +195,9 @@ export class TextsDisplayObject {
     this.endTurnButton.setVisible(canAct)
     this.defeatText.setVisible(player.defeated)
     this.victoryText.setVisible(worldState.gameOverInfo?.victor === player.id)
+
+    // Side panel
+
     this.worldLogText.setText(R.takeLast(20, this.worldState.worldLog).join('\n'))
     this.worldLogText.setVisible(localGameState.sidebar === 'log')
     let y = 65
