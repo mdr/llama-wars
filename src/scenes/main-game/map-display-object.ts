@@ -38,11 +38,14 @@ export class MapDisplayObject {
 
   private createHex = (hex: Hex): void => {
     const polygonCenter = hexCenter(hex)
-    this.scene.add.image(polygonCenter.x, polygonCenter.y, 'grass').setScale(0.65).setDepth(-5)
+    const grass = this.scene.add.image(polygonCenter.x, polygonCenter.y, 'grass').setScale(0.65).setDepth(-5)
+    this.scene.cameras.getCamera('ui').ignore(grass)
     if (this.worldState.map.isMountain(hex)) {
-      this.scene.add.image(polygonCenter.x, polygonCenter.y, 'mountain').setDepth(-5)
+      const mountain = this.scene.add.image(polygonCenter.x, polygonCenter.y, 'mountain').setDepth(-5)
+      this.scene.cameras.getCamera('ui').ignore(mountain)
     }
     const polygon = this.addPolygon(polygonCenter, HEX_SIZE)
+    this.scene.cameras.getCamera('ui').ignore(polygon)
     this.hexPolygons.set(hex.toString(), polygon)
   }
 

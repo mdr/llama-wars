@@ -77,7 +77,10 @@ export class GameScene extends Phaser.Scene {
     this.localGameState = INITIAL_LOCAL_GAME_STATE.copy({ playerId: serverOrClient.playerId })
     this.serverOrClient = serverOrClient
     serverOrClient.addListener(this.handleWorldEvent)
-
+    const mainCamera = this.cameras.main
+    this.cameras.add(0, 0, mainCamera.width, mainCamera.height, false, 'ui')
+    mainCamera.setBounds(0, 0, mainCamera.width * 2, mainCamera.height * 2)
+    // mainCamera.zoomTo(0.5, 2000)
     this.displayObjects = new DisplayObjects(this, this.worldState, this.localGameState, this.handleLocalAction)
     this.updateAsAtStartOfTurn()
     this.setUpInputs()
@@ -109,7 +112,19 @@ export class GameScene extends Phaser.Scene {
     this.input.keyboard.on('keydown', this.handleKey)
     this.input.on('pointerdown', this.handlePointerDown)
     this.input.on('pointermove', this.handlePointerMove)
-    this.input.topOnly = true
+    this.input.on('wheel', (pointer: Pointer, something: any[], dx: number, dy: number, dz: number) => {
+      if (dy < 0) {
+        this.cameras.main.zoom *= 1.1
+        if (this.cameras.main.zoom > 1) {
+          this.cameras.main.zoom = 1
+        }
+      } else {
+        this.cameras.main.zoom *= 1 / 1.1
+        if (this.cameras.main.zoom < 0.3) {
+          this.cameras.main.zoom = 0.3
+        }
+      }
+    })
   }
 
   private handleKey = (event: KeyboardEvent): void => {
@@ -122,6 +137,10 @@ export class GameScene extends Phaser.Scene {
   private handleLocalAction = (localAction: LocalAction): void => {
     const localActionProcessor = new LocalActionProcessor(this.worldState, this.localGameState)
     const result = localActionProcessor.process(localAction)
+    if (result?.panTo) {
+      const { x, y } = result?.panTo
+      this.cameras.main.pan(x, y, 500, 'Cubic')
+    }
     if (result) {
       this.enactLocalActionResult(result)
     }
@@ -144,12 +163,12 @@ export class GameScene extends Phaser.Scene {
   }
 
   private handlePointerMove = (pointer: Pointer): void => {
-    const pointerPoint = { x: pointer.x, y: pointer.y }
+    const pointerPoint = this.cameras.main.getWorldPoint(pointer.x, pointer.y)
     this.displayObjects?.handlePointerMove(pointerPoint)
   }
 
   private handlePointerDown = (pointer: Pointer): void => {
-    const pressedPoint = { x: pointer.x, y: pointer.y }
+    const pressedPoint = this.cameras.main.getWorldPoint(pointer.x, pointer.y)
     const hex = fromPoint(multiplyPoint(subtractPoints(pressedPoint, DRAWING_OFFSET), 1 / HEX_SIZE))
     if (pointer.button === 2) {
       this.handleLocalAction({ type: 'goHex', hex })

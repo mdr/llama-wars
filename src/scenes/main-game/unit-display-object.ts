@@ -26,6 +26,8 @@ export class UnitDisplayObject {
     this.unit = unit
     this.image = scene.add.sprite(0, 0, 'llama-2').setScale(0.8).setTint(getPlayerTint(this.unit.playerId))
     this.healthBarGraphics = scene.add.graphics()
+    this.scene.cameras.getCamera('ui').ignore(this.image)
+    this.scene.cameras.getCamera('ui').ignore(this.healthBarGraphics)
   }
 
   private getHealthBarPosition = (point: Point): Point => addPoints(point, HEALTH_BAR_OFFSET)

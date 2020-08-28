@@ -9,10 +9,13 @@ import { UnreachableCaseError } from '../../util/unreachable-case-error'
 import { HexDirection } from '../../world/hex-direction'
 import { Mode } from './mode'
 import { CombinedState } from '../combined-state-methods'
+import { Point } from '../point'
+import { hexCenter } from './game-scene'
 
 export interface LocalActionResult {
   newLocalGameState?: LocalGameState
   worldAction?: WorldAction
+  panTo?: Point
 }
 
 export class LocalActionProcessor {
@@ -63,10 +66,8 @@ export class LocalActionProcessor {
     const selectedUnit = this.combinedState.findSelectedUnit()
     const unitToSelect = this.combinedState.findNextUnitWithUnspentActionPoints(selectedUnit?.id)
     if (unitToSelect) {
-      const newLocalGameState = this.localGameState
-        .setSelectedHex(unitToSelect?.location)
-        .setMode({ type: 'selectHex' })
-      return { newLocalGameState: newLocalGameState }
+      const newLocalGameState = this.localGameState.setSelectedHex(unitToSelect.location).setMode({ type: 'selectHex' })
+      return { newLocalGameState: newLocalGameState, panTo: hexCenter(unitToSelect.location) }
     } else {
       return undefined
     }

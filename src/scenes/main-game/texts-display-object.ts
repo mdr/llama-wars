@@ -51,10 +51,17 @@ export class TextsDisplayObject {
       localActionDispatcher,
       selectionLocation,
     ).setDepth(100)
+    this.scene.cameras.main.ignore(this.selectionInfo)
     this.scene.add.existing(this.selectionInfo)
-    this.scene.add.image(40, 28, ImageKeys.LLAMA_2).setScale(0.6).setTint(getPlayerTint(localGameState.playerId))
+    const playerLlamaImage = this.scene.add
+      .image(40, 28, ImageKeys.LLAMA_2)
+      .setScale(0.6)
+      .setTint(getPlayerTint(localGameState.playerId))
+    this.scene.cameras.main.ignore(playerLlamaImage)
     this.playerText = this.scene.add.text(70, 20, '')
     this.hourglass = this.scene.add.image(875, 30, 'hourglass').setVisible(false)
+    this.scene.cameras.main.ignore(this.playerText)
+    this.scene.cameras.main.ignore(this.hourglass)
 
     this.defeatText = this.scene.add
       .text(462, (9 * HEX_SIZE + DRAWING_OFFSET.y) / 2, 'You have been defeated!', {
@@ -65,6 +72,8 @@ export class TextsDisplayObject {
       .setFontSize(42)
       .setVisible(false)
       .setDepth(200)
+    this.scene.cameras.main.ignore(this.defeatText)
+
     this.victoryText = this.scene.add
       .text(462, 30, 'Victory!', {
         stroke: '#000000',
@@ -74,6 +83,7 @@ export class TextsDisplayObject {
       .setFontSize(42)
       .setVisible(false)
       .setDepth(200)
+    this.scene.cameras.main.ignore(this.victoryText)
 
     const sidePanelLocation = { x: getGameWidth(this.scene) - SidePanelDisplayObject.WIDTH - 10, y: 20 }
     this.sidePanel = new SidePanelDisplayObject(
@@ -84,6 +94,7 @@ export class TextsDisplayObject {
       sidePanelLocation,
     ).setDepth(100)
     scene.add.existing(this.sidePanel)
+    this.scene.cameras.main.ignore(this.sidePanel)
 
     this.endTurnButton = new PrimaryButton(this.scene, 0, 0, 'End Turn', () =>
       this.localActionDispatcher({ type: 'endTurn' }),
@@ -94,6 +105,7 @@ export class TextsDisplayObject {
     this.endTurnButton.setX(x)
     this.endTurnButton.setY(y)
     this.scene.add.existing(this.endTurnButton)
+    this.scene.cameras.main.ignore(this.endTurnButton)
 
     this.waitingForNextTurnText = this.scene.add
       .text(x, y + 15, 'Waiting for next turn...', {
@@ -102,6 +114,7 @@ export class TextsDisplayObject {
       .setFontSize(18)
       .setShadow(2, 2, '#000000')
       .setDepth(200)
+    this.scene.cameras.main.ignore(this.waitingForNextTurnText)
   }
 
   public syncScene = (worldState: WorldState, localGameState: LocalGameState): void => {
