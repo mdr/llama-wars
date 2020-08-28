@@ -1,19 +1,24 @@
 import { AudioKeys, ImageKeys } from '../scenes/asset-keys'
 import { GameObjects } from 'phaser'
+import EventData = Phaser.Types.Input.EventData
+import Pointer = Phaser.Input.Pointer
 
 export class PrimaryButton extends GameObjects.Container {
   private readonly image: GameObjects.Image
   private readonly text: GameObjects.Text
-
   constructor(scene: Phaser.Scene, x: number, y: number, text: string, onPressed: () => void) {
     super(scene, x, y, [])
     this.image = scene.add
       .image(0, 0, 'blank-button')
       .setInteractive()
-      .on('pointerdown', () => this.image.setTexture(ImageKeys.BLANK_BUTTON_PRESSED))
-      .on('pointerup', () => {
+      .on('pointerdown', (pointer: Pointer, x: number, y: number, event: EventData) => {
+        this.image.setTexture(ImageKeys.BLANK_BUTTON_PRESSED)
+        event.stopPropagation()
+      })
+      .on('pointerup', (pointer: Pointer, x: number, y: number, event: EventData) => {
         this.image.setTexture(ImageKeys.BLANK_BUTTON)
         scene.sound.play(AudioKeys.CLICK)
+        event.stopPropagation()
         onPressed()
       })
       .on('pointerout', () => this.image.setTexture(ImageKeys.BLANK_BUTTON))

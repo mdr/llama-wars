@@ -14,6 +14,8 @@ import { PrimaryButton } from '../../ui/primary-button'
 import { SelectionInfoDisplayObject } from './selection-info-display-object'
 import { ACTION_LINK_COLOUR, HOVER_ACTION_LINK_COLOUR } from './link-display-object'
 import { getGameHeight } from '../../helpers'
+import Pointer = Phaser.Input.Pointer
+import EventData = Phaser.Types.Input.EventData
 
 export type LocalActionDispatcher = (action: LocalAction) => void
 
@@ -57,8 +59,15 @@ export class TextsDisplayObject {
     this.worldState = worldState
     this.localGameState = localGameState
     this.localActionDispatcher = localActionDispatcher
-    this.background = scene.add.rectangle(950, 20, 500, 620, colourNumber('#000000'), 0.8).setOrigin(0)
-    const border = new UiBorderDisplayObject(scene, { topLeft: point(950, 20), width: 500, height: 620 })
+    const { x, y } = { x: 950, y: 20 }
+    this.background = scene.add
+      .rectangle(x, y, 500, 620, colourNumber('#000000'), 0.8)
+      .setOrigin(0)
+      .setInteractive()
+      .on('pointerdown', (pointer: Pointer, x: number, y: number, event: EventData): void => event.stopPropagation())
+      .on('pointerup', (pointer: Pointer, x: number, y: number, event: EventData): void => event.stopPropagation())
+
+    const border = new UiBorderDisplayObject(scene, { topLeft: point(x, y), width: 500, height: 620 })
     scene.add.existing(border)
 
     const selectionLocation = { x: 10, y: getGameHeight(this.scene) - SelectionInfoDisplayObject.HEIGHT - 10 }
