@@ -2,7 +2,6 @@ import * as R from 'ramda'
 
 import { WorldState } from '../../world/world-state'
 import { LocalGameState } from '../local-game-state'
-import { mapHeight } from '../hex-geometry'
 import { colourNumber, getPlayerTint } from '../colours'
 import { DRAWING_OFFSET, HEX_SIZE } from './game-scene'
 import { point, Point } from '../point'
@@ -58,7 +57,6 @@ export class TextsDisplayObject {
     this.worldState = worldState
     this.localGameState = localGameState
     this.localActionDispatcher = localActionDispatcher
-    const map = this.worldState.map
     this.background = scene.add.rectangle(950, 20, 500, 620, colourNumber('#000000'), 0.8).setOrigin(0)
     const border = new UiBorderDisplayObject(scene, { topLeft: point(950, 20), width: 500, height: 620 })
     scene.add.existing(border)
@@ -70,13 +68,14 @@ export class TextsDisplayObject {
       localGameState,
       localActionDispatcher,
       selectionLocation,
-    )
+    ).setDepth(100)
+    this.scene.add.existing(this.selectionInfo)
     this.scene.add.image(40, 28, ImageKeys.LLAMA_2).setScale(0.6).setTint(getPlayerTint(localGameState.playerId))
     this.playerText = this.scene.add.text(70, 20, '')
     this.hourglass = this.scene.add.image(875, 30, 'hourglass').setVisible(false)
 
     this.endTurnText = this.scene.add
-      .text(790 + 520, mapHeight(map) * HEX_SIZE + DRAWING_OFFSET.y + 68 + 72, '', {
+      .text(790 + 520, 9 * HEX_SIZE + DRAWING_OFFSET.y + 68 + 72, '', {
         fill: '#ffffff',
       })
       .setOrigin(0.5)
@@ -84,7 +83,7 @@ export class TextsDisplayObject {
     this.endTurnButton = new PrimaryButton(
       this.scene,
       650 + 520,
-      mapHeight(map) * HEX_SIZE + DRAWING_OFFSET.y + 44 + 72,
+      9 * HEX_SIZE + DRAWING_OFFSET.y + 44 + 72,
       'End Turn',
       () => this.localActionDispatcher({ type: 'endTurn' }),
     )
@@ -102,7 +101,7 @@ export class TextsDisplayObject {
       .on('pointerover', () => this.selectPlayersText.setFill(HOVER_ACTION_LINK_COLOUR))
       .on('pointerout', () => this.selectPlayersText.setFill(ACTION_LINK_COLOUR))
     this.defeatText = this.scene.add
-      .text(462, (mapHeight(map) * HEX_SIZE + DRAWING_OFFSET.y) / 2, 'You have been defeated!', {
+      .text(462, (9 * HEX_SIZE + DRAWING_OFFSET.y) / 2, 'You have been defeated!', {
         stroke: '#000000',
         strokeThickness: 4,
       })
@@ -154,8 +153,6 @@ export class TextsDisplayObject {
       this.playerObjects.set(player.id, playerObjects)
     }
   }
-
-  public hasClickHandlerFor = (point: Point): boolean => this.selectionInfo.hasClickHandlerFor(point)
 
   public syncScene = (worldState: WorldState, localGameState: LocalGameState): void => {
     this.worldState = worldState

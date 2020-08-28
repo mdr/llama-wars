@@ -11,15 +11,14 @@ import { PlayerId } from '../../world/player'
 import { Unit, UnitId } from '../../world/unit'
 import { AttackType } from '../../world/world-actions'
 import { LinkDisplayObject } from './link-display-object'
-import Scene = Phaser.Scene
 import { colourNumber } from '../colours'
+import EventData = Phaser.Types.Input.EventData
+import Pointer = Phaser.Input.Pointer
 
 const BORDER_PADDING = 12
 const TEXT_SPACING = 25
 
-export class SelectionInfoDisplayObject {
-  private readonly scene: Scene
-
+export class SelectionInfoDisplayObject extends GameObjects.Container {
   private worldState: WorldState
   private localGameState: LocalGameState
   private readonly localActionDispatcher: LocalActionDispatcher
@@ -41,29 +40,32 @@ export class SelectionInfoDisplayObject {
     localActionDispatcher: LocalActionDispatcher,
     location: Point,
   ) {
+    super(scene, location.x, location.y, [])
     this.scene = scene
     this.worldState = worldState
     this.localGameState = localGameState
     this.localActionDispatcher = localActionDispatcher
-    const { x, y } = location
     this.background = scene.add
       .rectangle(
-        x,
-        y,
+        0,
+        0,
         SelectionInfoDisplayObject.WIDTH,
         SelectionInfoDisplayObject.HEIGHT,
         colourNumber('#000000'),
         0.8,
       )
       .setOrigin(0)
+      .setInteractive()
+      .on('pointerdown', (pointer: Pointer, x: number, y: number, event: EventData): void => event.stopPropagation())
+      .on('pointerup', (pointer: Pointer, x: number, y: number, event: EventData): void => event.stopPropagation())
     this.border = new UiBorderDisplayObject(scene, {
-      topLeft: point(x, y),
+      topLeft: point(0, 0),
       width: SelectionInfoDisplayObject.WIDTH,
       height: SelectionInfoDisplayObject.HEIGHT,
     })
     scene.add.existing(this.border)
-    const Y_OFFSET = y + BORDER_PADDING
-    const X_OFFSET = x + BORDER_PADDING
+    const Y_OFFSET = BORDER_PADDING
+    const X_OFFSET = BORDER_PADDING
     this.selectionText = this.scene.add.text(X_OFFSET, Y_OFFSET, '')
     this.actionLink1 = new LinkDisplayObject(scene, X_OFFSET, Y_OFFSET + TEXT_SPACING, '', this.handleActionLink1Click)
     this.actionLink2 = new LinkDisplayObject(
@@ -83,6 +85,7 @@ export class SelectionInfoDisplayObject {
     this.scene.add.existing(this.actionLink1)
     this.scene.add.existing(this.actionLink2)
     this.scene.add.existing(this.actionLink3)
+    this.add([this.background, this.border, this.selectionText, this.actionLink1, this.actionLink2, this.actionLink3])
   }
 
   private get combinedState(): CombinedState {
@@ -124,12 +127,11 @@ export class SelectionInfoDisplayObject {
     this.worldState = worldState
     this.localGameState = localGameState
     const visible = this.combinedState.findSelectedUnit() !== undefined
-    this.background.setVisible(visible)
-    this.border.setVisible(visible)
-    this.selectionText.setText('').setVisible(visible)
-    this.actionLink1.setText('').setVisible(visible)
-    this.actionLink2.setText('').setVisible(visible)
-    this.actionLink3.setText('').setVisible(visible)
+    this.setVisible(visible)
+    this.selectionText.setText('')
+    this.actionLink1.setText('')
+    this.actionLink2.setText('')
+    this.actionLink3.setText('')
     const mode = this.localGameState.mode
     switch (mode.type) {
       case 'selectHex':
@@ -181,10 +183,4 @@ export class SelectionInfoDisplayObject {
   }
 
   private getPlayerName = (playerId: PlayerId): string => this.worldState.getPlayer(playerId).name
-
-  public hasClickHandlerFor = (point: Point): boolean => {
-    for (const gameObject of [this.actionLink1, this.actionLink2, this.actionLink3])
-      if (gameObject.containsPoint(point)) return true
-    return false
-  }
 }

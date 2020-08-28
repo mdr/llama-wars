@@ -109,6 +109,7 @@ export class GameScene extends Phaser.Scene {
     this.input.keyboard.on('keydown', this.handleKey)
     this.input.on('pointerdown', this.handlePointerDown)
     this.input.on('pointermove', this.handlePointerMove)
+    this.input.topOnly = true
   }
 
   private handleKey = (event: KeyboardEvent): void => {
@@ -148,11 +149,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   private handlePointerDown = (pointer: Pointer): void => {
-    // Ignore clicks on these as they have their own handlers
     const pressedPoint = { x: pointer.x, y: pointer.y }
-    if (this.displayObjects?.hasClickHandlerFor(pressedPoint)) {
-      return
-    }
     const hex = fromPoint(multiplyPoint(subtractPoints(pressedPoint, DRAWING_OFFSET), 1 / HEX_SIZE))
     if (pointer.button === 2) {
       this.handleLocalAction({ type: 'goHex', hex })

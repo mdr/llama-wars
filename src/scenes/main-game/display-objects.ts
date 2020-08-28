@@ -65,8 +65,6 @@ export class DisplayObjects {
 
   public handlePointerMove = (point: Point): void => this.mapDisplayObject?.handlePointerMove(point)
 
-  public hasClickHandlerFor = (point: Point): boolean => this.textsDisplayObject.hasClickHandlerFor(point)
-
   public syncScene = (
     worldState: WorldState,
     localGameState: LocalGameState,

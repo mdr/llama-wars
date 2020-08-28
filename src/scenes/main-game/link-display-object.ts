@@ -1,5 +1,7 @@
 import { Point } from '../point'
 import { GameObjects } from 'phaser'
+import EventData = Phaser.Types.Input.EventData
+import Pointer = Phaser.Input.Pointer
 
 export const ACTION_LINK_COLOUR = '#cccc00'
 export const HOVER_ACTION_LINK_COLOUR = '#ffff00'
@@ -14,7 +16,7 @@ export class LinkDisplayObject extends GameObjects.Text {
     this.onClick = onClick
     this.setDefaultStyle()
       .setInteractive()
-      .on('pointerup', this.onClick)
+      .on('pointerup', this.handlePointerUp)
       .on('pointerdown', this.handlePointerDown)
       .on('pointerover', this.handlePointerOver)
       .on('pointerout', this.handlePointerOut)
@@ -26,14 +28,18 @@ export class LinkDisplayObject extends GameObjects.Text {
     this.setDefaultStyle()
   }
 
-  private handlePointerDown = (): void => {
+  private handlePointerDown = (pointer: Pointer, x: number, y: number, event: EventData): void => {
     this.setBackgroundColor(PRESSED_BACKGROUND_COLOUR)
+    event.stopPropagation()
   }
 
-  private handlePointerOver = (pointer: Phaser.Input.Pointer): void => {
+  private handlePointerOver = (pointer: Pointer): void => {
     this.setBackgroundColor(pointer.isDown ? PRESSED_BACKGROUND_COLOUR : DEFAULT_BACKGROUND_COLOUR)
     this.setFill(HOVER_ACTION_LINK_COLOUR)
   }
 
-  public containsPoint = (point: Point): boolean => this.getBounds().contains(point.x, point.y)
+  private handlePointerUp = (pointer: Pointer, x: number, y: number, event: EventData) => {
+    this.onClick()
+    event.stopPropagation()
+  }
 }
