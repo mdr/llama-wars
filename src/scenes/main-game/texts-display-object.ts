@@ -86,7 +86,8 @@ export class TextsDisplayObject {
       9 * HEX_SIZE + DRAWING_OFFSET.y + 44 + 72,
       'End Turn',
       () => this.localActionDispatcher({ type: 'endTurn' }),
-    )
+    ).setDepth(100)
+    this.scene.add.existing(this.endTurnButton)
 
     this.selectWorldLogText = this.scene.add
       .text(960, 26, 'Log', { fill: ACTION_LINK_COLOUR })

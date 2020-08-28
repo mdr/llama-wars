@@ -35,6 +35,7 @@ export class LobbyDisplayObjects {
     this.scene.add.text(155, 50, 'Llama Wars', { fill: '#FFFFFF' }).setFontSize(26)
     if (playerId === HOST_PLAYER_ID) {
       this.startGameButton = new PrimaryButton(this.scene, 100, 0, 'Start Game', this.handleStartGameButtonPressed)
+      this.scene.add.existing(this.startGameButton)
     } else {
       this.waitingForHostText = this.scene.add.text(100, 0, 'Waiting for host to start the game...')
     }

@@ -27,7 +27,8 @@ export class MainMenuScene extends Phaser.Scene {
     this.add.text(155, 50, 'Llama Wars', { fill: '#FFFFFF' }).setFontSize(26)
     this.sound.pauseOnBlur = false
     this.sound.add(AudioKeys.CLICK)
-    new PrimaryButton(this, 100, 120, 'Host Game', this.handleHostGame)
+    const hostGameButton = new PrimaryButton(this, 100, 120, 'Host Game', this.handleHostGame)
+    this.add.existing(hostGameButton)
   }
 
   private handleHostGame = async (): Promise<void> => {
