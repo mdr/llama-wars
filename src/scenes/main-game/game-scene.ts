@@ -26,7 +26,7 @@ import { DisplayObjects } from './display-objects'
 import { PlayerId } from '../../world/player'
 import Pointer = Phaser.Input.Pointer
 import { AnimationSpec } from './animation-spec'
-import { UiBorderDisplayObject } from './ui-border-display-object'
+import { UI_CAMERA } from './cameras'
 
 export const GAME_SCENE_KEY = 'Game'
 const CAMERA_BOUNDS_BUFFER = 200
@@ -80,7 +80,7 @@ export class GameScene extends Phaser.Scene {
     this.serverOrClient = serverOrClient
     serverOrClient.addListener(this.handleWorldEvent)
     const mainCamera = this.cameras.main
-    this.cameras.add(0, 0, mainCamera.width, mainCamera.height, false, 'ui')
+    this.cameras.add(0, 0, mainCamera.width, mainCamera.height, false, UI_CAMERA)
     mainCamera.setBounds(
       0 - CAMERA_BOUNDS_BUFFER,
       0 - CAMERA_BOUNDS_BUFFER,

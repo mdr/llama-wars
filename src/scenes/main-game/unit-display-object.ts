@@ -6,8 +6,9 @@ import { addPoints, distanceBetweenPoints, Point } from '../point'
 import { playTween } from '../../util/phaser/tween-utils'
 import { AnimationSpeed } from './display-objects'
 import { randomIntInclusive } from '../../util/random-util'
-import assert = require('assert')
 import { AnimationKeys } from '../animations'
+import { getUiCamera } from './cameras'
+import assert = require('assert')
 
 const HEALTH_BAR_WIDTH = 50
 const HEALTH_BAR_HEIGHT = 12
@@ -26,8 +27,9 @@ export class UnitDisplayObject {
     this.unit = unit
     this.image = scene.add.sprite(0, 0, 'llama-2').setScale(0.8).setTint(getPlayerTint(this.unit.playerId))
     this.healthBarGraphics = scene.add.graphics()
-    this.scene.cameras.getCamera('ui').ignore(this.image)
-    this.scene.cameras.getCamera('ui').ignore(this.healthBarGraphics)
+    const uiCamera = getUiCamera(this.scene)
+    uiCamera.ignore(this.image)
+    uiCamera.ignore(this.healthBarGraphics)
   }
 
   private getHealthBarPosition = (point: Point): Point => addPoints(point, HEALTH_BAR_OFFSET)
