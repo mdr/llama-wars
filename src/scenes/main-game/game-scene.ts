@@ -55,6 +55,7 @@ export class GameScene extends Phaser.Scene {
   private localGameState: LocalGameState = INITIAL_LOCAL_GAME_STATE
 
   private displayObjects?: DisplayObjects
+  private controls?: Phaser.Cameras.Controls.SmoothedKeyControl
 
   private get combinedState(): CombinedState {
     return new CombinedState(this.worldState, this.localGameState)
@@ -119,6 +120,19 @@ export class GameScene extends Phaser.Scene {
     this.input.on('pointerdown', this.handlePointerDown)
     this.input.on('pointermove', this.handlePointerMove)
     this.input.on('wheel', this.handleWheel)
+    const cursors = this.input.keyboard.createCursorKeys()
+    this.controls = new Phaser.Cameras.Controls.SmoothedKeyControl({
+      camera: this.cameras.main,
+      left: cursors.left,
+      right: cursors.right,
+      up: cursors.up,
+      down: cursors.down,
+      zoomIn: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.Q),
+      zoomOut: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.E),
+      acceleration: 0.6,
+      drag: 0.005,
+      maxSpeed: 1.0,
+    })
   }
 
   private handleWheel = (pointer: Pointer, something: any[], dx: number, dy: number) => {
@@ -327,5 +341,9 @@ export class GameScene extends Phaser.Scene {
 
   private get playerId(): PlayerId {
     return this.localGameState.playerId
+  }
+
+  public update(time: number, delta: number): void {
+    this.controls?.update(delta)
   }
 }

@@ -5,10 +5,8 @@ import { Mode } from './mode'
 
 export const mapToLocalAction = (event: KeyboardEvent, mode: Mode): Option<LocalAction> => {
   switch (event.key) {
-    case 'ArrowLeft':
     case '4':
       return { type: 'go', direction: HexDirection.WEST }
-    case 'ArrowRight':
     case '6':
       return { type: 'go', direction: HexDirection.EAST }
     case '7':
