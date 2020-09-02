@@ -112,19 +112,21 @@ export class GameScene extends Phaser.Scene {
     this.input.keyboard.on('keydown', this.handleKey)
     this.input.on('pointerdown', this.handlePointerDown)
     this.input.on('pointermove', this.handlePointerMove)
-    this.input.on('wheel', (pointer: Pointer, something: any[], dx: number, dy: number, dz: number) => {
-      if (dy < 0) {
-        this.cameras.main.zoom *= 1.1
-        if (this.cameras.main.zoom > 1) {
-          this.cameras.main.zoom = 1
-        }
-      } else {
-        this.cameras.main.zoom *= 1 / 1.1
-        if (this.cameras.main.zoom < 0.3) {
-          this.cameras.main.zoom = 0.3
-        }
+    this.input.on('wheel', this.handleWheel)
+  }
+
+  private handleWheel = (pointer: Pointer, something: any[], dx: number, dy: number) => {
+    if (dy < 0) {
+      this.cameras.main.zoom *= 1.1
+      if (this.cameras.main.zoom > 1) {
+        this.cameras.main.zoom = 1
       }
-    })
+    } else {
+      this.cameras.main.zoom *= 1 / 1.1
+      if (this.cameras.main.zoom < 0.3) {
+        this.cameras.main.zoom = 0.3
+      }
+    }
   }
 
   private handleKey = (event: KeyboardEvent): void => {
@@ -134,13 +136,13 @@ export class GameScene extends Phaser.Scene {
     }
   }
 
+  private panTo = (point: Point): void => {
+    this.cameras.main.pan(point.x, point.y, 500, 'Cubic')
+  }
+
   private handleLocalAction = (localAction: LocalAction): void => {
     const localActionProcessor = new LocalActionProcessor(this.worldState, this.localGameState)
     const result = localActionProcessor.process(localAction)
-    if (result?.panTo) {
-      const { x, y } = result?.panTo
-      this.cameras.main.pan(x, y, 500, 'Cubic')
-    }
     if (result) {
       this.enactLocalActionResult(result)
     }
@@ -159,6 +161,9 @@ export class GameScene extends Phaser.Scene {
         this.localGameState = this.localGameState.decrementActionsOutstandingWithServer()
         this.syncScene()
       })
+    }
+    if (result.panTo) {
+      this.panTo(result.panTo)
     }
   }
 
