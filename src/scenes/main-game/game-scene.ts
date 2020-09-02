@@ -1,6 +1,6 @@
 import { addPoints, multiplyPoint, Point, subtractPoints } from '../point'
 import { Hex } from '../../world/hex'
-import { centerPoint, fromPoint } from '../hex-geometry'
+import { centerPoint, fromPoint, hexWidth, mapHeight, mapWidth } from '../hex-geometry'
 import { WorldState } from '../../world/world-state'
 import {
   CombatParticipantInfo,
@@ -26,8 +26,10 @@ import { DisplayObjects } from './display-objects'
 import { PlayerId } from '../../world/player'
 import Pointer = Phaser.Input.Pointer
 import { AnimationSpec } from './animation-spec'
+import { UiBorderDisplayObject } from './ui-border-display-object'
 
 export const GAME_SCENE_KEY = 'Game'
+const CAMERA_BOUNDS_BUFFER = 200
 
 const sceneConfig: Phaser.Types.Scenes.SettingsConfig = {
   active: false,
@@ -40,7 +42,7 @@ export interface GameSceneData {
 }
 
 export const HEX_SIZE = 48
-export const DRAWING_OFFSET = { x: 60, y: 100 }
+export const DRAWING_OFFSET: Point = { x: hexWidth(HEX_SIZE / 2), y: HEX_SIZE }
 export const hexCenter = (hex: Hex): Point => addPoints(multiplyPoint(centerPoint(hex), HEX_SIZE), DRAWING_OFFSET)
 
 export type GameId = string
@@ -79,8 +81,12 @@ export class GameScene extends Phaser.Scene {
     serverOrClient.addListener(this.handleWorldEvent)
     const mainCamera = this.cameras.main
     this.cameras.add(0, 0, mainCamera.width, mainCamera.height, false, 'ui')
-    mainCamera.setBounds(0, 0, mainCamera.width * 2, mainCamera.height * 2)
-    // mainCamera.zoomTo(0.5, 2000)
+    mainCamera.setBounds(
+      0 - CAMERA_BOUNDS_BUFFER,
+      0 - CAMERA_BOUNDS_BUFFER,
+      DRAWING_OFFSET.x + mapWidth(this.worldState.map, HEX_SIZE) + CAMERA_BOUNDS_BUFFER * 2,
+      mapHeight(this.worldState.map, HEX_SIZE) + CAMERA_BOUNDS_BUFFER * 2,
+    )
     this.displayObjects = new DisplayObjects(this, this.worldState, this.localGameState, this.handleLocalAction)
     this.updateAsAtStartOfTurn()
     this.setUpInputs()
@@ -137,7 +143,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   private panTo = (point: Point): void => {
-    this.cameras.main.pan(point.x, point.y, 500, 'Cubic')
+    this.cameras.main.pan(point.x, point.y, 500, 'Cubic', true)
   }
 
   private handleLocalAction = (localAction: LocalAction): void => {
