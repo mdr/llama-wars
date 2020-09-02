@@ -115,6 +115,15 @@ export class TextsDisplayObject {
       .setShadow(2, 2, '#000000')
       .setDepth(200)
     this.scene.cameras.main.ignore(this.waitingForNextTurnText)
+
+    window.addEventListener('resize', () => {
+      this.selectionInfo.setY(window.innerHeight - SelectionInfoDisplayObject.HEIGHT - 10)
+      this.sidePanel.setX(window.innerWidth - SidePanelDisplayObject.WIDTH - 10)
+      const x = window.innerWidth - endButtonBounds.width
+      const y = window.innerHeight - endButtonBounds.height - 10
+      this.endTurnButton.setX(x)
+      this.endTurnButton.setY(y)
+    })
   }
 
   public syncScene = (worldState: WorldState, localGameState: LocalGameState): void => {
