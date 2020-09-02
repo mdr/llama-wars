@@ -58,7 +58,8 @@ export class TextsDisplayObject {
       .setScale(0.6)
       .setTint(getPlayerTint(localGameState.playerId))
     this.scene.cameras.main.ignore(playerLlamaImage)
-    this.playerText = this.scene.add.text(70, 20, '')
+    this.playerText = this.scene.add.text(70, 20, '').setFontSize(18).setShadow(2, 2, '#000000')
+
     this.hourglass = this.scene.add.image(875, 30, 'hourglass').setVisible(false)
     this.scene.cameras.main.ignore(this.playerText)
     this.scene.cameras.main.ignore(this.hourglass)

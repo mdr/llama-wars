@@ -137,6 +137,7 @@ export class UnitDisplayObject {
       })
       .setFontSize(26)
       .setOrigin(0.5)
+    getUiCamera(this.scene).ignore(text)
     const duration = this.scaleSpeed(2000, speed)
     const tween1 = this.scene.tweens.create({
       targets: text,

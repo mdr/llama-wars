@@ -29,7 +29,7 @@ import { AnimationSpec } from './animation-spec'
 import { UI_CAMERA } from './cameras'
 
 export const GAME_SCENE_KEY = 'Game'
-const CAMERA_BOUNDS_BUFFER = 200
+const CAMERA_BOUNDS_BUFFER = 600
 
 const sceneConfig: Phaser.Types.Scenes.SettingsConfig = {
   active: false,
@@ -156,8 +156,10 @@ export class GameScene extends Phaser.Scene {
     }
   }
 
-  private panTo = (point: Point): void => {
-    this.cameras.main.pan(point.x, point.y, 500, 'Cubic', true)
+  private panIntoViewIfNeeded = (point: Point): void => {
+    if (!this.cameras.main.worldView.contains(point.x, point.y)) {
+      this.cameras.main.pan(point.x, point.y, 500, 'Cubic', true)
+    }
   }
 
   private handleLocalAction = (localAction: LocalAction): void => {
@@ -183,7 +185,7 @@ export class GameScene extends Phaser.Scene {
       })
     }
     if (result.panTo) {
-      this.panTo(result.panTo)
+      this.panIntoViewIfNeeded(result.panTo)
     }
   }
 
@@ -289,23 +291,24 @@ export class GameScene extends Phaser.Scene {
       this.localGameState.selectedHex &&
       previousWorldState.findUnitInLocation(this.localGameState.selectedHex)?.id === unitId
     if (wasPreviouslySelected && unit.playerId === this.playerId) {
-      const newSelectedHex = this.calculateNewSelectedUnitAfterMoveOrAttack(unitId, to)
+      const newSelectedHex = this.calculateNewSelectedUnitAfterMoveOrAttack(unitId)
       this.localGameState = this.localGameState.copy({ mode: { type: 'selectHex' } }).setSelectedHex(newSelectedHex)
+      if (newSelectedHex) {
+        this.panIntoViewIfNeeded(hexCenter(newSelectedHex))
+      }
     }
     this.syncScene({ type: 'move', unitId, from, to })
   }
 
-  private calculateNewSelectedUnitAfterMoveOrAttack = (unitId: UnitId, defaultLocation: Hex): Option<Hex> => {
+  private calculateNewSelectedUnitAfterMoveOrAttack = (unitId: UnitId): Option<Hex> => {
     const unit = this.worldState.findUnitById(unitId)
     // Retain selection if unit still exists and we still have action points, else select next unit (or nothing if there isn't one)
-    let newSelectedHex
-    if (!unit || unit.actionPoints.current === 0) {
-      const nextUnit = this.combinedState.findNextUnitWithUnspentActionPoints(unitId)
-      newSelectedHex = nextUnit?.location
+    if (unit && unit.actionPoints.current > 0) {
+      return unit.location
     } else {
-      newSelectedHex = defaultLocation
+      const nextUnit = this.combinedState.findNextUnitWithUnspentActionPoints(unitId)
+      return nextUnit?.location
     }
-    return newSelectedHex
   }
 
   private handleCombatWorldEvent = (event: CombatWorldEvent, previousWorldState: WorldState) => {
@@ -326,8 +329,11 @@ export class GameScene extends Phaser.Scene {
   ) => {
     const previouslySelectedUnitId = new CombinedState(previousWorldState, this.localGameState).findSelectedUnit()?.id
     if (previouslySelectedUnitId === attacker.unitId && attacker.playerId === this.playerId) {
-      const newSelectedHex = this.calculateNewSelectedUnitAfterMoveOrAttack(attacker.unitId, attacker.location)
+      const newSelectedHex = this.calculateNewSelectedUnitAfterMoveOrAttack(attacker.unitId)
       this.localGameState = this.localGameState.copy({ mode: { type: 'selectHex' } }).setSelectedHex(newSelectedHex)
+      if (newSelectedHex) {
+        this.panIntoViewIfNeeded(hexCenter(newSelectedHex))
+      }
     } else {
       // deselect unit killed by another player
       if (defender.killed && defender.unitId === previouslySelectedUnitId && defender.playerId === this.playerId) {
