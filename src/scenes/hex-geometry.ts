@@ -1,7 +1,6 @@
 import { Hex } from '../world/hex'
 import { Point } from './point'
 import { WorldMap } from '../world/world-map'
-import { HEX_SIZE } from './main-game/game-scene'
 
 export const centerPoint = (hex: Hex): Point => ({
   x: hex.x * Math.sqrt(3) + (hex.y * Math.sqrt(3)) / 2,
@@ -47,4 +46,4 @@ export function* hexCorners(center: Point, size: number): IterableIterator<Point
 export const hexWidth = (hexSize: number): number => hexSize * Math.sqrt(3)
 
 export const mapHeight = (map: WorldMap, hexSize: number): number => (1 / 2 + (map.height * 3) / 2) * hexSize
-export const mapWidth = (map: WorldMap, hexSize: number): number => hexWidth(HEX_SIZE) * map.width
+export const mapWidth = (map: WorldMap, hexSize: number): number => hexWidth(hexSize) * map.width

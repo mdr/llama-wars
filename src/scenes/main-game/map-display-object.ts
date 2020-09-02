@@ -13,7 +13,7 @@ import {
 import { LocalGameState } from '../local-game-state'
 import { CombinedState } from '../combined-state-methods'
 import Polygon = Phaser.GameObjects.Polygon
-import { getUiCamera, UI_CAMERA } from './cameras'
+import { getUiCamera } from './cameras'
 
 type TileState = 'default' | 'selected' | 'targetable'
 

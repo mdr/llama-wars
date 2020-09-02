@@ -1,7 +1,6 @@
 import { WorldState } from '../../world/world-state'
 import { LocalGameState } from '../local-game-state'
 import { getPlayerTint } from '../colours'
-import { DRAWING_OFFSET, HEX_SIZE } from './game-scene'
 import { CombinedState } from '../combined-state-methods'
 import { LocalAction } from './local-action'
 import { ImageKeys } from '../asset-keys'
@@ -65,7 +64,7 @@ export class TextsDisplayObject {
     this.scene.cameras.main.ignore(this.hourglass)
 
     this.defeatText = this.scene.add
-      .text(462, (9 * HEX_SIZE + DRAWING_OFFSET.y) / 2, 'You have been defeated!', {
+      .text(getGameWidth(this.scene) / 2, getGameHeight(this.scene) / 2, 'You have been defeated!', {
         stroke: '#000000',
         strokeThickness: 4,
       })
@@ -76,7 +75,7 @@ export class TextsDisplayObject {
     this.scene.cameras.main.ignore(this.defeatText)
 
     this.victoryText = this.scene.add
-      .text(462, 30, 'Victory!', {
+      .text(getGameWidth(this.scene) / 2, getGameHeight(this.scene) / 2, 'Victory!', {
         stroke: '#000000',
         strokeThickness: 4,
       })

@@ -1,4 +1,3 @@
-import { Point } from '../point'
 import { GameObjects } from 'phaser'
 import EventData = Phaser.Types.Input.EventData
 import Pointer = Phaser.Input.Pointer
