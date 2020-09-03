@@ -123,6 +123,8 @@ export class TextsDisplayObject {
       const y = window.innerHeight - endButtonBounds.height - 10
       this.endTurnButton.setX(x)
       this.endTurnButton.setY(y)
+      this.waitingForNextTurnText.setX(x)
+      this.waitingForNextTurnText.setY(y + 15)
     })
   }
 

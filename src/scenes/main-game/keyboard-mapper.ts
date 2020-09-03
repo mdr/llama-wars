@@ -22,6 +22,9 @@ export const mapToLocalAction = (event: KeyboardEvent, mode: Mode): Option<Local
     case 'Enter':
       if (event.shiftKey) return { type: 'endTurn' }
       break
+    case 'f':
+      if (event.ctrlKey) return { type: 'toggleFullScreen' }
+      break
     case 'n':
       if (event.ctrlKey) return { type: 'selectNextUnit' }
       break

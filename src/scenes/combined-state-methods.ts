@@ -1,7 +1,7 @@
 import { LocalGameState } from './local-game-state'
 import { WorldState } from '../world/world-state'
 import { Option } from '../util/types'
-import { Unit, UnitId } from '../world/unit'
+import { Unit, UnitId, UnitType } from '../world/unit'
 import { Hex } from '../world/hex'
 import * as R from 'ramda'
 import { Player, PlayerId } from '../world/player'
@@ -34,7 +34,10 @@ export class CombinedState {
     unit.playerId === this.playerId && unit.hasUnspentActionPoints && !this.getCurrentPlayer().endedTurn
 
   public unitCouldPotentiallyAttack = (unit: Unit): boolean =>
-    unit.playerId === this.playerId && unit.hasUnspentActionPoints && !this.getCurrentPlayer().endedTurn
+    unit.playerId === this.playerId &&
+    unit.type !== UnitType.CRIA &&
+    unit.hasUnspentActionPoints &&
+    !this.getCurrentPlayer().endedTurn
 
   public unitCanMoveToHex = (unit: Unit, hex: Hex): boolean =>
     this.unitCouldPotentiallyMove(unit) &&
@@ -53,8 +56,9 @@ export class CombinedState {
       targetUnit !== undefined &&
       targetUnit.playerId !== this.localGameState.playerId &&
       canAttackOccur(attackType, this.worldState.map, unit.location, location)
-    )
+    ) {
       return targetUnit
+    }
   }
 
   public findNextUnitWithUnspentActionPoints = (unitId?: UnitId): Option<Unit> => {
@@ -62,17 +66,21 @@ export class CombinedState {
       (unit) => unit.id,
       this.worldState.getUnitsForPlayer(this.playerId).filter((unit) => unit.hasUnspentActionPoints),
     )
-    if (unitId)
+    if (unitId) {
       return (
         R.head(candidateUnits.filter((unit) => unit.id > unitId)) ??
         R.head(candidateUnits.filter((unit) => unit.id < unitId))
       )
-    else return R.head(candidateUnits)
+    } else {
+      return R.head(candidateUnits)
+    }
   }
 
   public getCurrentPlayer = (): Player => {
     const player = this.worldState.findPlayer(this.playerId)
-    if (!player) throw `Could not find player with id ${this.playerId}`
+    if (!player) {
+      throw `Could not find player with id ${this.playerId}`
+    }
     return player
   }
 }

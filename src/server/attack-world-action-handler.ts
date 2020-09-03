@@ -2,11 +2,26 @@ import * as R from 'ramda'
 import { WorldState } from '../world/world-state'
 import { AttackType, AttackWorldAction } from '../world/world-actions'
 import { CombatWorldEvent, PlayerDefeatedWorldEvent, WorldEvent, WorldEventId } from '../world/world-events'
-import { Unit } from '../world/unit'
+import { Unit, UnitType } from '../world/unit'
 import { PlayerId } from '../world/player'
 import { randomIntInclusive } from '../util/random-util'
 import { Hex } from '../world/hex'
 import { WorldMap } from '../world/world-map'
+
+interface DamageDistribution {
+  baseDamage: number
+  plusMinus: number
+}
+
+const WARRIOR_ATTACK_DAMAGE_DISTRIBUTION = { baseDamage: 20, plusMinus: 3 }
+const DEFAULT_MELEE_DAMAGE_DISTRIBUTION = { baseDamage: 10, plusMinus: 2 }
+const CRIA_MELEE_DAMAGE_DISTRIBUTION = { baseDamage: 7, plusMinus: 2 }
+
+const NO_DAMAGE_DISTRIBUTION = { baseDamage: 0, plusMinus: 0 }
+const SPIT_DAMAGE_DISTRIBUTION = { baseDamage: 5, plusMinus: 1 }
+
+const rollDamage = ({ baseDamage, plusMinus }: DamageDistribution): number =>
+  randomIntInclusive(baseDamage - plusMinus, baseDamage + plusMinus)
 
 export const canAttackOccur = (attackType: AttackType, map: WorldMap, from: Hex, to: Hex): boolean => {
   switch (attackType) {
@@ -32,8 +47,16 @@ export class AttackWorldActionHandler {
   public handleAttack = (action: AttackWorldAction): WorldEvent[] => {
     const { attacker, defender } = this.validateAttack(action)
     const { attackType } = action
-    const rawAttackerDamage = attackType === 'melee' ? randomIntInclusive(8, 12) : 0
-    const rawDefenderDamage = attackType === 'melee' ? randomIntInclusive(17, 23) : randomIntInclusive(4, 6)
+    const attackerDamageDistribution =
+      attackType === 'melee'
+        ? defender.type === UnitType.CRIA
+          ? CRIA_MELEE_DAMAGE_DISTRIBUTION
+          : DEFAULT_MELEE_DAMAGE_DISTRIBUTION
+        : NO_DAMAGE_DISTRIBUTION
+    const rawAttackerDamage = rollDamage(attackerDamageDistribution)
+    const defenderDamageDistribution =
+      attackType === 'melee' ? WARRIOR_ATTACK_DAMAGE_DISTRIBUTION : SPIT_DAMAGE_DISTRIBUTION
+    const rawDefenderDamage = rollDamage(defenderDamageDistribution)
     const attackerDamage = Math.min(attacker.hitPoints.current, rawAttackerDamage)
     const defenderDamage = Math.min(defender.hitPoints.current, rawDefenderDamage)
     const combatWorldEvent = this.makeCombatWorldEvent(attackType, attacker, attackerDamage, defender, defenderDamage)
@@ -81,6 +104,9 @@ export class AttackWorldActionHandler {
     }
     if (!attacker.location.equals(action.attacker.location)) {
       throw new Error(`Attacker not in expected location`)
+    }
+    if (attacker.type === UnitType.CRIA) {
+      throw new Error(`Crias may not attack`)
     }
 
     const defenderId = action.defender.unitId

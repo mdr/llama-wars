@@ -99,8 +99,19 @@ export class GameScene extends Phaser.Scene {
     ALL_AUDIO_KEYS.forEach((key) => this.sound.add(key))
   }
 
-  private syncScene = (animation?: AnimationSpec): void =>
+  private syncScene = (animation?: AnimationSpec): void => {
+    this.syncFullScreen()
     this.displayObjects?.syncScene(this.worldState, this.localGameState, animation)
+  }
+
+  private syncFullScreen = (): void => {
+    if (this.localGameState.fullScreen && !this.scale.isFullscreen) {
+      this.scale.startFullscreen()
+    }
+    if (!this.localGameState.fullScreen && this.scale.isFullscreen) {
+      this.scale.stopFullscreen()
+    }
+  }
 
   // Networking
   // ----------

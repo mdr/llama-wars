@@ -67,6 +67,10 @@ export interface MatureUnitLocalAction {
   type: 'matureUnit'
 }
 
+export interface ToggleFullScreenLocalAction {
+  type: 'toggleFullScreen'
+}
+
 export type LocalAction =
   | GoLocalAction
   | GoHexLocalAction
@@ -81,3 +85,4 @@ export type LocalAction =
   | ChangeSidebarLocalAction
   | ChatLocalAction
   | MatureUnitLocalAction
+  | ToggleFullScreenLocalAction

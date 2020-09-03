@@ -12,6 +12,7 @@ export class LocalGameState {
   readonly selectedHex: Option<Hex>
   readonly actionsOutstandingWithServer: number
   readonly sidebar: Sidebar
+  readonly fullScreen: boolean
 
   constructor({
     playerId,
@@ -19,18 +20,21 @@ export class LocalGameState {
     selectedHex,
     actionsOutstandingWithServer = 0,
     sidebar,
+    fullScreen = false,
   }: {
     playerId: PlayerId
     mode: Mode
     selectedHex?: Option<Hex>
     actionsOutstandingWithServer?: number
     sidebar: Sidebar
+    fullScreen?: boolean
   }) {
     this.playerId = playerId
     this.mode = mode
     this.selectedHex = selectedHex
     this.actionsOutstandingWithServer = actionsOutstandingWithServer
     this.sidebar = sidebar
+    this.fullScreen = fullScreen
     assert(actionsOutstandingWithServer >= 0)
   }
 
@@ -40,14 +44,23 @@ export class LocalGameState {
     selectedHex = toMaybe(this.selectedHex),
     actionsOutstandingWithServer = this.actionsOutstandingWithServer,
     sidebar = this.sidebar,
+    fullScreen = this.fullScreen,
   }: {
     playerId?: PlayerId
     mode?: Mode
     selectedHex?: Maybe<Hex>
     actionsOutstandingWithServer?: number
     sidebar?: Sidebar
+    fullScreen?: boolean
   } = {}): LocalGameState =>
-    new LocalGameState({ playerId, mode, selectedHex: toOption(selectedHex), actionsOutstandingWithServer, sidebar })
+    new LocalGameState({
+      playerId,
+      mode,
+      selectedHex: toOption(selectedHex),
+      actionsOutstandingWithServer,
+      sidebar,
+      fullScreen,
+    })
 
   public deselect = (): LocalGameState => this.setSelectedHex(undefined)
 
@@ -60,6 +73,8 @@ export class LocalGameState {
 
   public decrementActionsOutstandingWithServer = (): LocalGameState =>
     this.copy({ actionsOutstandingWithServer: this.actionsOutstandingWithServer - 1 })
+
+  public toggleFullScreen = (): LocalGameState => this.copy({ fullScreen: !this.fullScreen })
 }
 
 export const INITIAL_LOCAL_GAME_STATE = new LocalGameState({

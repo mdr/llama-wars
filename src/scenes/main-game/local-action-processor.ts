@@ -59,6 +59,8 @@ export class LocalActionProcessor {
         return this.handleChat(action.message)
       case 'matureUnit':
         return this.handleMatureUnit()
+      case 'toggleFullScreen':
+        return this.handleToggleFullScreen()
       default:
         throw new UnreachableCaseError(action)
     }
@@ -194,4 +196,7 @@ export class LocalActionProcessor {
       return { worldAction: { type: 'matureUnit', unitId: unit.id, unitType: UnitType.WARRIOR } }
     }
   }
+  private handleToggleFullScreen = (): Option<LocalActionResult> => ({
+    newLocalGameState: this.localGameState.toggleFullScreen(),
+  })
 }
