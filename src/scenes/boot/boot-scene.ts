@@ -217,5 +217,8 @@ export class BootScene extends Phaser.Scene {
     this.load.audio(AudioKeys.CLICK, 'assets/audio/click.wav')
     //https://freesound.org/people/tvlaudio/sounds/267897/
     this.load.audio(AudioKeys.SPIT, 'assets/audio/spit.wav')
+
+    // https://opengameart.org/content/level-up-power-up-coin-get-13-sounds
+    this.load.audio(AudioKeys.MATURE, 'assets/audio/Rise07.mp3')
   }
 }

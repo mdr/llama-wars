@@ -8,7 +8,7 @@ import { UiBorderDisplayObject } from './ui-border-display-object'
 import { GameObjects } from 'phaser'
 import { LocalActionDispatcher } from './texts-display-object'
 import { PlayerId } from '../../world/player'
-import { Unit, UnitId } from '../../world/unit'
+import { Unit, UnitId, UnitType } from '../../world/unit'
 import { AttackType } from '../../world/world-actions'
 import { LinkDisplayObject } from './link-display-object'
 import { colourNumber } from '../colours'
@@ -179,8 +179,18 @@ export class SelectionInfoDisplayObject extends GameObjects.Container {
   private describeUnit = (unit: Unit): string => {
     const { name, playerId, hitPoints, actionPoints } = unit
     const playerName = this.getPlayerName(playerId)
-    return `${name} - Llama warrior - ${playerName} - HP ${hitPoints.current}/${hitPoints.max} - actions ${actionPoints.current}/${actionPoints.max}`
+    const type = this.getUnitType(unit)
+    return `${name} - ${type} - ${playerName} - HP ${hitPoints.current}/${hitPoints.max} - actions ${actionPoints.current}/${actionPoints.max}`
   }
 
   private getPlayerName = (playerId: PlayerId): string => this.worldState.getPlayer(playerId).name
+
+  private getUnitType = (unit: Unit): string => {
+    switch (unit.type) {
+      case UnitType.CRIA:
+        return 'Cria'
+      case UnitType.WARRIOR:
+        return 'Llama Warrior'
+    }
+  }
 }

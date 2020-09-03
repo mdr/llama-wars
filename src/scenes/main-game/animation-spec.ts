@@ -26,4 +26,9 @@ export interface CombatAnimationSpec {
   }
 }
 
-export type AnimationSpec = MoveAnimationSpec | CombatAnimationSpec
+export interface MatureAnimationSpec {
+  type: 'mature'
+  unitId: UnitId
+}
+
+export type AnimationSpec = MoveAnimationSpec | CombatAnimationSpec | MatureAnimationSpec

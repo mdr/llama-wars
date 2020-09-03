@@ -36,6 +36,7 @@ export const AudioKeys = {
   VICTORY_MUSIC: 'victory-music',
   CLICK: 'click',
   SPIT: 'spit',
+  MATURE: 'mature',
 }
 
 export const ALL_AUDIO_KEYS = [
@@ -50,4 +51,5 @@ export const ALL_AUDIO_KEYS = [
   AudioKeys.VICTORY_MUSIC,
   AudioKeys.CLICK,
   AudioKeys.SPIT,
+  AudioKeys.MATURE,
 ]

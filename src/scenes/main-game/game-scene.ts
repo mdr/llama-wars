@@ -6,6 +6,7 @@ import {
   CombatParticipantInfo,
   CombatWorldEvent,
   GameOverWorldEvent,
+  UnitMaturedWorldEvent,
   UnitMovedWorldEvent,
   WorldEvent,
 } from '../../world/world-events'
@@ -98,7 +99,7 @@ export class GameScene extends Phaser.Scene {
     ALL_AUDIO_KEYS.forEach((key) => this.sound.add(key))
   }
 
-  public syncScene = (animation?: AnimationSpec): void =>
+  private syncScene = (animation?: AnimationSpec): void =>
     this.displayObjects?.syncScene(this.worldState, this.localGameState, animation)
 
   // Networking
@@ -230,7 +231,6 @@ export class GameScene extends Phaser.Scene {
       case 'gameStarted':
       case 'chat':
       case 'playerKicked':
-      case 'unitMatured':
         this.syncScene()
         break
       case 'unitMoved':
@@ -250,6 +250,9 @@ export class GameScene extends Phaser.Scene {
         break
       case 'newTurn':
         this.handleNewTurn()
+        break
+      case 'unitMatured':
+        this.handleUnitMatured(event)
         break
       default:
         throw new UnreachableCaseError(event)
@@ -312,7 +315,11 @@ export class GameScene extends Phaser.Scene {
     }
   }
 
-  private handleCombatWorldEvent = (event: CombatWorldEvent, previousWorldState: WorldState) => {
+  private handleUnitMatured = (event: UnitMaturedWorldEvent): void => {
+    this.syncScene({ type: 'mature', unitId: event.unitId })
+  }
+
+  private handleCombatWorldEvent = (event: CombatWorldEvent, previousWorldState: WorldState): void => {
     const { attacker, defender } = event
     this.updateSelectionAfterCombat(attacker, defender, previousWorldState)
     this.syncScene({

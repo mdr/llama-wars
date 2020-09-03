@@ -1,5 +1,5 @@
 import { Hex } from '../../world/hex'
-import { Unit } from '../../world/unit'
+import { Unit, UnitType } from '../../world/unit'
 import { hexCenter } from './game-scene'
 import { getPlayerTint, HEALTH_BORDER_COLOUR, HEALTH_EMPTY_COLOUR, HEALTH_FULL_COLOUR } from '../colours'
 import { addPoints, distanceBetweenPoints, Point } from '../point'
@@ -15,6 +15,9 @@ const HEALTH_BAR_HEIGHT = 12
 const HEALTH_BAR_BORDER_THICKNESS = 2
 const IMAGE_OFFSET = { x: 0, y: 4 }
 const HEALTH_BAR_OFFSET = { x: -25, y: -40 }
+
+const CRIA_SCALE = 0.6
+const ORDINARY_SCALE = 0.8
 
 export class UnitDisplayObject {
   private readonly scene: Phaser.Scene
@@ -38,7 +41,9 @@ export class UnitDisplayObject {
     assert(unit.id === this.unit.id)
     this.unit = unit
     const unitPoint = hexCenter(this.unit.location)
-    this.image.setPosition(unitPoint.x + IMAGE_OFFSET.x, unitPoint.y + IMAGE_OFFSET.y)
+    this.image
+      .setPosition(unitPoint.x + IMAGE_OFFSET.x, unitPoint.y + IMAGE_OFFSET.y)
+      .setScale(unit.type === UnitType.CRIA ? CRIA_SCALE : ORDINARY_SCALE)
     this.syncHealthBar(unitPoint)
   }
 
@@ -92,6 +97,20 @@ export class UnitDisplayObject {
   }
 
   private scaleSpeed = (duration: number, speed: AnimationSpeed) => (speed === 'normal' ? duration : duration / 4)
+
+  public runMatureAnimation = async (speed: AnimationSpeed): Promise<void> => {
+    const duration = this.scaleSpeed(1000, speed)
+    const tween = this.scene.tweens.create({
+      targets: [this.image],
+      scale: {
+        from: CRIA_SCALE,
+        to: ORDINARY_SCALE,
+      },
+      duration,
+      ease: 'Cubic',
+    })
+    await playTween(tween)
+  }
 
   public runDeathAnimation = async (speed: AnimationSpeed): Promise<void> => {
     const duration = this.scaleSpeed(1000, speed)

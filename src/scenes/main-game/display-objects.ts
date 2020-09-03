@@ -12,7 +12,7 @@ import { AudioKeys } from '../asset-keys'
 import { randomElement } from '../../util/random-util'
 import { fireAndForget } from '../../util/async-util'
 import { LLAMA_EAT, LLAMA_WALK } from '../animations'
-import { AnimationSpec, CombatAnimationSpec, MoveAnimationSpec } from './animation-spec'
+import { AnimationSpec, CombatAnimationSpec, MatureAnimationSpec, MoveAnimationSpec } from './animation-spec'
 
 export type AnimationSpeed = 'normal' | 'quick'
 
@@ -194,6 +194,8 @@ export class DisplayObjects {
         return [animation.unitId]
       case 'combat':
         return [animation.attacker.unitId, animation.defender.unitId]
+      case 'mature':
+        return [animation.unitId]
     }
   }
 
@@ -205,6 +207,9 @@ export class DisplayObjects {
       case 'combat':
         await this.runCombatAnimation(animation, speed)
         break
+      case 'mature':
+        await this.runMatureAnimation(animation, speed)
+        break
       default:
         throw new UnreachableCaseError(animation)
     }
@@ -215,6 +220,13 @@ export class DisplayObjects {
     if (!displayObject) throw `Unexpected missing display object for unit ${animation.unitId}`
     this.scene.sound.play(AudioKeys.WALK)
     await displayObject.runMoveAnimation(animation.from, animation.to, speed)
+  }
+
+  private runMatureAnimation = async (animation: MatureAnimationSpec, speed: AnimationSpeed): Promise<void> => {
+    const displayObject = this.animatedUnitDisplayObjects.get(animation.unitId)
+    if (!displayObject) throw `Unexpected missing display object for unit ${animation.unitId}`
+    this.scene.sound.play(AudioKeys.MATURE)
+    await displayObject.runMatureAnimation(speed)
   }
 
   private runCombatAnimation = async (animation: CombatAnimationSpec, speed: AnimationSpeed): Promise<void> => {
