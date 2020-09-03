@@ -197,7 +197,7 @@ export class SelectionInfoDisplayObject extends GameObjects.Container {
       actions.push(UnitAction.MOVE)
     }
     if (this.combinedState.unitCouldPotentiallyAttack(unit)) {
-      actions.push(UnitAction.MOVE)
+      actions.push(UnitAction.ATTACK)
       actions.push(UnitAction.SPIT)
     }
     if (unit.type === UnitType.CRIA) {

@@ -9,6 +9,7 @@ import { randomIntInclusive } from '../../util/random-util'
 import { AnimationKeys } from '../animations'
 import { getUiCamera } from './cameras'
 import assert = require('assert')
+import { ImageKeys } from '../asset-keys'
 
 const HEALTH_BAR_WIDTH = 50
 const HEALTH_BAR_HEIGHT = 12
@@ -28,7 +29,7 @@ export class UnitDisplayObject {
   constructor(scene: Phaser.Scene, unit: Unit) {
     this.scene = scene
     this.unit = unit
-    this.image = scene.add.sprite(0, 0, 'llama-2').setScale(0.8).setTint(getPlayerTint(this.unit.playerId))
+    this.image = scene.add.sprite(0, 0, ImageKeys.LLAMA_2).setTint(getPlayerTint(this.unit.playerId))
     this.healthBarGraphics = scene.add.graphics()
     const uiCamera = getUiCamera(this.scene)
     uiCamera.ignore(this.image)
