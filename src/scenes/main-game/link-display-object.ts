@@ -1,6 +1,8 @@
 import { GameObjects } from 'phaser'
 import EventData = Phaser.Types.Input.EventData
 import Pointer = Phaser.Input.Pointer
+import { Pixels } from '../../util/types'
+import { AudioKeys } from '../asset-keys'
 
 export const ACTION_LINK_COLOUR = '#cccc00'
 export const HOVER_ACTION_LINK_COLOUR = '#ffff00'
@@ -10,7 +12,7 @@ const PRESSED_BACKGROUND_COLOUR = '#333333'
 export class LinkDisplayObject extends GameObjects.Text {
   private readonly onClick: () => void
 
-  constructor(scene: Phaser.Scene, x: number, y: number, text: string, onClick: () => void) {
+  constructor(scene: Phaser.Scene, x: Pixels, y: Pixels, text: string, onClick: () => void) {
     super(scene, x, y, text, {})
     this.onClick = onClick
     this.setDefaultStyle()
@@ -27,7 +29,7 @@ export class LinkDisplayObject extends GameObjects.Text {
     this.setDefaultStyle()
   }
 
-  private handlePointerDown = (pointer: Pointer, x: number, y: number, event: EventData): void => {
+  private handlePointerDown = (pointer: Pointer, x: Pixels, y: Pixels, event: EventData): void => {
     this.setBackgroundColor(PRESSED_BACKGROUND_COLOUR)
     event.stopPropagation()
   }
@@ -37,7 +39,8 @@ export class LinkDisplayObject extends GameObjects.Text {
     this.setFill(HOVER_ACTION_LINK_COLOUR)
   }
 
-  private handlePointerUp = (pointer: Pointer, x: number, y: number, event: EventData) => {
+  private handlePointerUp = (pointer: Pointer, x: Pixels, y: Pixels, event: EventData) => {
+    this.scene.sound.play(AudioKeys.CLICK)
     this.onClick()
     event.stopPropagation()
   }

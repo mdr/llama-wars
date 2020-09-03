@@ -5,7 +5,6 @@ import { LocalGameState } from '../local-game-state'
 import { UnreachableCaseError } from '../../util/unreachable-case-error'
 import { point } from '../point'
 import { CombinedState } from '../combined-state-methods'
-import { AudioKeys } from '../asset-keys'
 import { UiBorderDisplayObject } from './ui-border-display-object'
 import { GameObjects } from 'phaser'
 import { PlayerId } from '../../world/player'
@@ -114,7 +113,6 @@ export class SelectionInfoDisplayObject extends GameObjects.Container {
     const mode = this.localGameState.mode
     switch (mode.type) {
       case 'selectHex':
-        this.scene.sound.play(AudioKeys.CLICK)
         const selectedUnit = this.combinedState.findSelectedUnit()
         if (selectedUnit) {
           const action = this.getUnitActions(selectedUnit)[0]
@@ -123,7 +121,6 @@ export class SelectionInfoDisplayObject extends GameObjects.Container {
         break
       case 'moveUnit':
       case 'attack':
-        this.scene.sound.play(AudioKeys.CLICK)
         this.localActionDispatcher({ type: 'abort' })
         break
       default:
@@ -133,7 +130,6 @@ export class SelectionInfoDisplayObject extends GameObjects.Container {
 
   private handleActionLink2Click = (): void => {
     if (this.localGameState.mode.type === 'selectHex') {
-      this.scene.sound.play(AudioKeys.CLICK)
       const selectedUnit = this.combinedState.findSelectedUnit()
       if (selectedUnit) {
         const action = this.getUnitActions(selectedUnit)[1]
@@ -144,7 +140,6 @@ export class SelectionInfoDisplayObject extends GameObjects.Container {
 
   private handleActionLink3Click = (): void => {
     if (this.localGameState.mode.type === 'selectHex') {
-      this.scene.sound.play(AudioKeys.CLICK)
       const selectedUnit = this.combinedState.findSelectedUnit()
       if (selectedUnit) {
         const action = this.getUnitActions(selectedUnit)[2]
