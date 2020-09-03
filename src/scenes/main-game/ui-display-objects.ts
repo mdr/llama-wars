@@ -2,7 +2,7 @@ import { WorldState } from '../../world/world-state'
 import { LocalGameState } from '../local-game-state'
 import { getPlayerTint } from '../colours'
 import { CombinedState } from '../combined-state-methods'
-import { LocalAction, LocalActionDispatcher } from './local-action'
+import { LocalActionDispatcher } from './local-action'
 import { ImageKeys } from '../asset-keys'
 import { PrimaryButton } from '../../ui/primary-button'
 import { SelectionInfoDisplayObject } from './selection-info-display-object'
@@ -11,7 +11,7 @@ import { SidePanelDisplayObject } from './side-panel-display-object'
 import { GameObjects } from 'phaser'
 import { Pixels } from '../../util/types'
 
-export class TextsDisplayObject {
+export class UiDisplayObjects {
   private readonly scene: Phaser.Scene
   private worldState: WorldState
   private localGameState: LocalGameState
@@ -41,21 +41,18 @@ export class TextsDisplayObject {
     this.localGameState = localGameState
     this.localActionDispatcher = localActionDispatcher
 
-    this.selectionInfo = new SelectionInfoDisplayObject(scene, worldState, localGameState, localActionDispatcher, {
-      x: 0,
-      y: 0,
-    }).setDepth(100)
-    this.scene.cameras.main.ignore(this.selectionInfo)
-    this.scene.add.existing(this.selectionInfo)
+    this.selectionInfo = this.createSelectionInfo()
+
     const playerLlamaImage = this.scene.add
       .image(40, 28, ImageKeys.LLAMA_2)
       .setScale(0.6)
       .setTint(getPlayerTint(localGameState.playerId))
     this.scene.cameras.main.ignore(playerLlamaImage)
+
     this.playerText = this.scene.add.text(70, 20, '').setFontSize(18).setShadow(2, 2, '#000000')
+    this.scene.cameras.main.ignore(this.playerText)
 
     this.hourglass = this.scene.add.image(875, 30, 'hourglass').setVisible(false)
-    this.scene.cameras.main.ignore(this.playerText)
     this.scene.cameras.main.ignore(this.hourglass)
 
     this.defeatText = this.scene.add
@@ -80,33 +77,58 @@ export class TextsDisplayObject {
       .setDepth(200)
     this.scene.cameras.main.ignore(this.victoryText)
 
-    this.sidePanel = new SidePanelDisplayObject(scene, worldState, localGameState, localActionDispatcher, {
-      x: 0,
-      y: 0,
-    }).setDepth(100)
-    scene.add.existing(this.sidePanel)
-    this.scene.cameras.main.ignore(this.sidePanel)
+    this.sidePanel = this.createSidePanel()
 
-    this.endTurnButton = new PrimaryButton(this.scene, 0, 0, 'End Turn', () =>
-      this.localActionDispatcher({ type: 'endTurn' }),
-    ).setDepth(100)
-    this.scene.add.existing(this.endTurnButton)
-    this.scene.cameras.main.ignore(this.endTurnButton)
+    this.endTurnButton = this.createEndTurnButton()
 
     this.waitingForNextTurnText = this.scene.add
-      .text(0, 0, 'Waiting for next turn...', {
-        fill: '#ffffff',
-      })
+      .text(0, 0, 'Waiting for next turn...', { fill: '#ffffff' })
       .setFontSize(18)
       .setShadow(2, 2, '#000000')
       .setDepth(200)
     this.scene.cameras.main.ignore(this.waitingForNextTurnText)
 
-    this.positionUI(getGameWidth(this.scene), getGameHeight(this.scene))
-    window.addEventListener('resize', () => this.positionUI(window.innerWidth, window.innerHeight))
+    this.layoutUi(getGameWidth(this.scene), getGameHeight(this.scene))
+    window.addEventListener('resize', () => this.layoutUi(window.innerWidth, window.innerHeight))
   }
 
-  private positionUI = (width: Pixels, height: Pixels): void => {
+  private createEndTurnButton = (): PrimaryButton => {
+    const endTurnButton = new PrimaryButton(this.scene, 0, 0, 'End Turn', this.handleEndTurnButtonPressed)
+    endTurnButton.setDepth(100)
+    this.scene.add.existing(endTurnButton)
+    this.scene.cameras.main.ignore(endTurnButton)
+    return endTurnButton
+  }
+
+  private handleEndTurnButtonPressed = (): void => this.localActionDispatcher({ type: 'endTurn' })
+
+  private createSidePanel = (): SidePanelDisplayObject => {
+    const sidePanel = new SidePanelDisplayObject(
+      this.scene,
+      this.worldState,
+      this.localGameState,
+      this.localActionDispatcher,
+    )
+    sidePanel.setDepth(100)
+    this.scene.add.existing(sidePanel)
+    this.scene.cameras.main.ignore(sidePanel)
+    return sidePanel
+  }
+
+  private createSelectionInfo = (): SelectionInfoDisplayObject => {
+    const selectionInfo = new SelectionInfoDisplayObject(
+      this.scene,
+      this.worldState,
+      this.localGameState,
+      this.localActionDispatcher,
+    )
+    selectionInfo.setDepth(100)
+    this.scene.cameras.main.ignore(selectionInfo)
+    this.scene.add.existing(selectionInfo)
+    return selectionInfo
+  }
+
+  private layoutUi = (width: Pixels, height: Pixels): void => {
     const endButtonBounds = this.endTurnButton.getBounds()
     this.selectionInfo.setY(height - SelectionInfoDisplayObject.HEIGHT - 10)
     this.sidePanel.setX(width - SidePanelDisplayObject.WIDTH - 10)

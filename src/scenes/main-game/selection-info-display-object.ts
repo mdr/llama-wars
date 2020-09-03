@@ -3,7 +3,7 @@ import * as R from 'ramda'
 import { WorldState } from '../../world/world-state'
 import { LocalGameState } from '../local-game-state'
 import { UnreachableCaseError } from '../../util/unreachable-case-error'
-import { Point, point } from '../point'
+import { point } from '../point'
 import { CombinedState } from '../combined-state-methods'
 import { AudioKeys } from '../asset-keys'
 import { UiBorderDisplayObject } from './ui-border-display-object'
@@ -13,9 +13,9 @@ import { Unit, UnitId, UnitType } from '../../world/unit'
 import { AttackType } from '../../world/world-actions'
 import { LinkDisplayObject } from './link-display-object'
 import { colourNumber } from '../colours'
+import { LocalActionDispatcher } from './local-action'
 import EventData = Phaser.Types.Input.EventData
 import Pointer = Phaser.Input.Pointer
-import { LocalActionDispatcher } from './local-action'
 
 const BORDER_PADDING = 12
 const TEXT_SPACING = 25
@@ -40,9 +40,8 @@ export class SelectionInfoDisplayObject extends GameObjects.Container {
     worldState: WorldState,
     localGameState: LocalGameState,
     localActionDispatcher: LocalActionDispatcher,
-    location: Point,
   ) {
-    super(scene, location.x, location.y, [])
+    super(scene, 0, 0, [])
     this.scene = scene
     this.worldState = worldState
     this.localGameState = localGameState

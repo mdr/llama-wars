@@ -3,14 +3,14 @@ import * as R from 'ramda'
 import { WorldState } from '../../world/world-state'
 import { LocalGameState } from '../local-game-state'
 import { colourNumber, getPlayerTint } from '../colours'
-import { Point, point } from '../point'
+import { point } from '../point'
 import { HOST_PLAYER_ID, PlayerId } from '../../world/player'
 import { ImageKeys } from '../asset-keys'
 import { UiBorderDisplayObject } from './ui-border-display-object'
 import { LinkDisplayObject } from './link-display-object'
+import { LocalActionDispatcher } from './local-action'
 import Pointer = Phaser.Input.Pointer
 import EventData = Phaser.Types.Input.EventData
-import { LocalActionDispatcher } from './local-action'
 
 interface PlayerObjects {
   nameText: Phaser.GameObjects.Text
@@ -38,9 +38,8 @@ export class SidePanelDisplayObject extends Phaser.GameObjects.Container {
     worldState: WorldState,
     localGameState: LocalGameState,
     localActionDispatcher: LocalActionDispatcher,
-    location: Point,
   ) {
-    super(scene, location.x, location.y, [])
+    super(scene, 0, 0, [])
     this.scene = scene
     this.worldState = worldState
     this.localGameState = localGameState

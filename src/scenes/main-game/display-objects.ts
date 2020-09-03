@@ -1,7 +1,7 @@
 import { MapDisplayObject } from './map-display-object'
 import { UnitId } from '../../world/unit'
 import { UnitDisplayObject } from './unit-display-object'
-import { TextsDisplayObject } from './texts-display-object'
+import { UiDisplayObjects } from './ui-display-objects'
 import { WorldState } from '../../world/world-state'
 import { LocalGameState } from '../local-game-state'
 import { Point } from '../point'
@@ -22,7 +22,7 @@ export class DisplayObjects {
   private readonly mapDisplayObject: MapDisplayObject
   private readonly unitDisplayObjects: Map<UnitId, UnitDisplayObject> = new Map()
   private readonly animatedUnitDisplayObjects: Map<UnitId, UnitDisplayObject> = new Map()
-  private readonly textsDisplayObject: TextsDisplayObject
+  private readonly textsDisplayObject: UiDisplayObjects
   private readonly localActionDispatcher: LocalActionDispatcher
   private isAnimating: boolean = false
   private worldState: WorldState
@@ -40,7 +40,7 @@ export class DisplayObjects {
     this.localGameState = localGameState
     this.localActionDispatcher = localActionDispatcher
     this.mapDisplayObject = new MapDisplayObject(scene, this.worldState, this.localGameState)
-    this.textsDisplayObject = new TextsDisplayObject(
+    this.textsDisplayObject = new UiDisplayObjects(
       scene,
       this.worldState,
       this.localGameState,
