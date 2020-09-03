@@ -1,4 +1,4 @@
-import { getGameHeight, getGameWidth } from '../../helpers'
+import { getGameHeight, getGameWidth } from '../../util/phaser/phaser-utils'
 import { AudioKeys, ImageKeys } from '../asset-keys'
 import { GAME_SCENE_KEY, GameId, GameSceneData } from '../main-game/game-scene'
 import { MAIN_MENU_SCENE_KEY } from '../main-menu/main-menu-scene'

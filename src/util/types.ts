@@ -27,3 +27,5 @@ export const just = <T>(item: T): Just<T> => ({
   type: 'just',
   item,
 })
+
+export type Pixels = number

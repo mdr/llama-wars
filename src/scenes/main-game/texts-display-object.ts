@@ -6,7 +6,7 @@ import { LocalAction } from './local-action'
 import { ImageKeys } from '../asset-keys'
 import { PrimaryButton } from '../../ui/primary-button'
 import { SelectionInfoDisplayObject } from './selection-info-display-object'
-import { getGameHeight, getGameWidth } from '../../helpers'
+import { getGameHeight, getGameWidth } from '../../util/phaser/phaser-utils'
 import { SidePanelDisplayObject } from './side-panel-display-object'
 import { GameObjects } from 'phaser'
 
