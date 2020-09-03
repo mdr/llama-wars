@@ -19,8 +19,7 @@ export class UiDisplayObjects {
 
   private readonly playerText: GameObjects.Text
   private readonly hourglass: GameObjects.Image
-  private readonly defeatText: GameObjects.Text
-  private readonly victoryText: GameObjects.Text
+  private readonly gameEndedText: GameObjects.Text
   private readonly waitingForNextTurnText: GameObjects.Text
   private readonly endTurnButton: PrimaryButton
   private readonly selectionInfo: SelectionInfoDisplayObject
@@ -55,7 +54,7 @@ export class UiDisplayObjects {
     this.hourglass = this.scene.add.image(875, 30, 'hourglass').setVisible(false)
     this.scene.cameras.main.ignore(this.hourglass)
 
-    this.defeatText = this.scene.add
+    this.gameEndedText = this.scene.add
       .text(getGameWidth(this.scene) / 2, getGameHeight(this.scene) / 2, 'You have been defeated!', {
         stroke: '#000000',
         strokeThickness: 4,
@@ -64,18 +63,7 @@ export class UiDisplayObjects {
       .setFontSize(42)
       .setVisible(false)
       .setDepth(200)
-    this.scene.cameras.main.ignore(this.defeatText)
-
-    this.victoryText = this.scene.add
-      .text(getGameWidth(this.scene) / 2, getGameHeight(this.scene) / 2, 'Victory!', {
-        stroke: '#000000',
-        strokeThickness: 4,
-      })
-      .setOrigin(0.5)
-      .setFontSize(42)
-      .setVisible(false)
-      .setDepth(200)
-    this.scene.cameras.main.ignore(this.victoryText)
+    this.scene.cameras.main.ignore(this.gameEndedText)
 
     this.sidePanel = this.createSidePanel()
 
@@ -143,15 +131,23 @@ export class UiDisplayObjects {
   public syncScene = (worldState: WorldState, localGameState: LocalGameState): void => {
     this.worldState = worldState
     this.localGameState = localGameState
+
+    this.selectionInfo.syncScene(worldState, localGameState)
+    this.sidePanel.syncScene(worldState, localGameState)
+
     const player = this.combinedState.getCurrentPlayer()
     this.hourglass.setVisible(localGameState.actionsOutstandingWithServer > 0)
     this.playerText.setText(`${player.name} - Turn ${this.worldState.turn}`)
     const canAct = worldState.canPlayerAct(player.id)
-    this.selectionInfo.syncScene(worldState, localGameState)
     this.endTurnButton.setVisible(canAct)
     this.waitingForNextTurnText.setVisible(!canAct)
-    this.defeatText.setVisible(player.defeated)
-    this.victoryText.setVisible(worldState.gameOverInfo?.victor === player.id)
-    this.sidePanel.syncScene(worldState, localGameState)
+    if (player.defeated) {
+      this.gameEndedText.setVisible(true)
+      this.gameEndedText.setText('You have been defeated!')
+    }
+    if (worldState.gameOverInfo?.victor === player.id) {
+      this.gameEndedText.setVisible(true)
+      this.gameEndedText.setText('Victory!')
+    }
   }
 }

@@ -39,9 +39,10 @@ export class DisplayObjects {
     this.worldState = worldState
     this.localGameState = localGameState
     this.localActionDispatcher = localActionDispatcher
+
     this.mapDisplayObject = new MapDisplayObject(scene, this.worldState, this.localGameState)
     this.textsDisplayObject = new UiDisplayObjects(
-      scene,
+      this.scene,
       this.worldState,
       this.localGameState,
       this.localActionDispatcher,
