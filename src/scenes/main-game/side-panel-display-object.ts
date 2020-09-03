@@ -8,9 +8,9 @@ import { HOST_PLAYER_ID, PlayerId } from '../../world/player'
 import { ImageKeys } from '../asset-keys'
 import { UiBorderDisplayObject } from './ui-border-display-object'
 import { LinkDisplayObject } from './link-display-object'
-import { LocalActionDispatcher } from './texts-display-object'
 import Pointer = Phaser.Input.Pointer
 import EventData = Phaser.Types.Input.EventData
+import { LocalActionDispatcher } from './local-action'
 
 interface PlayerObjects {
   nameText: Phaser.GameObjects.Text

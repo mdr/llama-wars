@@ -2,7 +2,7 @@ import { WorldState } from '../../world/world-state'
 import { LocalGameState } from '../local-game-state'
 import { getPlayerTint } from '../colours'
 import { CombinedState } from '../combined-state-methods'
-import { LocalAction } from './local-action'
+import { LocalAction, LocalActionDispatcher } from './local-action'
 import { ImageKeys } from '../asset-keys'
 import { PrimaryButton } from '../../ui/primary-button'
 import { SelectionInfoDisplayObject } from './selection-info-display-object'
@@ -10,8 +10,6 @@ import { getGameHeight, getGameWidth } from '../../util/phaser/phaser-utils'
 import { SidePanelDisplayObject } from './side-panel-display-object'
 import { GameObjects } from 'phaser'
 import { Pixels } from '../../util/types'
-
-export type LocalActionDispatcher = (action: LocalAction) => void
 
 export class TextsDisplayObject {
   private readonly scene: Phaser.Scene

@@ -8,7 +8,6 @@ import { CombinedState } from '../combined-state-methods'
 import { AudioKeys } from '../asset-keys'
 import { UiBorderDisplayObject } from './ui-border-display-object'
 import { GameObjects } from 'phaser'
-import { LocalActionDispatcher } from './texts-display-object'
 import { PlayerId } from '../../world/player'
 import { Unit, UnitId, UnitType } from '../../world/unit'
 import { AttackType } from '../../world/world-actions'
@@ -16,6 +15,7 @@ import { LinkDisplayObject } from './link-display-object'
 import { colourNumber } from '../colours'
 import EventData = Phaser.Types.Input.EventData
 import Pointer = Phaser.Input.Pointer
+import { LocalActionDispatcher } from './local-action'
 
 const BORDER_PADDING = 12
 const TEXT_SPACING = 25

@@ -86,3 +86,5 @@ export type LocalAction =
   | ChatLocalAction
   | MatureUnitLocalAction
   | ToggleFullScreenLocalAction
+
+export type LocalActionDispatcher = (action: LocalAction) => void

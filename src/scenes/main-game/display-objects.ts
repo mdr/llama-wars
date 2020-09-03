@@ -1,7 +1,7 @@
 import { MapDisplayObject } from './map-display-object'
 import { UnitId } from '../../world/unit'
 import { UnitDisplayObject } from './unit-display-object'
-import { LocalActionDispatcher, TextsDisplayObject } from './texts-display-object'
+import { TextsDisplayObject } from './texts-display-object'
 import { WorldState } from '../../world/world-state'
 import { LocalGameState } from '../local-game-state'
 import { Point } from '../point'
@@ -13,6 +13,7 @@ import { randomElement } from '../../util/random-util'
 import { fireAndForget } from '../../util/async-util'
 import { LLAMA_EAT, LLAMA_WALK } from '../animations'
 import { AnimationSpec, CombatAnimationSpec, MatureAnimationSpec, MoveAnimationSpec } from './animation-spec'
+import { LocalActionDispatcher } from './local-action'
 
 export type AnimationSpeed = 'normal' | 'quick'
 
