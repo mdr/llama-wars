@@ -1,7 +1,7 @@
 import { MapDisplayObject } from './map-display-object'
 import { UnitId } from '../../world/unit'
 import { UnitDisplayObject } from './unit-display-object'
-import { UiDisplayObjects } from './ui-display-objects'
+import { UiDisplayObjects } from './ui/ui-display-objects'
 import { WorldState } from '../../world/world-state'
 import { LocalGameState } from '../local-game-state'
 import { Point } from '../point'

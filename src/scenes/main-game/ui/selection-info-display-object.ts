@@ -1,18 +1,18 @@
 import * as R from 'ramda'
 
-import { WorldState } from '../../world/world-state'
-import { LocalGameState } from '../local-game-state'
-import { UnreachableCaseError } from '../../util/unreachable-case-error'
-import { point } from '../point'
-import { CombinedState } from '../combined-state-methods'
+import { WorldState } from '../../../world/world-state'
+import { LocalGameState } from '../../local-game-state'
+import { UnreachableCaseError } from '../../../util/unreachable-case-error'
+import { point } from '../../point'
+import { CombinedState } from '../../combined-state-methods'
 import { UiBorderDisplayObject } from './ui-border-display-object'
 import { GameObjects } from 'phaser'
-import { PlayerId } from '../../world/player'
-import { Unit, UnitId, UnitType } from '../../world/unit'
-import { AttackType } from '../../world/world-actions'
+import { PlayerId } from '../../../world/player'
+import { Unit, UnitId, UnitType } from '../../../world/unit'
+import { AttackType } from '../../../world/world-actions'
 import { LinkDisplayObject } from './link-display-object'
-import { colourNumber } from '../colours'
-import { LocalActionDispatcher } from './local-action'
+import { colourNumber } from '../../colours'
+import { LocalActionDispatcher } from '../local-action'
 import EventData = Phaser.Types.Input.EventData
 import Pointer = Phaser.Input.Pointer
 

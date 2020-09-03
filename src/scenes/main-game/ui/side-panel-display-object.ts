@@ -1,14 +1,14 @@
 import * as R from 'ramda'
 
-import { WorldState } from '../../world/world-state'
-import { LocalGameState } from '../local-game-state'
-import { colourNumber, getPlayerTint } from '../colours'
-import { point } from '../point'
-import { HOST_PLAYER_ID, PlayerId } from '../../world/player'
-import { ImageKeys } from '../asset-keys'
+import { WorldState } from '../../../world/world-state'
+import { LocalGameState } from '../../local-game-state'
+import { colourNumber, getPlayerTint } from '../../colours'
+import { point } from '../../point'
+import { HOST_PLAYER_ID, PlayerId } from '../../../world/player'
+import { ImageKeys } from '../../asset-keys'
 import { UiBorderDisplayObject } from './ui-border-display-object'
 import { LinkDisplayObject } from './link-display-object'
-import { LocalActionDispatcher } from './local-action'
+import { LocalActionDispatcher } from '../local-action'
 import Pointer = Phaser.Input.Pointer
 import EventData = Phaser.Types.Input.EventData
 

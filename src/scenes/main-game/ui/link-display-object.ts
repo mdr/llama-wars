@@ -1,8 +1,8 @@
 import { GameObjects } from 'phaser'
 import EventData = Phaser.Types.Input.EventData
 import Pointer = Phaser.Input.Pointer
-import { Pixels } from '../../util/types'
-import { AudioKeys } from '../asset-keys'
+import { Pixels } from '../../../util/types'
+import { AudioKeys } from '../../asset-keys'
 
 export const ACTION_LINK_COLOUR = '#cccc00'
 export const HOVER_ACTION_LINK_COLOUR = '#ffff00'

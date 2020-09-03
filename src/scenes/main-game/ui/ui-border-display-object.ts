@@ -1,5 +1,5 @@
-import { Point } from '../point'
-import { ImageKeys } from '../asset-keys'
+import { Point } from '../../point'
+import { ImageKeys } from '../../asset-keys'
 import { GameObjects } from 'phaser'
 
 const HORIZONTAL_IMAGE_WIDTH = 74
