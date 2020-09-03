@@ -1,10 +1,10 @@
 import { PlayerId } from '../world/player'
-import { Unit, UnitId } from '../world/unit'
+import { Unit, UnitId, UnitType } from '../world/unit'
 import { Hex } from '../world/hex'
 import { randomElement } from '../util/random-util'
 import * as R from 'ramda'
 import { ActionPoints } from '../world/action-points'
-import { HitPoints } from '../world/hit-points'
+import { CRIA_HIT_POINTS, HitPoints } from '../world/hit-points'
 import { WorldState } from '../world/world-state'
 
 const LLAMA_NAMES = [
@@ -26,6 +26,7 @@ const LLAMA_NAMES = [
   'Milly',
   'Carlos',
   'Ricardo',
+  'Alpaca Capone',
 ]
 
 export class WorldGenerator {
@@ -46,10 +47,11 @@ export class WorldGenerator {
     return new Unit({
       id,
       playerId,
+      type: UnitType.CRIA,
       name,
       location,
       actionPoints: new ActionPoints({ current: 2, max: 2 }),
-      hitPoints: new HitPoints({ current: 100, max: 100 }),
+      hitPoints: new HitPoints({ current: CRIA_HIT_POINTS, max: CRIA_HIT_POINTS }),
     })
   }
 

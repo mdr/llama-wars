@@ -1,8 +1,9 @@
 import { Hex } from './hex'
-import { Unit, UnitId } from './unit'
+import { Unit, UnitId, UnitType } from './unit'
 import { PlayerId } from './player'
 import { WorldState } from './world-state'
 import { AttackType } from './world-actions'
+import { HitPoints } from './hit-points'
 
 export type WorldEventId = number
 
@@ -102,6 +103,14 @@ export interface PlayerKickedWorldEvent {
   playerId: PlayerId
 }
 
+export interface UnitMaturedWorldEvent {
+  id: WorldEventId
+  type: 'unitMatured'
+  unitId: UnitId
+  unitType: UnitType
+  hitPoints: HitPoints
+}
+
 export type WorldEvent =
   | InitialiseWorldEvent
   | PlayerAddedWorldEvent
@@ -115,3 +124,4 @@ export type WorldEvent =
   | GameOverWorldEvent
   | ChatWorldEvent
   | PlayerKickedWorldEvent
+  | UnitMaturedWorldEvent

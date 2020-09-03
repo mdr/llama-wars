@@ -5,9 +5,15 @@ import { PlayerId } from './player'
 
 export type UnitId = number
 
+export enum UnitType {
+  CRIA = 'cria',
+  WARRIOR = 'warrior',
+}
+
 export class Unit {
   readonly id: UnitId
   readonly playerId: PlayerId
+  readonly type: UnitType
   readonly name: string
   readonly location: Hex
   readonly hitPoints: HitPoints
@@ -16,6 +22,7 @@ export class Unit {
   constructor({
     id,
     playerId,
+    type,
     name,
     location,
     hitPoints,
@@ -23,6 +30,7 @@ export class Unit {
   }: {
     id: UnitId
     playerId: PlayerId
+    type: UnitType
     name: string
     location: Hex
     hitPoints: HitPoints
@@ -30,6 +38,7 @@ export class Unit {
   }) {
     this.id = id
     this.playerId = playerId
+    this.type = type
     this.name = name
     this.location = location
     this.hitPoints = hitPoints
@@ -41,6 +50,7 @@ export class Unit {
   public copy = ({
     id = this.id,
     playerId = this.playerId,
+    type = this.type,
     name = this.name,
     location = this.location,
     hitPoints = this.hitPoints,
@@ -48,11 +58,12 @@ export class Unit {
   }: {
     id?: UnitId
     playerId?: PlayerId
+    type?: UnitType
     name?: string
     location?: Hex
     hitPoints?: HitPoints
     actionPoints?: ActionPoints
-  } = {}): Unit => new Unit({ id, playerId, name, location, hitPoints, actionPoints })
+  } = {}): Unit => new Unit({ id, playerId, type, name, location, hitPoints, actionPoints })
 
   public move = (location: Hex, actionPointsConsumed: number): Unit =>
     this.copy({ location, actionPoints: this.actionPoints.reduce(actionPointsConsumed) })
@@ -70,6 +81,7 @@ export class Unit {
     id: this.id,
     playerId: this.playerId,
     name: this.name,
+    type: this.type,
     location: this.location.toJson(),
     hitPoints: this.hitPoints.toJson(),
     actionPoints: this.actionPoints.toJson(),
@@ -80,6 +92,7 @@ export class Unit {
       id: json.id,
       playerId: json.playerId,
       name: json.name,
+      type: json.type,
       location: Hex.fromJson(json.location),
       hitPoints: HitPoints.fromJson(json.hitPoints),
       actionPoints: ActionPoints.fromJson(json.actionPoints),

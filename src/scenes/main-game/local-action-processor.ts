@@ -3,7 +3,7 @@ import { AttackType, WorldAction } from '../../world/world-actions'
 import { WorldState } from '../../world/world-state'
 import { LocalAction } from './local-action'
 import { Option } from '../../util/types'
-import { Unit, UnitId } from '../../world/unit'
+import { Unit, UnitId, UnitType } from '../../world/unit'
 import { Hex } from '../../world/hex'
 import { UnreachableCaseError } from '../../util/unreachable-case-error'
 import { HexDirection } from '../../world/hex-direction'
@@ -57,6 +57,8 @@ export class LocalActionProcessor {
         return this.handleChangeSidebar(action.sidebar)
       case 'chat':
         return this.handleChat(action.message)
+      case 'matureUnit':
+        return this.handleMatureUnit()
       default:
         throw new UnreachableCaseError(action)
     }
@@ -140,14 +142,15 @@ export class LocalActionProcessor {
     const unit = this.combinedState.findSelectedUnit()
     if (unit && this.combinedState.unitCouldPotentiallyAttack(unit)) {
       const newMode: Mode = { type: 'attack', from: unit.location, unitId: unit.id, attackType }
-      const newLocalGameState = this.localGameState.setMode(newMode)
-      return { newLocalGameState }
+      return { newLocalGameState: this.localGameState.setMode(newMode) }
     }
   }
 
   private handleCompleteMove = (unitId: UnitId, destination: Hex): Option<LocalActionResult> => {
     const unit = this.worldState.getUnitById(unitId)
-    if (this.combinedState.unitCanMoveToHex(unit, destination)) return this.moveToHex(unit, destination)
+    if (this.combinedState.unitCanMoveToHex(unit, destination)) {
+      return this.moveToHex(unit, destination)
+    }
   }
 
   private handleCompleteAttack = (
@@ -184,4 +187,11 @@ export class LocalActionProcessor {
   })
 
   private handleChat = (message: string): LocalActionResult => ({ worldAction: { type: 'chat', message } })
+
+  private handleMatureUnit = (): Option<LocalActionResult> => {
+    const unit = this.combinedState.findSelectedUnit()
+    if (unit && unit.type === UnitType.CRIA) {
+      return { worldAction: { type: 'matureUnit', unitId: unit.id, unitType: UnitType.WARRIOR } }
+    }
+  }
 }

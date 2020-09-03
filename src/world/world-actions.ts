@@ -1,5 +1,5 @@
 import { Hex } from './hex'
-import { UnitId } from './unit'
+import { UnitId, UnitType } from './unit'
 import { WorldState } from './world-state'
 import { PlayerId } from './player'
 import { Option } from '../util/types'
@@ -59,6 +59,12 @@ export interface KickPlayerWorldAction {
   playerId: PlayerId
 }
 
+export interface MatureUnitWorldAction {
+  type: 'matureUnit'
+  unitId: UnitId
+  unitType: UnitType
+}
+
 export type WorldAction =
   | InitialiseWorldAction
   | AddPlayerWorldAction
@@ -69,3 +75,4 @@ export type WorldAction =
   | EndTurnWorldAction
   | ChatWorldAction
   | KickPlayerWorldAction
+  | MatureUnitWorldAction

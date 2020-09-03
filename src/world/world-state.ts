@@ -111,9 +111,16 @@ export class WorldState {
   public removeUnit = (unitId: UnitId): WorldState =>
     this.copy({ units: R.filter((unit) => unit.id !== unitId, this.units) })
 
+  public updateUnit = (unitId: UnitId, modify: (player: Unit) => Unit): WorldState => {
+    const unit = this.getUnitById(unitId)
+    return this.replaceUnit(unitId, modify(unit))
+  }
+
   public updatePlayer = (playerId: PlayerId, modify: (player: Player) => Player): WorldState => {
     const player = this.findPlayer(playerId)
-    if (!player) throw `No player found with ID ${playerId}`
+    if (!player) {
+      throw `No player found with ID ${playerId}`
+    }
     return this.replacePlayer(playerId, modify(player))
   }
 

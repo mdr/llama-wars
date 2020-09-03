@@ -9,7 +9,7 @@ export interface GoLocalAction {
   direction: HexDirection
 }
 
-export interface GoHexAction {
+export interface GoHexLocalAction {
   type: 'goHex'
   hex: Hex
 }
@@ -53,19 +53,23 @@ export interface SelectHexLocalAction {
   hex: Hex
 }
 
-export interface ChangeSidebarAction {
+export interface ChangeSidebarLocalAction {
   type: 'changeSidebar'
   sidebar: Sidebar
 }
 
-export interface ChatAction {
+export interface ChatLocalAction {
   type: 'chat'
   message: string
 }
 
+export interface MatureUnitLocalAction {
+  type: 'matureUnit'
+}
+
 export type LocalAction =
   | GoLocalAction
-  | GoHexAction
+  | GoHexLocalAction
   | EndTurnLocalAction
   | SelectNextUnitLocalAction
   | EnterMoveModeLocalAction
@@ -74,5 +78,6 @@ export type LocalAction =
   | CompleteMoveLocalAction
   | CompleteAttackLocalAction
   | SelectHexLocalAction
-  | ChangeSidebarAction
-  | ChatAction
+  | ChangeSidebarLocalAction
+  | ChatLocalAction
+  | MatureUnitLocalAction

@@ -11,12 +11,14 @@ import {
   PlayerDefeatedWorldEvent,
   PlayerEndedTurnWorldEvent,
   PlayerKickedWorldEvent,
+  UnitMaturedWorldEvent,
   UnitMovedWorldEvent,
   WorldEvent,
 } from './world-events'
 import { UnreachableCaseError } from '../util/unreachable-case-error'
 import { HOST_PLAYER_ID, Player, PlayerId } from './player'
 import { canAttackOccur } from '../server/attack-world-action-handler'
+import { Unit } from './unit'
 
 export const applyEvent = (state: WorldState, event: WorldEvent): WorldState => {
   switch (event.type) {
@@ -44,6 +46,8 @@ export const applyEvent = (state: WorldState, event: WorldEvent): WorldState => 
       return handleChat(state, event)
     case 'playerKicked':
       return handlePlayerKicked(state, event)
+    case 'unitMatured':
+      return handleUnitMatured(state, event)
     default:
       throw new UnreachableCaseError(event)
   }
@@ -216,3 +220,6 @@ const handlePlayerKicked = (state: WorldState, event: PlayerKickedWorldEvent): W
 
 const handleChat = (state: WorldState, event: ChatWorldEvent): WorldState =>
   state.addWorldLog(`[${state.getPlayer(event.playerId).name}] ${event.message}`)
+
+const handleUnitMatured = (state: WorldState, event: UnitMaturedWorldEvent): WorldState =>
+  state.updateUnit(event.unitId, (unit: Unit) => unit.copy({ hitPoints: event.hitPoints, type: event.unitType }))

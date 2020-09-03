@@ -1,5 +1,8 @@
 import assert = require('assert')
 
+export const WARRIOR_HIT_POINTS = 100
+export const CRIA_HIT_POINTS = 50
+
 export class HitPoints {
   readonly current: number
   readonly max: number

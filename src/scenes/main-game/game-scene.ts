@@ -230,6 +230,7 @@ export class GameScene extends Phaser.Scene {
       case 'gameStarted':
       case 'chat':
       case 'playerKicked':
+      case 'unitMatured':
         this.syncScene()
         break
       case 'unitMoved':

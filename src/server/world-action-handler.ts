@@ -8,6 +8,7 @@ import {
   EndTurnWorldAction,
   InitialiseWorldAction,
   KickPlayerWorldAction,
+  MatureUnitWorldAction,
   MoveUnitWorldAction,
   WorldAction,
 } from '../world/world-actions'
@@ -20,6 +21,7 @@ import {
   PlayerChangedNameWorldEvent,
   PlayerEndedTurnWorldEvent,
   PlayerKickedWorldEvent,
+  UnitMaturedWorldEvent,
   UnitMovedWorldEvent,
   WorldEvent,
   WorldEventId,
@@ -27,6 +29,8 @@ import {
 import { HOST_PLAYER_ID, Player, PlayerId } from '../world/player'
 import { WorldGenerator } from './world-generator'
 import { AttackWorldActionHandler } from './attack-world-action-handler'
+import { UnitType } from '../world/unit'
+import { HitPoints, WARRIOR_HIT_POINTS } from '../world/hit-points'
 
 export class WorldActionHandler {
   private readonly worldState: WorldState
@@ -80,6 +84,8 @@ export class WorldActionHandler {
         return this.handleChat(action)
       case 'kickPlayer':
         return this.handleKickPlayer(action)
+      case 'matureUnit':
+        return this.handleMatureUnit(action)
     }
   }
 
@@ -153,7 +159,7 @@ export class WorldActionHandler {
     ]
   }
 
-  private handleEndTurn = (action: EndTurnWorldAction): WorldEvent[] => {
+  private handleEndTurn = (action: EndTurnWorldAction): [PlayerEndedTurnWorldEvent] => {
     if (action.turn !== this.worldState.turn) {
       throw new Error(`Cannot end a turn that's not the current turn`)
     }
@@ -194,5 +200,24 @@ export class WorldActionHandler {
       throw new Error(`Only the host can kick players`)
     }
     return [{ id: this.nextWorldEventId, type: 'playerKicked', playerId }]
+  }
+
+  private handleMatureUnit = (action: MatureUnitWorldAction): [UnitMaturedWorldEvent] => {
+    const { unitId, unitType } = action
+    const unit = this.worldState.findUnitById(unitId)
+    if (!unit) {
+      throw new Error(`No unit found with ID ${unitId}`)
+    }
+    if (unit.playerId !== this.playerId) {
+      throw new Error(`Cannot mature another player's unit`)
+    }
+    if (unit.type !== UnitType.CRIA) {
+      throw new Error(`Can only mature a cria`)
+    }
+    if (unitType === UnitType.CRIA) {
+      throw new Error(`Cannot mature into a cria`)
+    }
+    const hitPoints = new HitPoints({ current: WARRIOR_HIT_POINTS, max: WARRIOR_HIT_POINTS })
+    return [{ id: this.nextWorldEventId, type: 'unitMatured', unitId, unitType, hitPoints }]
   }
 }
