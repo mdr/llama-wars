@@ -1,3 +1,5 @@
+import * as R from 'ramda'
+
 import { WorldState } from '../../world/world-state'
 import { LocalGameState } from '../local-game-state'
 import { UnreachableCaseError } from '../../util/unreachable-case-error'
@@ -92,12 +94,33 @@ export class SelectionInfoDisplayObject extends GameObjects.Container {
     return new CombinedState(this.worldState, this.localGameState)
   }
 
+  private handleUnitAction = (action: UnitAction): void => {
+    switch (action) {
+      case UnitAction.MOVE:
+        this.localActionDispatcher({ type: 'enterMoveMode' })
+        break
+      case UnitAction.SPIT:
+        this.localActionDispatcher({ type: 'enterAttackMode', attackType: 'spit' })
+        break
+      case UnitAction.ATTACK:
+        this.localActionDispatcher({ type: 'enterAttackMode', attackType: 'melee' })
+        break
+      case UnitAction.MATURE:
+        this.localActionDispatcher({ type: 'matureUnit' })
+        break
+    }
+  }
+
   private handleActionLink1Click = (): void => {
     const mode = this.localGameState.mode
     switch (mode.type) {
       case 'selectHex':
         this.scene.sound.play(AudioKeys.CLICK)
-        this.localActionDispatcher({ type: 'enterMoveMode' })
+        const selectedUnit = this.combinedState.findSelectedUnit()
+        if (selectedUnit) {
+          const action = this.getUnitActions(selectedUnit)[0]
+          this.handleUnitAction(action)
+        }
         break
       case 'moveUnit':
       case 'attack':
@@ -112,14 +135,22 @@ export class SelectionInfoDisplayObject extends GameObjects.Container {
   private handleActionLink2Click = (): void => {
     if (this.localGameState.mode.type === 'selectHex') {
       this.scene.sound.play(AudioKeys.CLICK)
-      this.localActionDispatcher({ type: 'enterAttackMode', attackType: 'melee' })
+      const selectedUnit = this.combinedState.findSelectedUnit()
+      if (selectedUnit) {
+        const action = this.getUnitActions(selectedUnit)[1]
+        this.handleUnitAction(action)
+      }
     }
   }
 
   private handleActionLink3Click = (): void => {
     if (this.localGameState.mode.type === 'selectHex') {
       this.scene.sound.play(AudioKeys.CLICK)
-      this.localActionDispatcher({ type: 'enterAttackMode', attackType: 'spit' })
+      const selectedUnit = this.combinedState.findSelectedUnit()
+      if (selectedUnit) {
+        const action = this.getUnitActions(selectedUnit)[2]
+        this.handleUnitAction(action)
+      }
     }
   }
 
@@ -160,18 +191,28 @@ export class SelectionInfoDisplayObject extends GameObjects.Container {
     this.actionLink1.setText('Click tile to move to (or ESC to cancel)')
   }
 
+  private getUnitActions = (unit: Unit): UnitAction[] => {
+    const actions = []
+    if (this.combinedState.unitCouldPotentiallyMove(unit)) {
+      actions.push(UnitAction.MOVE)
+    }
+    if (this.combinedState.unitCouldPotentiallyAttack(unit)) {
+      actions.push(UnitAction.MOVE)
+      actions.push(UnitAction.SPIT)
+    }
+    if (unit.type === UnitType.CRIA) {
+      actions.push(UnitAction.MATURE)
+    }
+    return actions
+  }
+
   private syncSelectHexModeText = (): void => {
     const selectedUnit = this.combinedState.findSelectedUnit()
     if (selectedUnit) {
       this.selectionText.setText(this.describeUnit(selectedUnit))
-      if (this.combinedState.unitCouldPotentiallyMove(selectedUnit)) {
-        this.actionLink1.setText('Move (m)')
-      }
-      if (this.combinedState.unitCouldPotentiallyAttack(selectedUnit)) {
-        this.actionLink2.setText('Attack (a)')
-      }
-      if (this.combinedState.unitCouldPotentiallyAttack(selectedUnit)) {
-        this.actionLink3.setText('Spit (s)')
+      const unitActions = this.getUnitActions(selectedUnit)
+      for (const [action, actionLink] of R.zip(unitActions, [this.actionLink1, this.actionLink2, this.actionLink3])) {
+        actionLink.setText(describeUnitAction(action))
       }
     }
   }
@@ -199,9 +240,10 @@ enum UnitAction {
   MOVE = 'MOVE',
   SPIT = 'SPIT',
   ATTACK = 'ATTACK',
+  MATURE = 'MATURE',
 }
 
-const getUnitActionDescription = (action: UnitAction): string => {
+const describeUnitAction = (action: UnitAction): string => {
   switch (action) {
     case UnitAction.ATTACK:
       return 'Attack (a)'
@@ -209,5 +251,7 @@ const getUnitActionDescription = (action: UnitAction): string => {
       return 'Move (m)'
     case UnitAction.SPIT:
       return 'Spit (s)'
+    case UnitAction.MATURE:
+      return 'Mature (t)'
   }
 }
