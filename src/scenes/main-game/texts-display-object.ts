@@ -9,6 +9,7 @@ import { SelectionInfoDisplayObject } from './selection-info-display-object'
 import { getGameHeight, getGameWidth } from '../../util/phaser/phaser-utils'
 import { SidePanelDisplayObject } from './side-panel-display-object'
 import { GameObjects } from 'phaser'
+import { Pixels } from '../../util/types'
 
 export type LocalActionDispatcher = (action: LocalAction) => void
 
@@ -42,14 +43,10 @@ export class TextsDisplayObject {
     this.localGameState = localGameState
     this.localActionDispatcher = localActionDispatcher
 
-    const selectionLocation = { x: 10, y: getGameHeight(this.scene) - SelectionInfoDisplayObject.HEIGHT - 10 }
-    this.selectionInfo = new SelectionInfoDisplayObject(
-      scene,
-      worldState,
-      localGameState,
-      localActionDispatcher,
-      selectionLocation,
-    ).setDepth(100)
+    this.selectionInfo = new SelectionInfoDisplayObject(scene, worldState, localGameState, localActionDispatcher, {
+      x: 0,
+      y: 0,
+    }).setDepth(100)
     this.scene.cameras.main.ignore(this.selectionInfo)
     this.scene.add.existing(this.selectionInfo)
     const playerLlamaImage = this.scene.add
@@ -85,30 +82,21 @@ export class TextsDisplayObject {
       .setDepth(200)
     this.scene.cameras.main.ignore(this.victoryText)
 
-    const sidePanelLocation = { x: getGameWidth(this.scene) - SidePanelDisplayObject.WIDTH - 10, y: 20 }
-    this.sidePanel = new SidePanelDisplayObject(
-      scene,
-      worldState,
-      localGameState,
-      localActionDispatcher,
-      sidePanelLocation,
-    ).setDepth(100)
+    this.sidePanel = new SidePanelDisplayObject(scene, worldState, localGameState, localActionDispatcher, {
+      x: 0,
+      y: 0,
+    }).setDepth(100)
     scene.add.existing(this.sidePanel)
     this.scene.cameras.main.ignore(this.sidePanel)
 
     this.endTurnButton = new PrimaryButton(this.scene, 0, 0, 'End Turn', () =>
       this.localActionDispatcher({ type: 'endTurn' }),
     ).setDepth(100)
-    const endButtonBounds = this.endTurnButton.getBounds()
-    const x = getGameWidth(this.scene) - endButtonBounds.width
-    const y = getGameHeight(this.scene) - endButtonBounds.height - 10
-    this.endTurnButton.setX(x)
-    this.endTurnButton.setY(y)
     this.scene.add.existing(this.endTurnButton)
     this.scene.cameras.main.ignore(this.endTurnButton)
 
     this.waitingForNextTurnText = this.scene.add
-      .text(x, y + 15, 'Waiting for next turn...', {
+      .text(0, 0, 'Waiting for next turn...', {
         fill: '#ffffff',
       })
       .setFontSize(18)
@@ -116,16 +104,20 @@ export class TextsDisplayObject {
       .setDepth(200)
     this.scene.cameras.main.ignore(this.waitingForNextTurnText)
 
-    window.addEventListener('resize', () => {
-      this.selectionInfo.setY(window.innerHeight - SelectionInfoDisplayObject.HEIGHT - 10)
-      this.sidePanel.setX(window.innerWidth - SidePanelDisplayObject.WIDTH - 10)
-      const x = window.innerWidth - endButtonBounds.width
-      const y = window.innerHeight - endButtonBounds.height - 10
-      this.endTurnButton.setX(x)
-      this.endTurnButton.setY(y)
-      this.waitingForNextTurnText.setX(x)
-      this.waitingForNextTurnText.setY(y + 15)
-    })
+    this.positionUI(getGameWidth(this.scene), getGameHeight(this.scene))
+    window.addEventListener('resize', () => this.positionUI(window.innerWidth, window.innerHeight))
+  }
+
+  private positionUI = (width: Pixels, height: Pixels): void => {
+    const endButtonBounds = this.endTurnButton.getBounds()
+    this.selectionInfo.setY(height - SelectionInfoDisplayObject.HEIGHT - 10)
+    this.sidePanel.setX(width - SidePanelDisplayObject.WIDTH - 10)
+    const x = width - endButtonBounds.width
+    const y = height - endButtonBounds.height - 10
+    this.endTurnButton.setX(x)
+    this.endTurnButton.setY(y)
+    this.waitingForNextTurnText.setX(x)
+    this.waitingForNextTurnText.setY(y + 15)
   }
 
   public syncScene = (worldState: WorldState, localGameState: LocalGameState): void => {

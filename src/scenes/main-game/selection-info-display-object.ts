@@ -194,3 +194,20 @@ export class SelectionInfoDisplayObject extends GameObjects.Container {
     }
   }
 }
+
+enum UnitAction {
+  MOVE = 'MOVE',
+  SPIT = 'SPIT',
+  ATTACK = 'ATTACK',
+}
+
+const getUnitActionDescription = (action: UnitAction): string => {
+  switch (action) {
+    case UnitAction.ATTACK:
+      return 'Attack (a)'
+    case UnitAction.MOVE:
+      return 'Move (m)'
+    case UnitAction.SPIT:
+      return 'Spit (s)'
+  }
+}
