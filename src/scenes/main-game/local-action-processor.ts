@@ -61,6 +61,8 @@ export class LocalActionProcessor {
         return this.handleMatureUnit()
       case 'toggleFullScreen':
         return this.handleToggleFullScreen()
+      case 'centreSelection':
+        return this.handleCentreSelection()
       default:
         throw new UnreachableCaseError(action)
     }
@@ -196,7 +198,15 @@ export class LocalActionProcessor {
       return { worldAction: { type: 'matureUnit', unitId: unit.id, unitType: UnitType.WARRIOR } }
     }
   }
+
   private handleToggleFullScreen = (): Option<LocalActionResult> => ({
     newLocalGameState: this.localGameState.toggleFullScreen(),
   })
+
+  private handleCentreSelection = (): Option<LocalActionResult> => {
+    const selectedHex = this.localGameState.selectedHex
+    if (selectedHex) {
+      return { panTo: hexCenter(selectedHex) }
+    }
+  }
 }

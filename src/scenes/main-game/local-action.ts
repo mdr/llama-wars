@@ -71,6 +71,10 @@ export interface ToggleFullScreenLocalAction {
   type: 'toggleFullScreen'
 }
 
+export interface CentreSelectionLocalAction {
+  type: 'centreSelection'
+}
+
 export type LocalAction =
   | GoLocalAction
   | GoHexLocalAction
@@ -86,5 +90,6 @@ export type LocalAction =
   | ChatLocalAction
   | MatureUnitLocalAction
   | ToggleFullScreenLocalAction
+  | CentreSelectionLocalAction
 
 export type LocalActionDispatcher = (action: LocalAction) => void

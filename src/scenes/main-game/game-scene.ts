@@ -170,8 +170,12 @@ export class GameScene extends Phaser.Scene {
 
   private panIntoViewIfNeeded = (point: Point): void => {
     if (!this.cameras.main.worldView.contains(point.x, point.y)) {
-      this.cameras.main.pan(point.x, point.y, 500, 'Cubic', true)
+      this.panIntoView(point)
     }
+  }
+
+  private panIntoView = (point: Point): void => {
+    this.cameras.main.pan(point.x, point.y, 500, 'Cubic', true)
   }
 
   private handleLocalAction = (localAction: LocalAction): void => {
@@ -197,7 +201,7 @@ export class GameScene extends Phaser.Scene {
       })
     }
     if (result.panTo) {
-      this.panIntoViewIfNeeded(result.panTo)
+      this.panIntoView(result.panTo)
     }
   }
 

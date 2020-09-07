@@ -40,5 +40,7 @@ export const mapToLocalAction = (event: KeyboardEvent, mode: Mode): Option<Local
     case 't':
       if (mode.type === 'selectHex') return { type: 'matureUnit' }
       break
+    case 'c':
+      return { type: 'centreSelection' }
   }
 }
