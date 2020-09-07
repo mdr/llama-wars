@@ -11,6 +11,7 @@ export const ImageKeys = {
   GRASS: 'grass',
   SPIT: 'spit',
   MOUNTAIN: 'mountain',
+  CASTLE: 'castle',
   CROWN: 'crown',
   BORDER_TOP_LEFT: 'border-top-left',
   BORDER_BOTTOM_LEFT: 'border-bottom-left',

@@ -193,6 +193,9 @@ export class BootScene extends Phaser.Scene {
     // https://opengameart.org/content/game-icons-0
     this.load.image(ImageKeys.CROWN, 'assets/sprites/crown.png')
 
+    // https://opengameart.org/content/hexagon-pack-310x
+    this.load.image(ImageKeys.CASTLE, 'assets/sprites/castle_open.png')
+
     // https://opengameart.org/content/250-hud-and-interface-icons-unknown-horizons
     this.load.image(ImageKeys.DELETE_BUTTON_1, 'assets/sprites/delete-button-1.png')
     this.load.image(ImageKeys.DELETE_BUTTON_2, 'assets/sprites/delete-button-2.png')

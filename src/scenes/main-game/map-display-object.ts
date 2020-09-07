@@ -14,6 +14,7 @@ import { LocalGameState } from '../local-game-state'
 import { CombinedState } from '../combined-state-methods'
 import Polygon = Phaser.GameObjects.Polygon
 import { getUiCamera } from './cameras'
+import { ImageKeys } from '../asset-keys'
 
 type TileState = 'default' | 'selected' | 'targetable'
 
@@ -31,6 +32,11 @@ export class MapDisplayObject {
     for (const hex of this.worldState.map.getMapHexes()) {
       this.createHex(hex)
     }
+    // const castle = this.scene.add
+    //   .image(hexCenter(new Hex(10, 10)).x, hexCenter(new Hex(10, 10)).y - 5, ImageKeys.CASTLE)
+    //   .setScale(0.6)
+    //   .setTint(getPlayerTint(1))
+    // getUiCamera(this.scene).ignore(castle)
   }
 
   private get combinedState(): CombinedState {
@@ -39,11 +45,11 @@ export class MapDisplayObject {
 
   private createHex = (hex: Hex): void => {
     const polygonCenter = hexCenter(hex)
-    const grass = this.scene.add.image(polygonCenter.x, polygonCenter.y, 'grass').setScale(0.65).setDepth(-5)
+    const grass = this.scene.add.image(polygonCenter.x, polygonCenter.y, ImageKeys.GRASS).setScale(0.65).setDepth(-5)
     const uiCamera = getUiCamera(this.scene)
     uiCamera.ignore(grass)
     if (this.worldState.map.isMountain(hex)) {
-      const mountain = this.scene.add.image(polygonCenter.x, polygonCenter.y, 'mountain').setDepth(-5)
+      const mountain = this.scene.add.image(polygonCenter.x, polygonCenter.y, ImageKeys.MOUNTAIN).setDepth(-5)
       uiCamera.ignore(mountain)
     }
     const polygon = this.addPolygon(polygonCenter, HEX_SIZE)

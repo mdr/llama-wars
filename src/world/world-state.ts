@@ -8,6 +8,7 @@ import { Player, PlayerId } from './player'
 import assert = require('assert')
 import { applyEvent } from './world-event-evaluator'
 import { WorldEvent } from './world-events'
+import { Building } from './building'
 
 interface GameOverInfo {
   victor: Option<PlayerId>
@@ -17,6 +18,7 @@ export class WorldState {
   readonly turn: number /* turn = 0 before the game has started */
   readonly map: WorldMap
   readonly units: Unit[]
+  readonly buildings: Building[]
   readonly players: Player[]
   readonly gameOverInfo?: GameOverInfo
   readonly worldLog: string[]
@@ -25,6 +27,7 @@ export class WorldState {
     turn,
     map,
     units,
+    buildings,
     players,
     gameOverInfo,
     worldLog = [],
@@ -32,6 +35,7 @@ export class WorldState {
     turn: number
     map: WorldMap
     units: Unit[]
+    buildings: Building[]
     players: Player[]
     gameOverInfo?: Option<GameOverInfo>
     worldLog?: string[]
@@ -39,6 +43,7 @@ export class WorldState {
     this.turn = turn
     this.map = map
     this.units = units
+    this.buildings = buildings
     this.players = players
     this.gameOverInfo = gameOverInfo
     this.worldLog = worldLog
@@ -49,6 +54,7 @@ export class WorldState {
     turn = this.turn,
     map = this.map,
     units = this.units,
+    buildings = this.buildings,
     players = this.players,
     gameOverInfo = toMaybe(this.gameOverInfo),
     worldLog = this.worldLog,
@@ -56,10 +62,12 @@ export class WorldState {
     turn?: number
     map?: WorldMap
     units?: Unit[]
+    buildings?: Building[]
     players?: Player[]
     gameOverInfo?: Maybe<GameOverInfo>
     worldLog?: string[]
-  } = {}): WorldState => new WorldState({ turn, map, units, players, gameOverInfo: toOption(gameOverInfo), worldLog })
+  } = {}): WorldState =>
+    new WorldState({ turn, map, units, buildings, players, gameOverInfo: toOption(gameOverInfo), worldLog })
 
   public get gameHasStarted(): boolean {
     return this.turn > 0
@@ -146,6 +154,7 @@ export class WorldState {
     turn: this.turn,
     map: this.map.toJson(),
     units: this.units.map((unit) => unit.toJson()),
+    buildings: this.buildings.map((building) => building.toJson()),
     players: this.players.map((player) => player.toJson()),
     gameOverInfo: this.gameOverInfo,
     worldLog: this.worldLog,
@@ -156,6 +165,7 @@ export class WorldState {
       turn: json.turn,
       map: WorldMap.fromJson(json.map),
       units: json.units.map((unit: any) => Unit.fromJson(unit)),
+      buildings: json.buildings.map((building: any) => Building.fromJson(building)),
       players: json.players.map((unit: any) => Player.fromJson(unit)),
       gameOverInfo: json.gameOverInfo,
       worldLog: json.worldLog,
