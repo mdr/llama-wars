@@ -1,6 +1,7 @@
 import { Point } from '../../point'
 import { ImageKeys } from '../../asset-keys'
 import { GameObjects } from 'phaser'
+import { Pixels } from '../../../util/types'
 
 const HORIZONTAL_IMAGE_WIDTH = 74
 const VERTICAL_IMAGE_HEIGHT = 59
@@ -10,15 +11,15 @@ const THICKNESS = 4
 
 interface UiBorderDisplayObjectParams {
   topLeft: Point
-  width: number
-  height: number
+  width: Pixels
+  height: Pixels
 }
 
 export class UiBorderDisplayObject extends GameObjects.Container {
   private readonly images: GameObjects.Image[] = []
   private readonly topLeft: Point
-  private readonly _width: number
-  private readonly _height: number
+  private readonly _width: Pixels
+  private readonly _height: Pixels
 
   constructor(scene: Phaser.Scene, { topLeft, width, height }: UiBorderDisplayObjectParams) {
     super(scene, topLeft.x, topLeft.y, [])

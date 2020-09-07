@@ -4,14 +4,17 @@ import { Maybe, Option, toMaybe, toOption } from '../util/types'
 import { PlayerId } from '../world/player'
 import assert = require('assert')
 
-export type Sidebar = 'log' | 'players'
+export enum SidebarMode {
+  LOG = 'LOG',
+  PLAYERS = 'PLAYERS',
+}
 
 export class LocalGameState {
   readonly playerId: PlayerId
   readonly mode: Mode
   readonly selectedHex: Option<Hex>
   readonly actionsOutstandingWithServer: number
-  readonly sidebar: Sidebar
+  readonly sidebar: SidebarMode
   readonly fullScreen: boolean
 
   constructor({
@@ -26,7 +29,7 @@ export class LocalGameState {
     mode: Mode
     selectedHex?: Option<Hex>
     actionsOutstandingWithServer?: number
-    sidebar: Sidebar
+    sidebar: SidebarMode
     fullScreen?: boolean
   }) {
     this.playerId = playerId
@@ -50,7 +53,7 @@ export class LocalGameState {
     mode?: Mode
     selectedHex?: Maybe<Hex>
     actionsOutstandingWithServer?: number
-    sidebar?: Sidebar
+    sidebar?: SidebarMode
     fullScreen?: boolean
   } = {}): LocalGameState =>
     new LocalGameState({
@@ -80,5 +83,5 @@ export class LocalGameState {
 export const INITIAL_LOCAL_GAME_STATE = new LocalGameState({
   playerId: 1,
   mode: { type: 'selectHex' },
-  sidebar: 'log',
+  sidebar: SidebarMode.LOG,
 })

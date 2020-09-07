@@ -2,7 +2,7 @@ import { HexDirection } from '../../world/hex-direction'
 import { Hex } from '../../world/hex'
 import { UnitId } from '../../world/unit'
 import { AttackType } from '../../world/world-actions'
-import { Sidebar } from '../local-game-state'
+import { SidebarMode } from '../local-game-state'
 
 export interface GoLocalAction {
   type: 'go'
@@ -55,7 +55,7 @@ export interface SelectHexLocalAction {
 
 export interface ChangeSidebarLocalAction {
   type: 'changeSidebar'
-  sidebar: Sidebar
+  sidebar: SidebarMode
 }
 
 export interface ChatLocalAction {

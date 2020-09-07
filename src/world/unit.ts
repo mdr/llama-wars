@@ -77,6 +77,8 @@ export class Unit {
     return this.actionPoints.current > 0
   }
 
+  public toString = (): string => `Unit(${JSON.stringify(this.toJson())})`
+
   public toJson = (): any => ({
     id: this.id,
     playerId: this.playerId,

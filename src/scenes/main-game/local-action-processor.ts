@@ -1,4 +1,4 @@
-import { LocalGameState, Sidebar } from '../local-game-state'
+import { LocalGameState, SidebarMode } from '../local-game-state'
 import { AttackType, WorldAction } from '../../world/world-actions'
 import { WorldState } from '../../world/world-state'
 import { LocalAction } from './local-action'
@@ -186,7 +186,7 @@ export class LocalActionProcessor {
     }
   }
 
-  private handleChangeSidebar = (sidebar: Sidebar): Option<LocalActionResult> => ({
+  private handleChangeSidebar = (sidebar: SidebarMode): Option<LocalActionResult> => ({
     newLocalGameState: this.localGameState.copy({ sidebar }),
   })
 

@@ -105,7 +105,7 @@ const handleUnitMoved = (state: WorldState, event: UnitMovedWorldEvent): WorldSt
   }
   if (!unit.location.equals(from)) {
     throw new Error(
-      `Unit is not in the expected location for movement. Unit is at ${unit.location}, but was expected to be at ${from}`,
+      `Unit "${unit}" is not in the expected location for movement. Unit is at ${unit.location}, but was expected to be at ${from}`,
     )
   }
   const toUnit = state.findUnitInLocation(to)
