@@ -300,6 +300,9 @@ export class GameScene extends Phaser.Scene {
     this.localGameState = this.localGameState
       .copy({ mode: { type: 'selectHex' } })
       .setSelectedHex(unitToSelect?.location)
+    if (this.localGameState.selectedHex) {
+      this.panIntoView(hexCenter(this.localGameState.selectedHex))
+    }
     this.syncScene()
   }
 
