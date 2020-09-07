@@ -11,6 +11,8 @@ import { SidePanelDisplayObject } from './side-panel-display-object'
 import { GameObjects } from 'phaser'
 import { Pixels } from '../../../util/types'
 
+export const EDGE_SPACING: Pixels = 10
+
 export class UiDisplayObjects {
   private readonly scene: Phaser.Scene
   private worldState: WorldState
@@ -118,10 +120,12 @@ export class UiDisplayObjects {
 
   private layoutUi = (width: Pixels, height: Pixels): void => {
     const endButtonBounds = this.endTurnButton.getBounds()
-    this.selectionInfo.setY(height - SelectionInfoDisplayObject.HEIGHT - 10)
-    this.sidePanel.setX(width - SidePanelDisplayObject.WIDTH - 10)
-    const x = width - endButtonBounds.width
-    const y = height - endButtonBounds.height - 10
+    this.selectionInfo.setX(EDGE_SPACING)
+    this.selectionInfo.setY(height - SelectionInfoDisplayObject.HEIGHT - EDGE_SPACING)
+    this.sidePanel.setX(width - SidePanelDisplayObject.WIDTH - EDGE_SPACING)
+    this.sidePanel.setY(EDGE_SPACING)
+    const x = width - endButtonBounds.width - EDGE_SPACING
+    const y = height - endButtonBounds.height - EDGE_SPACING
     this.endTurnButton.setX(x)
     this.endTurnButton.setY(y)
     this.waitingForNextTurnText.setX(x)
