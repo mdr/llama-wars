@@ -7,6 +7,7 @@ import { Hex } from '../world/hex'
 import { Player, PlayerId } from '../world/player'
 import { AttackType } from '../world/world-actions'
 import { canAttackOccur } from '../server/attack-world-action-handler'
+import { Building } from '../world/building'
 
 export class CombinedState {
   protected readonly worldState: WorldState
@@ -30,6 +31,8 @@ export class CombinedState {
 
   public findUnitInLocation = (hex: Hex): Option<Unit> => this.worldState.findUnitInLocation(hex)
 
+  public findBuildingInLocation = (hex: Hex): Option<Building> => this.worldState.findBuildingInLocation(hex)
+
   public unitCouldPotentiallyMove = (unit: Unit): boolean =>
     unit.playerId === this.playerId && unit.hasUnspentActionPoints && !this.getCurrentPlayer().endedTurn
 
@@ -44,7 +47,8 @@ export class CombinedState {
     hex.isAdjacentTo(unit.location) &&
     this.worldState.map.isInBounds(hex) &&
     !this.worldState.map.isMountain(hex) &&
-    !this.findUnitInLocation(hex)
+    !this.findUnitInLocation(hex) &&
+    !this.findBuildingInLocation(hex)
 
   /**
    * @return the unit in the hex to attack, if an attack is possible, else undefined.

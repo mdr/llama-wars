@@ -32,11 +32,6 @@ export class MapDisplayObject {
     for (const hex of this.worldState.map.getMapHexes()) {
       this.createHex(hex)
     }
-    // const castle = this.scene.add
-    //   .image(hexCenter(new Hex(10, 10)).x, hexCenter(new Hex(10, 10)).y - 5, ImageKeys.CASTLE)
-    //   .setScale(0.6)
-    //   .setTint(getPlayerTint(1))
-    // getUiCamera(this.scene).ignore(castle)
   }
 
   private get combinedState(): CombinedState {

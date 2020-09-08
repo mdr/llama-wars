@@ -124,6 +124,9 @@ export class WorldState {
     return this.replaceUnit(unitId, modify(unit))
   }
 
+  public findBuildingInLocation = (hex: Hex): Option<Building> =>
+    R.find((building) => building.location.equals(hex), this.buildings)
+
   public updatePlayer = (playerId: PlayerId, modify: (player: Player) => Player): WorldState => {
     const player = this.findPlayer(playerId)
     if (!player) {

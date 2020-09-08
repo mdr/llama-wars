@@ -77,7 +77,9 @@ const handlePlayerChangedName = (state: WorldState, event: PlayerChangedNameWorl
 
 const getPlayer = (state: WorldState, playerId: PlayerId): Player => {
   const player = state.findPlayer(playerId)
-  if (!player) throw new Error(`No player found with ID ${playerId}`)
+  if (!player) {
+    throw new Error(`No player found with ID ${playerId}`)
+  }
   return player
 }
 
@@ -86,7 +88,7 @@ const handleGameStarted = (state: WorldState, event: GameStartedWorldEvent): Wor
     throw new Error(`Game already started`)
   }
   return state
-    .copy({ turn: 1, units: event.units })
+    .copy({ turn: 1, units: event.units, buildings: event.buildings })
     .updateWorldMap((map) => map.copy({ mountains: event.mountains }))
     .addWorldLog('Let battle commence!')
 }

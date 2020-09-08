@@ -117,8 +117,9 @@ export class WorldActionHandler {
     }
     const worldGenerator = new WorldGenerator(this.worldState)
     const units = worldGenerator.generateUnits()
+    const buildings = worldGenerator.generateBuildings()
     const mountains = worldGenerator.generateMountains()
-    return [{ id: this.nextWorldEventId, type: 'gameStarted', units, mountains }]
+    return [{ id: this.nextWorldEventId, type: 'gameStarted', units, buildings, mountains }]
   }
 
   private handleAttack = (action: AttackWorldAction): WorldEvent[] =>

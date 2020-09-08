@@ -14,6 +14,7 @@ import { fireAndForget } from '../../util/async-util'
 import { LLAMA_EAT, LLAMA_WALK } from '../animations'
 import { AnimationSpec, CombatAnimationSpec, MatureAnimationSpec, MoveAnimationSpec } from './animation-spec'
 import { LocalActionDispatcher } from './local-action'
+import { BuildingDisplayObject } from './building-display-object'
 
 export type AnimationSpeed = 'normal' | 'quick'
 
@@ -22,6 +23,7 @@ export class DisplayObjects {
   private readonly mapDisplayObject: MapDisplayObject
   private readonly unitDisplayObjects: Map<UnitId, UnitDisplayObject> = new Map()
   private readonly animatedUnitDisplayObjects: Map<UnitId, UnitDisplayObject> = new Map()
+  private readonly buildingDisplayObjects: Map<UnitId, BuildingDisplayObject> = new Map()
   private readonly textsDisplayObject: UiDisplayObjects
   private readonly localActionDispatcher: LocalActionDispatcher
   private isAnimating: boolean = false
@@ -84,6 +86,30 @@ export class DisplayObjects {
     }
 
     this.syncUnits()
+    this.syncBuildings()
+  }
+
+  private syncBuildings = (): void => {
+    this.removeBuildingDisplayObjectsNoLongerNeeded()
+    for (const building of this.worldState.buildings) {
+      let buildingDisplayObject = this.buildingDisplayObjects.get(building.id)
+      if (!buildingDisplayObject) {
+        buildingDisplayObject = new BuildingDisplayObject(this.scene, building)
+        this.buildingDisplayObjects.set(building.id, buildingDisplayObject)
+      }
+      buildingDisplayObject.syncScene(building)
+    }
+  }
+
+  private removeBuildingDisplayObjectsNoLongerNeeded = (): void => {
+    const surplusBuildingIds = R.difference(
+      Array.from(this.buildingDisplayObjects.keys()),
+      this.worldState.buildings.map((building) => building.id),
+    )
+    for (const buildingId of surplusBuildingIds) {
+      this.buildingDisplayObjects.get(buildingId)?.destroy()
+      this.buildingDisplayObjects.delete(buildingId)
+    }
   }
 
   private syncUnits = (): void => {

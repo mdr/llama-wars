@@ -4,8 +4,9 @@ import { Hex } from '../world/hex'
 import { randomElement } from '../util/random-util'
 import * as R from 'ramda'
 import { ActionPoints } from '../world/action-points'
-import { CRIA_HIT_POINTS, HitPoints } from '../world/hit-points'
+import { CASTLE_HIT_POINTS, CRIA_HIT_POINTS, HitPoints } from '../world/hit-points'
 import { WorldState } from '../world/world-state'
+import { Building, BuildingId, BuildingType } from '../world/building'
 
 const LLAMA_NAMES = [
   'Walter',
@@ -33,11 +34,20 @@ export class WorldGenerator {
   private readonly worldState: WorldState
   private remainingHexes: Hex[]
   private nextUnitId: UnitId = 1
+  private nextBuildingId: BuildingId = 1
 
   constructor(worldState: WorldState) {
     this.worldState = worldState
     this.remainingHexes = Array.from(worldState.map.getMapHexes())
   }
+
+  public generateUnits = (): Unit[] =>
+    R.chain((player) => this.generateUnitsForPlayer(player.id), this.worldState.players)
+
+  private generateUnitsForPlayer = (playerId: PlayerId): Unit[] => [
+    this.generateUnit(playerId),
+    this.generateUnit(playerId),
+  ]
 
   private generateUnit = (playerId: PlayerId): Unit => {
     const id = this.nextUnitId++
@@ -55,6 +65,24 @@ export class WorldGenerator {
     })
   }
 
+  public generateBuildings = (): Building[] =>
+    R.chain((player) => this.generateBuildingsForPlayer(player.id), this.worldState.players)
+
+  private generateBuildingsForPlayer = (playerId: PlayerId): Building[] => [this.generateCastle(playerId)]
+
+  private generateCastle = (playerId: PlayerId): Building => {
+    const id = this.nextBuildingId++
+    const location = randomElement(this.remainingHexes)
+    this.remainingHexes = R.without([location], this.remainingHexes)
+    return new Building({
+      id,
+      playerId,
+      type: BuildingType.CASTLE,
+      location,
+      hitPoints: new HitPoints({ current: CASTLE_HIT_POINTS, max: CASTLE_HIT_POINTS }),
+    })
+  }
+
   private generateMountain = (): Hex => {
     const location = randomElement(this.remainingHexes)
     this.remainingHexes = R.without([location], this.remainingHexes)
@@ -62,7 +90,4 @@ export class WorldGenerator {
   }
 
   public generateMountains = (): Hex[] => R.range(1, 10).map(this.generateMountain)
-
-  public generateUnits = (): Unit[] =>
-    R.chain((player) => [this.generateUnit(player.id), this.generateUnit(player.id)], this.worldState.players)
 }

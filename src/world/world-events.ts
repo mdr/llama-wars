@@ -4,6 +4,7 @@ import { PlayerId } from './player'
 import { WorldState } from './world-state'
 import { AttackType } from './world-actions'
 import { HitPoints } from './hit-points'
+import { Building } from './building'
 
 export type WorldEventId = number
 
@@ -37,6 +38,7 @@ export interface GameStartedWorldEvent {
   id: WorldEventId
   type: 'gameStarted'
   units: Unit[]
+  buildings: Building[]
   mountains: Hex[]
 }
 

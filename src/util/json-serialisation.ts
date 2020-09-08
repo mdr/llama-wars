@@ -5,6 +5,7 @@ import { HitPoints } from '../world/hit-points'
 import { ActionPoints } from '../world/action-points'
 import { Player } from '../world/player'
 import { WorldState } from '../world/world-state'
+import { Building } from '../world/building'
 
 export const serialiseToJson = (value: any): any => {
   switch (typeof value) {
@@ -24,6 +25,8 @@ export const serialiseToJson = (value: any): any => {
         return { ...value.toJson(), _llamaClass: 'WorldState' }
       } else if (value instanceof Unit) {
         return { ...value.toJson(), _llamaClass: 'Unit' }
+      } else if (value instanceof Building) {
+        return { ...value.toJson(), _llamaClass: 'Building' }
       } else if (value instanceof HitPoints) {
         return { ...value.toJson(), _llamaClass: 'HitPoints' }
       } else if (value instanceof ActionPoints) {
@@ -58,6 +61,8 @@ export const deserialiseFromJson = (value: any): any => {
         return WorldState.fromJson(value)
       } else if (value._llamaClass === 'Unit') {
         return Unit.fromJson(value)
+      } else if (value._llamaClass === 'Building') {
+        return Building.fromJson(value)
       } else if (value._llamaClass === 'ActionPoints') {
         return ActionPoints.fromJson(value)
       } else if (value._llamaClass === 'HitPoints') {
