@@ -81,6 +81,13 @@ export class GameScene extends Phaser.Scene {
     this.localGameState = INITIAL_LOCAL_GAME_STATE.copy({ playerId: serverOrClient.playerId })
     this.serverOrClient = serverOrClient
     serverOrClient.addListener(this.handleWorldEvent)
+    this.initialiseCameras()
+    this.displayObjects = new DisplayObjects(this, this.worldState, this.localGameState, this.handleLocalAction)
+    this.updateAsAtStartOfTurn()
+    this.setUpInputs()
+  }
+
+  private initialiseCameras = (): void => {
     const mainCamera = this.cameras.main
     this.cameras.add(0, 0, mainCamera.width, mainCamera.height, false, UI_CAMERA)
     mainCamera.setBounds(
@@ -89,9 +96,6 @@ export class GameScene extends Phaser.Scene {
       DRAWING_OFFSET.x + mapWidth(this.worldState.map, HEX_SIZE) + CAMERA_BOUNDS_BUFFER * 2,
       mapHeight(this.worldState.map, HEX_SIZE) + CAMERA_BOUNDS_BUFFER * 2,
     )
-    this.displayObjects = new DisplayObjects(this, this.worldState, this.localGameState, this.handleLocalAction)
-    this.updateAsAtStartOfTurn()
-    this.setUpInputs()
   }
 
   private setUpSound = (): void => {
@@ -213,7 +217,8 @@ export class GameScene extends Phaser.Scene {
   private handlePointerDown = (pointer: Pointer): void => {
     const pressedPoint = this.cameras.main.getWorldPoint(pointer.x, pointer.y)
     const hex = fromPoint(multiplyPoint(subtractPoints(pressedPoint, DRAWING_OFFSET), 1 / HEX_SIZE))
-    if (pointer.button === 2) {
+    const isRightMouseButton = pointer.button === 2
+    if (isRightMouseButton) {
       this.handleLocalAction({ type: 'goHex', hex })
     } else {
       this.handleLeftClick(hex)
@@ -296,10 +301,12 @@ export class GameScene extends Phaser.Scene {
   }
 
   private updateAsAtStartOfTurn() {
-    const unitToSelect = this.combinedState.findNextUnitWithUnspentActionPoints()
-    this.localGameState = this.localGameState
-      .copy({ mode: { type: 'selectHex' } })
-      .setSelectedHex(unitToSelect?.location)
+    if (!this.combinedState.findSelectedUnit()) {
+      const unitToSelect = this.combinedState.findNextUnitWithUnspentActionPoints()
+      this.localGameState = this.localGameState
+        .copy({ mode: { type: 'selectHex' } })
+        .setSelectedHex(unitToSelect?.location)
+    }
     if (this.localGameState.selectedHex) {
       this.panIntoView(hexCenter(this.localGameState.selectedHex))
     }
