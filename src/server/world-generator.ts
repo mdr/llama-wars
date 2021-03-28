@@ -7,34 +7,17 @@ import { ActionPoints } from '../world/action-points'
 import { CASTLE_HIT_POINTS, CRIA_HIT_POINTS, HitPoints } from '../world/hit-points'
 import { WorldState } from '../world/world-state'
 import { Building, BuildingId, BuildingType } from '../world/building'
-
-const LLAMA_NAMES = [
-  'Walter',
-  'Dolly',
-  'Chewpaca',
-  'Barack O. Llama',
-  'Como Se',
-  'Fuzzy',
-  'Jeremy',
-  'Alfonso',
-  'Rose',
-  'Lorenzo',
-  'Rita',
-  'Anton',
-  'Bernard',
-  'Cassie',
-  'Francesca',
-  'Milly',
-  'Carlos',
-  'Ricardo',
-  'Alpaca Capone',
-]
+import { Option } from '../util/types'
+import { maxOpt } from '../util/collection-util'
+import { assertNotUndefined } from '../util/assertion-util'
+import { LLAMA_NAMES } from './llama-names'
 
 export class WorldGenerator {
   private readonly worldState: WorldState
   private remainingHexes: Hex[]
   private nextUnitId: UnitId = 1
   private nextBuildingId: BuildingId = 1
+  private readonly spawnPoints: Map<PlayerId, Hex> = new Map()
 
   constructor(worldState: WorldState) {
     this.worldState = worldState
@@ -65,6 +48,34 @@ export class WorldGenerator {
     })
   }
 
+  public pickSpawnPoints = (): void => {
+    for (const player of this.worldState.players) {
+      const spawnPoint = this.pickSpawnPoint()
+      this.spawnPoints.set(player.id, spawnPoint)
+      this.remainingHexes = R.without([spawnPoint], this.remainingHexes)
+    }
+  }
+
+  private pickSpawnPoint = (): Hex => {
+    const MAX_SPAWN_ATTEMPTS = 100
+    for (let i = 0; i < MAX_SPAWN_ATTEMPTS; i++) {
+      const spawnPoint = this.tryPickSpawnPoint()
+      if (spawnPoint) {
+        return spawnPoint
+      }
+    }
+    throw new Error('Could not find free spawn point')
+  }
+
+  private tryPickSpawnPoint = (): Option<Hex> => {
+    const candidateLocation = randomElement(this.remainingHexes)
+    const spawnLocations: Hex[] = Array.from(this.spawnPoints.values())
+    const distancesToExistingSpawns = spawnLocations.map((location) => candidateLocation.distanceTo(location))
+    const closestDistanceToExistingSpawn = maxOpt(distancesToExistingSpawns)
+    const isSufficientlyDistant = closestDistanceToExistingSpawn === undefined || closestDistanceToExistingSpawn > 8
+    return isSufficientlyDistant ? candidateLocation : undefined
+  }
+
   public generateBuildings = (): Building[] =>
     R.chain((player) => this.generateBuildingsForPlayer(player.id), this.worldState.players)
 
@@ -72,8 +83,8 @@ export class WorldGenerator {
 
   private generateCastle = (playerId: PlayerId): Building => {
     const id = this.nextBuildingId++
-    const location = randomElement(this.remainingHexes)
-    this.remainingHexes = R.without([location], this.remainingHexes)
+    const location = this.spawnPoints.get(playerId)
+    assertNotUndefined(location, 'Castles only generated after spawn points')
     return new Building({
       id,
       playerId,

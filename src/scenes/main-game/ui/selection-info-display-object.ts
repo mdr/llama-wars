@@ -15,6 +15,7 @@ import { colourNumber } from '../../colours'
 import { LocalActionDispatcher } from '../local-action'
 import EventData = Phaser.Types.Input.EventData
 import Pointer = Phaser.Input.Pointer
+import { Building } from '../../../world/building'
 
 const BORDER_PADDING = 12
 const TEXT_SPACING = 25
@@ -151,7 +152,7 @@ export class SelectionInfoDisplayObject extends GameObjects.Container {
   public syncScene = (worldState: WorldState, localGameState: LocalGameState): void => {
     this.worldState = worldState
     this.localGameState = localGameState
-    const visible = this.combinedState.findSelectedUnit() !== undefined
+    const visible = this.showSideBar()
     this.setVisible(visible)
     this.selectionText.setText('')
     this.actionLink1.setText('')
@@ -172,6 +173,9 @@ export class SelectionInfoDisplayObject extends GameObjects.Container {
         throw new UnreachableCaseError(mode)
     }
   }
+
+  private showSideBar = (): boolean =>
+    this.combinedState.findSelectedUnit() !== undefined || this.combinedState.findSelectedBuilding() !== undefined
 
   private syncAttackModeText = (unitId: UnitId, attackType: AttackType): void => {
     const unit = this.worldState.getUnitById(unitId)
@@ -209,6 +213,10 @@ export class SelectionInfoDisplayObject extends GameObjects.Container {
         actionLink.setText(describeUnitAction(action))
       }
     }
+    const selectedBuilding = this.combinedState.findSelectedBuilding()
+    if (selectedBuilding) {
+      this.selectionText.setText(this.describeBuilding(selectedBuilding))
+    }
   }
 
   private describeUnit = (unit: Unit): string => {
@@ -216,6 +224,13 @@ export class SelectionInfoDisplayObject extends GameObjects.Container {
     const playerName = this.getPlayerName(playerId)
     const type = this.getUnitType(unit)
     return `${name} - ${type} - ${playerName} - HP ${hitPoints.current}/${hitPoints.max} - actions ${actionPoints.current}/${actionPoints.max}`
+  }
+
+  private describeBuilding = (building: Building): string => {
+    const { playerId, hitPoints } = building
+    const playerName = this.getPlayerName(playerId)
+    const type = 'Castle'
+    return `${type} - ${playerName} - HP ${hitPoints.current}/${hitPoints.max}`
   }
 
   private getPlayerName = (playerId: PlayerId): string => this.worldState.getPlayer(playerId).name

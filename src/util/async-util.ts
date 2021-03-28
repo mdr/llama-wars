@@ -1,6 +1,7 @@
 import * as Bluebird from 'bluebird'
 
 export const fireAndForget = <T>(asyncTask: () => Promise<T>): void => {
+  // noinspection JSIgnoredPromiseFromCall
   asyncTask()
 }
 

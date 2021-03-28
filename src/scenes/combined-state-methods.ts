@@ -21,6 +21,9 @@ export class CombinedState {
   public findSelectedUnit = (): Option<Unit> =>
     this.selectedHex ? this.findUnitInLocation(this.selectedHex) : undefined
 
+  public findSelectedBuilding = (): Option<Building> =>
+    this.selectedHex ? this.findBuildingInLocation(this.selectedHex) : undefined
+
   public get selectedHex(): Option<Hex> {
     return this.localGameState.selectedHex
   }
