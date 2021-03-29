@@ -6,10 +6,6 @@ import { WorldMap } from '../../world/world-map'
 import { Hex } from '../../world/hex'
 import * as R from 'ramda'
 
-export interface CombatParticipants {
-  attacker: Unit
-  defender: Unit
-}
 export const canAttackOccur = (attackType: AttackType, map: WorldMap, from: Hex, to: Hex): boolean => {
   switch (attackType) {
     case 'melee':
@@ -18,6 +14,11 @@ export const canAttackOccur = (attackType: AttackType, map: WorldMap, from: Hex,
       const blockedByMountains = R.all(map.isMountain, R.intersection(from.neighbours(), to.neighbours()))
       return !blockedByMountains && from.distanceTo(to) <= 2
   }
+}
+
+export interface CombatParticipants {
+  attacker: Unit
+  defender: Unit
 }
 
 export class AttackWorldActionValidator {
@@ -30,6 +31,32 @@ export class AttackWorldActionValidator {
   }
 
   public validateAttack = (action: AttackWorldAction): CombatParticipants => {
+    const attacker = this.validateAttacker(action)
+    const defender = this.validateDefender(action)
+    if (!canAttackOccur(action.attackType, this.worldState.map, attacker.location, defender.location)) {
+      throw new Error(
+        `Invalid unit attack of type ${action.attackType} between hexes ${attacker.location} to ${defender.location} too far apart`,
+      )
+    }
+    return { attacker, defender }
+  }
+
+  private validateDefender(action: AttackWorldAction) {
+    const defenderId = action.defender.unitId
+    const defender = this.worldState.findUnitById(defenderId)
+    if (!defender) {
+      throw new Error(`No unit found with ID ${defenderId}`)
+    }
+    if (defender.playerId === this.playerId) {
+      throw new Error(`Cannot attack own unit`)
+    }
+    if (!defender.location.equals(action.defender.location)) {
+      throw new Error(`Defender not in expected location`)
+    }
+    return defender
+  }
+
+  private validateAttacker(action: AttackWorldAction) {
     const attackerId = action.attacker.unitId
     const attacker = this.worldState.findUnitById(attackerId)
     if (!attacker) {
@@ -47,24 +74,6 @@ export class AttackWorldActionValidator {
     if (attacker.type === UnitType.CRIA) {
       throw new Error(`Crias may not attack`)
     }
-
-    const defenderId = action.defender.unitId
-    const defender = this.worldState.findUnitById(defenderId)
-    if (!defender) {
-      throw new Error(`No unit found with ID ${defenderId}`)
-    }
-    if (defender.playerId === this.playerId) {
-      throw new Error(`Cannot attack own unit`)
-    }
-    if (!defender.location.equals(action.defender.location)) {
-      throw new Error(`Defender not in expected location`)
-    }
-
-    if (!canAttackOccur(action.attackType, this.worldState.map, attacker.location, defender.location)) {
-      throw new Error(
-        `Invalid unit attack of type ${action.attackType} between hexes ${attacker.location} to ${defender.location} too far apart`,
-      )
-    }
-    return { attacker, defender }
+    return attacker
   }
 }

@@ -31,6 +31,7 @@ import { WorldGenerator } from '../world-generator'
 import { AttackWorldActionHandler } from './attack-world-action-handler'
 import { UnitType } from '../../world/unit'
 import { HitPoints, WARRIOR_HIT_POINTS } from '../../world/hit-points'
+import { MoveUnitActionHandler } from './move-unit-action-handler'
 
 export class WorldActionHandler {
   private readonly worldState: WorldState
@@ -48,7 +49,7 @@ export class WorldActionHandler {
     return this.beginNewTurnIfNeeded(events)
   }
 
-  private beginNewTurnIfNeeded(events: WorldEvent[]) {
+  private beginNewTurnIfNeeded(events: WorldEvent[]): WorldEvent[] {
     const lastEvent = R.last(events)
     if (lastEvent === undefined) {
       return []
@@ -122,40 +123,8 @@ export class WorldActionHandler {
   private handleAttack = (action: AttackWorldAction): WorldEvent[] =>
     new AttackWorldActionHandler(this.worldState, this.playerId, this.nextWorldEventId).handleAttack(action)
 
-  private handleMoveUnit = (action: MoveUnitWorldAction): [UnitMovedWorldEvent] => {
-    const { unitId, to } = action
-    const unit = this.worldState.findUnitById(unitId)
-    if (!unit) {
-      throw new Error(`No unit found with ID ${unitId}`)
-    }
-    const from = unit.location
-    if (!from.isAdjacentTo(to)) {
-      throw new Error(`Invalid unit movement between non-adjacent hexes ${from} to ${to}`)
-    }
-    if (!this.worldState.map.isInBounds(to)) {
-      throw new Error(`Invalid unit movement to out-of-bounds hex ${to}`)
-    }
-    if (this.worldState.findUnitInLocation(to)) {
-      throw new Error(`Invalid unit movement to already-occupied hex`)
-    }
-    if (unit.actionPoints.current < 1) {
-      throw new Error(`Not enough action points to move`)
-    }
-    if (unit.playerId !== this.playerId) {
-      throw new Error(`Cannot move another player's unit`)
-    }
-    return [
-      {
-        id: this.nextWorldEventId,
-        type: 'unitMoved',
-        playerId: this.playerId,
-        actionPointsConsumed: 1,
-        unitId,
-        from,
-        to,
-      },
-    ]
-  }
+  private handleMoveUnit = (action: MoveUnitWorldAction): [UnitMovedWorldEvent] =>
+    new MoveUnitActionHandler(this.worldState, this.playerId, this.nextWorldEventId).handleMoveUnit(action)
 
   private handleEndTurn = (action: EndTurnWorldAction): [PlayerEndedTurnWorldEvent] => {
     if (action.turn !== this.worldState.turn) {
