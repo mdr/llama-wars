@@ -60,7 +60,7 @@ export interface CombatParticipantInfo {
   playerId: PlayerId
   unitId: UnitId
   location: Hex
-  damage: number
+  damageTaken: number
   killed: boolean
 }
 

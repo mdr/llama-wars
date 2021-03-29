@@ -4,25 +4,9 @@ import { AttackType, AttackWorldAction } from '../world/world-actions'
 import { CombatWorldEvent, PlayerDefeatedWorldEvent, WorldEvent, WorldEventId } from '../world/world-events'
 import { Unit, UnitType } from '../world/unit'
 import { PlayerId } from '../world/player'
-import { randomIntInclusive } from '../util/random-util'
 import { Hex } from '../world/hex'
 import { WorldMap } from '../world/world-map'
-
-interface DamageDistribution {
-  baseDamage: number
-  plusMinus: number
-}
-
-const damageDistribution = {
-  warrior: { baseDamage: 20, plusMinus: 3 },
-  default: { baseDamage: 10, plusMinus: 2 },
-  cria: { baseDamage: 7, plusMinus: 2 },
-  none: { baseDamage: 0, plusMinus: 0 },
-  spit: { baseDamage: 0, plusMinus: 0 },
-}
-
-const rollDamage = ({ baseDamage, plusMinus }: DamageDistribution): number =>
-  randomIntInclusive(baseDamage - plusMinus, baseDamage + plusMinus)
+import { damageDistribution, rollFromDistribution } from './DamageDistribution'
 
 export const canAttackOccur = (attackType: AttackType, map: WorldMap, from: Hex, to: Hex): boolean => {
   switch (attackType) {
@@ -45,39 +29,45 @@ export class AttackWorldActionHandler {
     this.nextWorldEventId = nextWorldEventId
   }
 
-  private calculateAttackerDamage = (attackType: AttackType, attacker: Unit, defender: Unit): number => {
-    const attackerDamageDistribution =
+  private calculateDamageTakenByAttacker = (attackType: AttackType, attacker: Unit, defender: Unit): number => {
+    const distribution =
       attackType === 'melee'
         ? defender.type === UnitType.CRIA
           ? damageDistribution.cria
           : damageDistribution.default
         : damageDistribution.none
-    const rawAttackerDamage = rollDamage(attackerDamageDistribution)
-    return Math.min(attacker.hitPoints.current, rawAttackerDamage)
+    const rawDamageTaken = rollFromDistribution(distribution)
+    return Math.min(attacker.hitPoints.current, rawDamageTaken)
   }
 
-  private calculateDefenderDamage = (attackType: AttackType, attacker: Unit, defender: Unit): number => {
-    const defenderDamageDistribution = attackType === 'melee' ? damageDistribution.warrior : damageDistribution.spit
-    const rawDefenderDamage = rollDamage(defenderDamageDistribution)
+  private calculateDamageTakenByDefender = (attackType: AttackType, attacker: Unit, defender: Unit): number => {
+    const distribution = attackType === 'melee' ? damageDistribution.warrior : damageDistribution.spit
+    const rawDefenderDamage = rollFromDistribution(distribution)
     return Math.min(defender.hitPoints.current, rawDefenderDamage)
   }
 
   public handleAttack = (action: AttackWorldAction): WorldEvent[] => {
     const { attacker, defender } = this.validateAttack(action)
     const { attackType } = action
-    const attackerDamage = this.calculateAttackerDamage(attackType, attacker, defender)
-    const defenderDamage = this.calculateDefenderDamage(attackType, attacker, defender)
-    return this.buildWorldEvents(attackType, attacker, attackerDamage, defender, defenderDamage)
+    const attackerDamageTaken = this.calculateDamageTakenByAttacker(attackType, attacker, defender)
+    const defenderDamageTaken = this.calculateDamageTakenByDefender(attackType, attacker, defender)
+    return this.buildWorldEvents(attackType, attacker, attackerDamageTaken, defender, defenderDamageTaken)
   }
 
   private buildWorldEvents(
     attackType: AttackType,
     attacker: Unit,
-    attackerDamage: number,
+    attackerDamageTaken: number,
     defender: Unit,
-    defenderDamage: number,
+    defenderDamageTaken: number,
   ) {
-    const combatWorldEvent = this.makeCombatWorldEvent(attackType, attacker, attackerDamage, defender, defenderDamage)
+    const combatWorldEvent = this.makeCombatWorldEvent(
+      attackType,
+      attacker,
+      attackerDamageTaken,
+      defender,
+      defenderDamageTaken,
+    )
     let newWorldState = this.worldState.applyEvent(combatWorldEvent)
     const events: WorldEvent[] = [combatWorldEvent]
     let nextWorldEventId = this.nextWorldEventId + 1
@@ -149,9 +139,9 @@ export class AttackWorldActionHandler {
   private makeCombatWorldEvent = (
     attackType: AttackType,
     attacker: Unit,
-    attackerDamage: number,
+    attackerDamageTaken: number,
     defender: Unit,
-    defenderDamage: number,
+    defenderDamageTaken: number,
   ): CombatWorldEvent => ({
     id: this.nextWorldEventId,
     type: 'combat',
@@ -160,15 +150,15 @@ export class AttackWorldActionHandler {
       playerId: attacker.playerId,
       unitId: attacker.id,
       location: attacker.location,
-      damage: attackerDamage,
-      killed: attacker.hitPoints.current === attackerDamage,
+      damageTaken: attackerDamageTaken,
+      killed: attacker.hitPoints.current === attackerDamageTaken,
     },
     defender: {
       playerId: defender.playerId,
       unitId: defender.id,
       location: defender.location,
-      damage: defenderDamage,
-      killed: defender.hitPoints.current === defenderDamage,
+      damageTaken: defenderDamageTaken,
+      killed: defender.hitPoints.current === defenderDamageTaken,
     },
     actionPointsConsumed: 1,
   })

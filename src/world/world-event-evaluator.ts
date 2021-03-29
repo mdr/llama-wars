@@ -153,14 +153,14 @@ const handleCombat = (state: WorldState, event: CombatWorldEvent): WorldState =>
   if (attacker.killed) {
     newState = newState.removeUnit(attackerUnit.id)
   } else {
-    const updatedAttacker = attackerUnit.damage(attacker.damage).reduceActionPoints(event.actionPointsConsumed)
+    const updatedAttacker = attackerUnit.damage(attacker.damageTaken).reduceActionPoints(event.actionPointsConsumed)
     newState = newState.replaceUnit(attackerUnit.id, updatedAttacker)
   }
 
   if (defender.killed) {
     newState = newState.removeUnit(defenderUnit.id)
   } else {
-    newState = newState.replaceUnit(defenderUnit.id, defenderUnit.damage(defender.damage))
+    newState = newState.replaceUnit(defenderUnit.id, defenderUnit.damage(defender.damageTaken))
   }
 
   if (defender.killed) {
@@ -173,8 +173,8 @@ const handleCombat = (state: WorldState, event: CombatWorldEvent): WorldState =>
     newState = newState.addWorldLog(`${attackerUnit.name} died in a futile attempt to take on ${attackerUnit.name}.`)
   } else {
     const verb = event.attackType === 'melee' ? 'attacked' : 'spat at'
-    const takingDamageClause = attacker.damage === 0 ? '' : ` and taking ${attacker.damage} damage`
-    const message = `${attackerUnit.name} ${verb} ${defenderUnit.name}, causing ${defender.damage} damage${takingDamageClause}.`
+    const takingDamageClause = attacker.damageTaken === 0 ? '' : ` and taking ${attacker.damageTaken} damage`
+    const message = `${attackerUnit.name} ${verb} ${defenderUnit.name}, causing ${defender.damageTaken} damage${takingDamageClause}.`
     newState = newState.addWorldLog(message)
   }
   return newState

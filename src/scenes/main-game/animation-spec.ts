@@ -15,13 +15,13 @@ export interface CombatAnimationSpec {
   attacker: {
     unitId: UnitId
     location: Hex
-    damage: number
+    damageTaken: number
     killed: boolean
   }
   defender: {
     unitId: UnitId
     location: Hex
-    damage: number
+    damageTaken: number
     killed: boolean
   }
 }

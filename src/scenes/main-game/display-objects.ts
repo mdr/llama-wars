@@ -284,11 +284,11 @@ export class DisplayObjects {
       simultaneousAnimations.push(defenderDisplayObject.runDeathAnimation(speed))
     }
     await Promise.all(simultaneousAnimations)
-    if (attacker.damage > 0) {
-      fireAndForget(() => attackerDisplayObject.runDamageAnimation(attacker.location, attacker.damage, speed))
+    if (attacker.damageTaken > 0) {
+      fireAndForget(() => attackerDisplayObject.runDamageAnimation(attacker.location, attacker.damageTaken, speed))
     }
-    if (defender.damage > 0) {
-      fireAndForget(() => defenderDisplayObject.runDamageAnimation(defender.location, defender.damage, speed))
+    if (defender.damageTaken > 0) {
+      fireAndForget(() => defenderDisplayObject.runDamageAnimation(defender.location, defender.damageTaken, speed))
     }
   }
 }
