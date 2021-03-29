@@ -37,6 +37,10 @@ export interface PlayerAddedWorldEvent {
 export interface GameStartedWorldEvent {
   id: WorldEventId
   type: 'gameStarted'
+  generatedWorld: GeneratedWorld
+}
+
+export interface GeneratedWorld {
   units: Unit[]
   buildings: Building[]
   mountains: Hex[]
