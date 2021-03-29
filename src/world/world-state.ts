@@ -8,11 +8,15 @@ import { Player, PlayerId } from './player'
 import assert = require('assert')
 import { applyEvent } from './world-event-evaluator'
 import { WorldEvent } from './world-events'
-import { Building } from './building'
+import { Building, BuildingId } from './building'
 
 interface GameOverInfo {
   victor: Option<PlayerId>
 }
+
+export type UnitOrBuilding = Unit | Building
+
+export type UnitOrBuildingId = UnitId | BuildingId
 
 export class WorldState {
   readonly turn: number /* turn = 0 before the game has started */

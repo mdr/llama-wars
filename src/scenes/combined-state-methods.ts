@@ -1,6 +1,6 @@
 import * as R from 'ramda'
 import { LocalGameState } from './local-game-state'
-import { WorldState } from '../world/world-state'
+import { UnitOrBuilding, WorldState } from '../world/world-state'
 import { Option } from '../util/types'
 import { Unit, UnitId, UnitType } from '../world/unit'
 import { Hex } from '../world/hex'
@@ -36,6 +36,9 @@ export class CombinedState {
 
   public findBuildingInLocation = (hex: Hex): Option<Building> => this.worldState.findBuildingInLocation(hex)
 
+  public findUnitOrBuildingInLocation = (hex: Hex): Option<UnitOrBuilding> =>
+    this.findUnitInLocation(hex) ?? this.findBuildingInLocation(hex)
+
   public unitCouldPotentiallyMove = (unit: Unit): boolean =>
     unit.playerId === this.playerId && unit.hasUnspentActionPoints && !this.getCurrentPlayer().endedTurn
 
@@ -54,17 +57,18 @@ export class CombinedState {
     !this.findBuildingInLocation(hex)
 
   /**
-   * @return the unit in the hex to attack, if an attack is possible, else undefined.
+   * @return the unit or building in the hex to attack, if an attack is possible, else undefined.
    */
-  public unitCanAttackHex = (unit: Unit, location: Hex, attackType: AttackType): Option<Unit> => {
-    const targetUnit = this.findUnitInLocation(location)
-    if (
-      this.unitCouldPotentiallyAttack(unit) &&
-      targetUnit !== undefined &&
-      targetUnit.playerId !== this.localGameState.playerId &&
-      canAttackOccur(attackType, this.worldState.map, unit.location, location)
-    ) {
-      return targetUnit
+  public unitCanAttackHex = (unit: Unit, location: Hex, attackType: AttackType): Option<UnitOrBuilding> => {
+    if (!this.unitCouldPotentiallyAttack(unit)) {
+      return undefined
+    }
+    if (!canAttackOccur(attackType, this.worldState.map, unit.location, location)) {
+      return undefined
+    }
+    const target = this.findUnitOrBuildingInLocation(location)
+    if (target !== undefined && target.playerId !== this.localGameState.playerId) {
+      return target
     }
   }
 

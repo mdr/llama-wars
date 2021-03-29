@@ -1,6 +1,6 @@
 import { LocalGameState, SidebarMode } from '../local-game-state'
 import { AttackType, WorldAction } from '../../world/world-actions'
-import { WorldState } from '../../world/world-state'
+import { UnitOrBuilding, WorldState } from '../../world/world-state'
 import { LocalAction } from './local-action'
 import { Option } from '../../util/types'
 import { Unit, UnitId, UnitType } from '../../world/unit'
@@ -104,19 +104,19 @@ export class LocalActionProcessor {
       if (this.combinedState.unitCanMoveToHex(selectedUnit, hex)) {
         return this.moveToHex(selectedUnit, hex)
       }
-      const targetUnit = this.combinedState.unitCanAttackHex(selectedUnit, hex, 'melee')
-      if (targetUnit) {
-        return this.attackHex('melee', selectedUnit, targetUnit)
+      const target = this.combinedState.unitCanAttackHex(selectedUnit, hex, 'melee')
+      if (target) {
+        return this.attackHex('melee', selectedUnit, target)
       }
     }
   }
 
-  private attackHex = (attackType: AttackType, attacker: Unit, defender: Unit): LocalActionResult => ({
+  private attackHex = (attackType: AttackType, attacker: Unit, defender: UnitOrBuilding): LocalActionResult => ({
     worldAction: {
       type: 'attack',
       attackType,
-      attacker: { unitId: attacker.id, location: attacker.location },
-      defender: { unitId: defender.id, location: defender.location },
+      attacker: { id: attacker.id, location: attacker.location },
+      defender: { id: defender.id, location: defender.location },
     },
   })
 

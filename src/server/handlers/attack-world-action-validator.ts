@@ -42,7 +42,7 @@ export class AttackWorldActionValidator {
   }
 
   private validateDefender(action: AttackWorldAction) {
-    const defenderId = action.defender.unitId
+    const defenderId = action.defender.id
     const defender = this.worldState.findUnitById(defenderId)
     if (!defender) {
       throw new Error(`No unit found with ID ${defenderId}`)
@@ -57,7 +57,7 @@ export class AttackWorldActionValidator {
   }
 
   private validateAttacker(action: AttackWorldAction) {
-    const attackerId = action.attacker.unitId
+    const attackerId = action.attacker.id
     const attacker = this.worldState.findUnitById(attackerId)
     if (!attacker) {
       throw new Error(`No unit found with ID ${attackerId}`)
