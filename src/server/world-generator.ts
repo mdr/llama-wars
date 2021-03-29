@@ -42,8 +42,8 @@ export class WorldGenerator {
   ]
 
   private generateUnit = (playerId: PlayerId): Unit => {
+    const location = this.pickStartLocationForUnit(playerId)
     const id = this.nextUnitId++
-    const location = randomElement(this.remainingHexes)
     this.remainingHexes = R.without([location], this.remainingHexes)
     const name = randomElement(LLAMA_NAMES)
     return new Unit({
@@ -55,6 +55,13 @@ export class WorldGenerator {
       actionPoints: new ActionPoints({ current: 2, max: 2 }),
       hitPoints: new HitPoints({ current: CRIA_HIT_POINTS, max: CRIA_HIT_POINTS }),
     })
+  }
+
+  private pickStartLocationForUnit = (playerId: PlayerId): Hex => {
+    const spawnPoint = this.spawnPoints.get(playerId)
+    assertNotUndefined(spawnPoint, 'Units only generated after spawns')
+    const freeNeighbours = R.intersection(this.remainingHexes, spawnPoint.neighbours())
+    return randomElement(freeNeighbours)
   }
 
   private pickSpawnPoints = (): void => {
