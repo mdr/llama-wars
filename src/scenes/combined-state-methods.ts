@@ -6,8 +6,8 @@ import { Unit, UnitId, UnitType } from '../world/unit'
 import { Hex } from '../world/hex'
 import { Player, PlayerId } from '../world/player'
 import { AttackType } from '../world/world-actions'
-import { canAttackOccur } from '../server/handlers/attack-world-action-handler'
 import { Building } from '../world/building'
+import { canAttackOccur } from '../server/handlers/attack-world-action-validator'
 
 export class CombinedState {
   protected readonly worldState: WorldState
