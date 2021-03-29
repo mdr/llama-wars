@@ -129,6 +129,7 @@ export class UnitDisplayObject {
     const toPoint = hexCenter(to)
     const distance = distanceBetweenPoints(fromPoint, toPoint)
     const image = this.scene.add.image(fromPoint.x, fromPoint.y, 'spit').setScale(0.8)
+    getUiCamera(this.scene).ignore(image)
     const duration = this.scaleSpeed(distance * 4, speed)
     const tween = this.scene.tweens.create({
       targets: image,

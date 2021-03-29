@@ -15,6 +15,7 @@ import { LLAMA_EAT, LLAMA_WALK } from '../animations'
 import { AnimationSpec, CombatAnimationSpec, MatureAnimationSpec, MoveAnimationSpec } from './animation-spec'
 import { LocalActionDispatcher } from './local-action'
 import { BuildingDisplayObject } from './building-display-object'
+import { AttackType } from '../../world/world-actions'
 
 export type AnimationSpeed = 'normal' | 'quick'
 
@@ -257,26 +258,48 @@ export class DisplayObjects {
     await displayObject.runMatureAnimation(speed)
   }
 
+  private runAttackAnimation = (
+    attackerDisplayObject: UnitDisplayObject,
+    animation: CombatAnimationSpec,
+    speed: AnimationSpeed,
+  ): Promise<void> => {
+    const { attackType, attacker, defender } = animation
+    switch (attackType) {
+      case 'melee':
+        return attackerDisplayObject.runAttackAnimation(attacker.location, defender.location, speed)
+      case 'spit':
+        return attackerDisplayObject.runSpitAnimation(attacker.location, defender.location, speed)
+    }
+  }
+
+  private playAttackSound = (attackType: AttackType) => {
+    switch (attackType) {
+      case 'melee':
+        this.scene.sound.play(randomElement([AudioKeys.ATTACK_1, AudioKeys.ATTACK_2, AudioKeys.ATTACK_3]))
+        break
+      case 'spit':
+        this.scene.sound.play(AudioKeys.SPIT)
+        break
+    }
+  }
+
+  private playCombatSound = (animation: CombatAnimationSpec) => {
+    const { attackType, attacker, defender } = animation
+    this.playAttackSound(attackType)
+    if (attacker.killed || defender.killed) {
+      this.scene.sound.play(AudioKeys.DEATH)
+    }
+  }
+
   private runCombatAnimation = async (animation: CombatAnimationSpec, speed: AnimationSpeed): Promise<void> => {
     const { attacker, defender } = animation
+    this.playCombatSound(animation)
     const attackerDisplayObject = this.animatedUnitDisplayObjects.get(attacker.unitId)
     if (!attackerDisplayObject) throw `Unexpected missing display object for unit ${attacker.unitId}`
     const defenderDisplayObject = this.animatedUnitDisplayObjects.get(defender.unitId)
     if (!defenderDisplayObject) throw `Unexpected missing display object for unit ${defender.unitId}`
-    if (animation.attackType === 'melee') {
-      this.scene.sound.play(randomElement([AudioKeys.ATTACK_1, AudioKeys.ATTACK_2, AudioKeys.ATTACK_3]))
-    } else {
-      this.scene.sound.play(AudioKeys.SPIT)
-    }
-    if (attacker.killed || defender.killed) {
-      this.scene.sound.play(AudioKeys.DEATH)
-    }
     const simultaneousAnimations: Promise<void>[] = []
-    if (animation.attackType === 'melee') {
-      simultaneousAnimations.push(attackerDisplayObject.runAttackAnimation(attacker.location, defender.location, speed))
-    } else {
-      simultaneousAnimations.push(attackerDisplayObject.runSpitAnimation(attacker.location, defender.location, speed))
-    }
+    simultaneousAnimations.push(this.runAttackAnimation(attackerDisplayObject, animation, speed))
     if (attacker.killed) {
       simultaneousAnimations.push(attackerDisplayObject.runDeathAnimation(speed))
     }
