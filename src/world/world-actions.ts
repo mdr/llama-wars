@@ -31,17 +31,16 @@ export interface MoveUnitWorldAction {
 
 export type AttackType = 'melee' | 'spit'
 
+export interface AttackParticipantInfo {
+  unitId: UnitId
+  location: Hex
+}
+
 export interface AttackWorldAction {
   type: 'attack'
   attackType: AttackType
-  attacker: {
-    unitId: UnitId
-    location: Hex
-  }
-  defender: {
-    unitId: UnitId
-    location: Hex
-  }
+  attacker: AttackParticipantInfo
+  defender: AttackParticipantInfo
 }
 
 export interface EndTurnWorldAction {
