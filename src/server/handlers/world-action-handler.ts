@@ -1,5 +1,5 @@
 import * as R from 'ramda'
-import { WorldState } from '../world/world-state'
+import { WorldState } from '../../world/world-state'
 import {
   AddPlayerWorldAction,
   AttackWorldAction,
@@ -11,7 +11,7 @@ import {
   MatureUnitWorldAction,
   MoveUnitWorldAction,
   WorldAction,
-} from '../world/world-actions'
+} from '../../world/world-actions'
 import {
   ChatWorldEvent,
   GameStartedWorldEvent,
@@ -25,12 +25,12 @@ import {
   UnitMovedWorldEvent,
   WorldEvent,
   WorldEventId,
-} from '../world/world-events'
-import { HOST_PLAYER_ID, Player, PlayerId } from '../world/player'
-import { WorldGenerator } from './world-generator'
+} from '../../world/world-events'
+import { HOST_PLAYER_ID, Player, PlayerId } from '../../world/player'
+import { WorldGenerator } from '../world-generator'
 import { AttackWorldActionHandler } from './attack-world-action-handler'
-import { UnitType } from '../world/unit'
-import { HitPoints, WARRIOR_HIT_POINTS } from '../world/hit-points'
+import { UnitType } from '../../world/unit'
+import { HitPoints, WARRIOR_HIT_POINTS } from '../../world/hit-points'
 
 export class WorldActionHandler {
   private readonly worldState: WorldState

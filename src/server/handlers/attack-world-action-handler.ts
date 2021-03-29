@@ -1,12 +1,12 @@
 import * as R from 'ramda'
-import { WorldState } from '../world/world-state'
-import { AttackType, AttackWorldAction } from '../world/world-actions'
-import { CombatWorldEvent, PlayerDefeatedWorldEvent, WorldEvent, WorldEventId } from '../world/world-events'
-import { Unit, UnitType } from '../world/unit'
-import { PlayerId } from '../world/player'
-import { Hex } from '../world/hex'
-import { WorldMap } from '../world/world-map'
-import { damageDistribution, rollFromDistribution } from './DamageDistribution'
+import { WorldState } from '../../world/world-state'
+import { AttackType, AttackWorldAction } from '../../world/world-actions'
+import { CombatWorldEvent, PlayerDefeatedWorldEvent, WorldEvent, WorldEventId } from '../../world/world-events'
+import { Unit, UnitType } from '../../world/unit'
+import { PlayerId } from '../../world/player'
+import { Hex } from '../../world/hex'
+import { WorldMap } from '../../world/world-map'
+import { damageDistribution, rollFromDistribution } from '../DamageDistribution'
 
 export const canAttackOccur = (attackType: AttackType, map: WorldMap, from: Hex, to: Hex): boolean => {
   switch (attackType) {

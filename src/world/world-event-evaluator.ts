@@ -17,7 +17,7 @@ import {
 } from './world-events'
 import { UnreachableCaseError } from '../util/unreachable-case-error'
 import { HOST_PLAYER_ID, Player, PlayerId } from './player'
-import { canAttackOccur } from '../server/attack-world-action-handler'
+import { canAttackOccur } from '../server/handlers/attack-world-action-handler'
 import { Unit } from './unit'
 
 export const applyEvent = (state: WorldState, event: WorldEvent): WorldState => {
