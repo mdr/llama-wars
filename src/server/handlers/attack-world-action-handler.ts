@@ -3,7 +3,7 @@ import { AttackType, AttackWorldAction } from '../../world/world-actions'
 import { WorldEvent, WorldEventId } from '../../world/world-events'
 import { Unit, UnitType } from '../../world/unit'
 import { PlayerId } from '../../world/player'
-import { damageDistribution, rollFromDistribution } from '../DamageDistribution'
+import { damageDistribution, rollFromDistribution } from '../damage-distribution'
 import { AttackWorldActionValidator, CombatParticipants } from './attack-world-action-validator'
 import { AttackWorldEventCalculator, CombatInfo } from './attack-world-event-calculator'
 
