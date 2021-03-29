@@ -8,9 +8,10 @@ import { CASTLE_HIT_POINTS, CRIA_HIT_POINTS, HitPoints } from '../world/hit-poin
 import { WorldState } from '../world/world-state'
 import { Building, BuildingId, BuildingType } from '../world/building'
 import { Option } from '../util/types'
-import { maxOpt } from '../util/collection-util'
+import { countWhere, maxOpt } from '../util/collection-util'
 import { assertNotUndefined } from '../util/assertion-util'
 import { LLAMA_NAMES } from './llama-names'
+import { GeneratedWorld } from '../world/world-events'
 
 export class WorldGenerator {
   private readonly worldState: WorldState
@@ -24,7 +25,15 @@ export class WorldGenerator {
     this.remainingHexes = Array.from(worldState.map.getMapHexes())
   }
 
-  public generateUnits = (): Unit[] =>
+  public generateWorld = (): GeneratedWorld => {
+    this.pickSpawnPoints()
+    const mountains = this.generateMountains()
+    const buildings = this.generateBuildings()
+    const units = this.generateUnits()
+    return { units, buildings, mountains }
+  }
+
+  private generateUnits = (): Unit[] =>
     R.chain((player) => this.generateUnitsForPlayer(player.id), this.worldState.players)
 
   private generateUnitsForPlayer = (playerId: PlayerId): Unit[] => [
@@ -48,7 +57,7 @@ export class WorldGenerator {
     })
   }
 
-  public pickSpawnPoints = (): void => {
+  private pickSpawnPoints = (): void => {
     for (const player of this.worldState.players) {
       const spawnPoint = this.pickSpawnPoint()
       this.spawnPoints.set(player.id, spawnPoint)
@@ -69,14 +78,25 @@ export class WorldGenerator {
 
   private tryPickSpawnPoint = (): Option<Hex> => {
     const candidateLocation = randomElement(this.remainingHexes)
-    const spawnLocations: Hex[] = Array.from(this.spawnPoints.values())
-    const distancesToExistingSpawns = spawnLocations.map((location) => candidateLocation.distanceTo(location))
-    const closestDistanceToExistingSpawn = maxOpt(distancesToExistingSpawns)
-    const isSufficientlyDistant = closestDistanceToExistingSpawn === undefined || closestDistanceToExistingSpawn > 8
-    return isSufficientlyDistant ? candidateLocation : undefined
+    return this.isValidSpawn(candidateLocation) ? candidateLocation : undefined
   }
 
-  public generateBuildings = (): Building[] =>
+  private isValidSpawn = (candidateLocation: Hex): boolean =>
+    this.isFarEnoughAwayFromOtherSpawns(candidateLocation) && this.hasFreeNeighbours(candidateLocation)
+
+  private isFarEnoughAwayFromOtherSpawns = (candidateLocation: Hex): boolean => {
+    const otherSpawns = Array.from(this.spawnPoints.values())
+    const distancesToOtherSpawns = otherSpawns.map((location) => candidateLocation.distanceTo(location))
+    const closestDistanceToAnotherSpawn = maxOpt(distancesToOtherSpawns)
+    return closestDistanceToAnotherSpawn === undefined || closestDistanceToAnotherSpawn > 8
+  }
+
+  private hasFreeNeighbours = (candidateLocation: Hex): boolean => {
+    const isFree = (location: Hex) => R.includes(location, this.remainingHexes)
+    return countWhere(candidateLocation.neighbours(), isFree) >= 2
+  }
+
+  private generateBuildings = (): Building[] =>
     R.chain((player) => this.generateBuildingsForPlayer(player.id), this.worldState.players)
 
   private generateBuildingsForPlayer = (playerId: PlayerId): Building[] => [this.generateCastle(playerId)]

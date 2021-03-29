@@ -115,12 +115,7 @@ export class WorldActionHandler {
     if (this.playerId !== HOST_PLAYER_ID) {
       throw new Error(`Cannot start the game unless the host`)
     }
-    const worldGenerator = new WorldGenerator(this.worldState)
-    worldGenerator.pickSpawnPoints()
-    const mountains = worldGenerator.generateMountains()
-    const buildings = worldGenerator.generateBuildings()
-    const units = worldGenerator.generateUnits()
-    const generatedWorld = { units, buildings, mountains }
+    const generatedWorld = new WorldGenerator(this.worldState).generateWorld()
     return [{ id: this.nextWorldEventId, type: 'gameStarted', generatedWorld }]
   }
 
