@@ -22,6 +22,9 @@ export type AnimationSpeed = 'normal' | 'quick'
 export class DisplayObjects {
   private readonly scene: Phaser.Scene
   private readonly mapDisplayObject: MapDisplayObject
+  // Unit display objects can either be in regular mode or animated mode.
+  // If animated, then they aren't included in the regular syncScene updates, but complete
+  // their animation and are then synced.
   private readonly unitDisplayObjects: Map<UnitId, UnitDisplayObject> = new Map()
   private readonly animatedUnitDisplayObjects: Map<UnitId, UnitDisplayObject> = new Map()
   private readonly buildingDisplayObjects: Map<UnitId, BuildingDisplayObject> = new Map()
@@ -59,13 +62,17 @@ export class DisplayObjects {
     const times = [4000, 5000, 7000]
     const delay = randomElement(times)
     setTimeout(() => {
-      const unitDisplayObjects = Array.from(this.unitDisplayObjects.values())
-      if (unitDisplayObjects.length > 0) {
-        const randomUnit = randomElement(unitDisplayObjects)
-        fireAndForget(() => randomUnit.runEatAnimation())
-      }
+      this.randomlyFireEatingAnimation()
       this.scheduleEatingAnimation()
     }, delay)
+  }
+
+  private randomlyFireEatingAnimation() {
+    const unitDisplayObjects = Array.from(this.unitDisplayObjects.values())
+    if (unitDisplayObjects.length > 0) {
+      const randomUnit = randomElement(unitDisplayObjects)
+      fireAndForget(() => randomUnit.runEatAnimation())
+    }
   }
 
   public handlePointerMove = (point: Point): void => this.mapDisplayObject?.handlePointerMove(point)
@@ -145,6 +152,7 @@ export class DisplayObjects {
     }
   }
 
+  // Select an initial batch of animations from the queue so that no two animations in the batch involve the same units.
   private sequenceAnimations = (): {
     animationsToPerformNow: AnimationSpec[]
     animationsToPerformLater: AnimationSpec[]
