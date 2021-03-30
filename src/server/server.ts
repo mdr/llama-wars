@@ -1,6 +1,6 @@
 import * as R from 'ramda'
 import { WorldEventListener, WorldStateOwner } from './world-state-owner'
-import { PlayerAddedWorldEvent, WorldEvent, WorldEventId } from '../world/world-events'
+import { PlayerAddedWorldEvent, WorldEvent, WorldEventId } from '../world/events/world-events'
 import { ClientRequest, JoinResponse, RejoinRequest, RejoinResponse, WorldEventMessage } from './messages'
 import { deserialiseFromJson, serialiseToJson } from '../util/json-serialisation'
 import { UnreachableCaseError } from '../util/unreachable-case-error'

@@ -1,6 +1,6 @@
 import { WorldState } from '../../world/world-state'
 import { MoveUnitWorldAction } from '../../world/world-actions'
-import { UnitMovedWorldEvent, WorldEventId } from '../../world/world-events'
+import { UnitMovedWorldEvent, WorldEventId } from '../../world/events/world-events'
 import { PlayerId } from '../../world/player'
 import { Unit } from '../../world/unit'
 

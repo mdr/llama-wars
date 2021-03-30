@@ -1,5 +1,5 @@
 import * as R from 'ramda'
-import { WorldState } from './world-state'
+import { UnitOrBuilding, WorldState } from '../world-state'
 import {
   ChatWorldEvent,
   CombatWorldEvent,
@@ -15,10 +15,11 @@ import {
   UnitMovedWorldEvent,
   WorldEvent,
 } from './world-events'
-import { UnreachableCaseError } from '../util/unreachable-case-error'
-import { HOST_PLAYER_ID, Player, PlayerId } from './player'
-import { Unit } from './unit'
-import { canAttackOccur } from '../server/handlers/attack-world-action-validator'
+import { UnreachableCaseError } from '../../util/unreachable-case-error'
+import { HOST_PLAYER_ID, Player, PlayerId } from '../player'
+import { Unit } from '../unit'
+import { canAttackOccur } from '../../server/handlers/attack-world-action-validator'
+import { handleCombat } from './combat-world-event-evaluator'
 
 export const applyEvent = (state: WorldState, event: WorldEvent): WorldState => {
   switch (event.type) {
@@ -122,62 +123,6 @@ const handleUnitMoved = (state: WorldState, event: UnitMovedWorldEvent): WorldSt
     throw new Error(`Invalid action point usage`)
   }
   return state.replaceUnit(unit.id, unit.move(to, event.actionPointsConsumed))
-}
-
-const handleCombat = (state: WorldState, event: CombatWorldEvent): WorldState => {
-  const { attacker, defender } = event
-
-  const attackerUnit = state.findUnitById(attacker.unitId)
-  if (!attackerUnit) throw new Error(`No unit found with ID ${attacker.unitId}`)
-  if (!attackerUnit.location.equals(attacker.location))
-    throw new Error(
-      `Invalid location for attacker. Attacking unit ${attackerUnit.id} is at location ${attackerUnit.location}, but was expected to be at ${attacker.location}`,
-    )
-
-  const defenderUnit = state.findUnitById(defender.unitId)
-  if (!defenderUnit) throw new Error(`No unit found with ID ${defender.unitId}`)
-  if (!defenderUnit.location.equals(defender.location))
-    throw new Error(
-      `Invalid location for defender. Defending unit ${defenderUnit.id} is at location ${defenderUnit.location}, but was expected to be at ${defender.location}`,
-    )
-
-  if (attackerUnit.playerId === defenderUnit.playerId) throw new Error(`Invalid combat with self`)
-  if (!canAttackOccur(event.attackType, state.map, attacker.location, defender.location))
-    throw new Error(
-      `Invalid combat of type ${event.attackType} between hexes ${attacker.location} to ${defender.location}`,
-    )
-  if (attackerUnit.actionPoints.current < event.actionPointsConsumed) throw new Error(`Invalid action point usage`)
-
-  let newState = state
-
-  if (attacker.killed) {
-    newState = newState.removeUnit(attackerUnit.id)
-  } else {
-    const updatedAttacker = attackerUnit.damage(attacker.damageTaken).reduceActionPoints(event.actionPointsConsumed)
-    newState = newState.replaceUnit(attackerUnit.id, updatedAttacker)
-  }
-
-  if (defender.killed) {
-    newState = newState.removeUnit(defenderUnit.id)
-  } else {
-    newState = newState.replaceUnit(defenderUnit.id, defenderUnit.damage(defender.damageTaken))
-  }
-
-  if (defender.killed) {
-    if (attacker.killed) {
-      newState = newState.addWorldLog(`${defenderUnit.name} was taken out in a suicide attack by ${attackerUnit.name}.`)
-    } else {
-      newState = newState.addWorldLog(`${defenderUnit.name} was brutally murdered by ${attackerUnit.name}.`)
-    }
-  } else if (attacker.killed) {
-    newState = newState.addWorldLog(`${attackerUnit.name} died in a futile attempt to take on ${attackerUnit.name}.`)
-  } else {
-    const verb = event.attackType === 'melee' ? 'attacked' : 'spat at'
-    const takingDamageClause = attacker.damageTaken === 0 ? '' : ` and taking ${attacker.damageTaken} damage`
-    const message = `${attackerUnit.name} ${verb} ${defenderUnit.name}, causing ${defender.damageTaken} damage${takingDamageClause}.`
-    newState = newState.addWorldLog(message)
-  }
-  return newState
 }
 
 const handlePlayerEndedTurn = (state: WorldState, event: PlayerEndedTurnWorldEvent): WorldState => {

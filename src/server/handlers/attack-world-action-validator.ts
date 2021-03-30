@@ -1,4 +1,4 @@
-import { WorldState } from '../../world/world-state'
+import { UnitOrBuilding, WorldState } from '../../world/world-state'
 import { AttackType, AttackWorldAction } from '../../world/world-actions'
 import { Unit, UnitType } from '../../world/unit'
 import { PlayerId } from '../../world/player'
@@ -18,7 +18,7 @@ export const canAttackOccur = (attackType: AttackType, map: WorldMap, from: Hex,
 
 export interface CombatParticipants {
   attacker: Unit
-  defender: Unit
+  defender: UnitOrBuilding
 }
 
 export class AttackWorldActionValidator {
@@ -41,14 +41,14 @@ export class AttackWorldActionValidator {
     return { attacker, defender }
   }
 
-  private validateDefender(action: AttackWorldAction) {
+  private validateDefender(action: AttackWorldAction): UnitOrBuilding {
     const defenderId = action.defender.id
-    const defender = this.worldState.findUnitById(defenderId)
+    const defender = this.worldState.findUnitOrBuildingById(defenderId)
     if (!defender) {
-      throw new Error(`No unit found with ID ${defenderId}`)
+      throw new Error(`No unit or building found with ID ${defenderId}`)
     }
     if (defender.playerId === this.playerId) {
-      throw new Error(`Cannot attack own unit`)
+      throw new Error(`Cannot attack own unit or building`)
     }
     if (!defender.location.equals(action.defender.location)) {
       throw new Error(`Defender not in expected location`)
@@ -56,7 +56,7 @@ export class AttackWorldActionValidator {
     return defender
   }
 
-  private validateAttacker(action: AttackWorldAction) {
+  private validateAttacker(action: AttackWorldAction): Unit {
     const attackerId = action.attacker.id
     const attacker = this.worldState.findUnitById(attackerId)
     if (!attacker) {

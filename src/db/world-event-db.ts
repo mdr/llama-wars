@@ -1,6 +1,6 @@
 import Dexie, { Collection } from 'dexie'
 import { GameId } from '../scenes/main-game/game-scene'
-import { WorldEvent } from '../world/world-events'
+import { WorldEvent } from '../world/events/world-events'
 import { deserialiseFromJson, serialiseToJson } from '../util/json-serialisation'
 
 export interface WorldEventRecord {

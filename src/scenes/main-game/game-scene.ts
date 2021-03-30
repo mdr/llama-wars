@@ -9,7 +9,7 @@ import {
   UnitMaturedWorldEvent,
   UnitMovedWorldEvent,
   WorldEvent,
-} from '../../world/world-events'
+} from '../../world/events/world-events'
 import { UnitId } from '../../world/unit'
 import { UnreachableCaseError } from '../../util/unreachable-case-error'
 import { Option } from '../../util/types'
@@ -361,15 +361,19 @@ export class GameScene extends Phaser.Scene {
     previousWorldState: WorldState,
   ) => {
     const previouslySelectedUnitId = new CombinedState(previousWorldState, this.localGameState).findSelectedUnit()?.id
-    if (previouslySelectedUnitId === attacker.unitId && attacker.playerId === this.playerId) {
-      const newSelectedHex = this.calculateNewSelectedUnitAfterMoveOrAttack(attacker.unitId)
+    if (previouslySelectedUnitId === attacker.unitOrBuildingId && attacker.playerId === this.playerId) {
+      const newSelectedHex = this.calculateNewSelectedUnitAfterMoveOrAttack(attacker.unitOrBuildingId)
       this.localGameState = this.localGameState.copy({ mode: { type: 'selectHex' } }).setSelectedHex(newSelectedHex)
       if (newSelectedHex) {
         this.panIntoViewIfNeeded(hexCenter(newSelectedHex))
       }
     } else {
       // deselect unit killed by another player
-      if (defender.killed && defender.unitId === previouslySelectedUnitId && defender.playerId === this.playerId) {
+      if (
+        defender.killed &&
+        defender.unitOrBuildingId === previouslySelectedUnitId &&
+        defender.playerId === this.playerId
+      ) {
         this.localGameState = this.localGameState.copy({ mode: { type: 'selectHex' } }).deselect()
       }
     }

@@ -24,4 +24,6 @@ export class HitPoints {
   public toJson = (): any => ({ current: this.current, max: this.max })
 
   public static fromJson = (json: any): HitPoints => new HitPoints({ current: json.current, max: json.max })
+
+  public percentage = (): number => this.current / this.max
 }

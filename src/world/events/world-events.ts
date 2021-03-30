@@ -1,10 +1,10 @@
-import { Hex } from './hex'
-import { Unit, UnitId, UnitType } from './unit'
-import { PlayerId } from './player'
-import { WorldState } from './world-state'
-import { AttackType } from './world-actions'
-import { HitPoints } from './hit-points'
-import { Building } from './building'
+import { Hex } from '../hex'
+import { Unit, UnitId, UnitType } from '../unit'
+import { PlayerId } from '../player'
+import { UnitOrBuildingId, WorldState } from '../world-state'
+import { AttackType } from '../world-actions'
+import { HitPoints } from '../hit-points'
+import { Building } from '../building'
 
 export type WorldEventId = number
 
@@ -58,7 +58,7 @@ export interface UnitMovedWorldEvent {
 
 export interface CombatParticipantInfo {
   playerId: PlayerId
-  unitId: UnitId
+  unitOrBuildingId: UnitOrBuildingId
   location: Hex
   damageTaken: number
   killed: boolean

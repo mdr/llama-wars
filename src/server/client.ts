@@ -12,7 +12,7 @@ import { deserialiseFromJson, serialiseToJson } from '../util/json-serialisation
 import { PlayerId } from '../world/player'
 import { PeerClient } from './peer-client'
 import { WorldState } from '../world/world-state'
-import { WorldEvent } from '../world/world-events'
+import { WorldEvent } from '../world/events/world-events'
 import { WorldEventListener } from './world-state-owner'
 import { Option } from '../util/types'
 import { UnreachableCaseError } from '../util/unreachable-case-error'

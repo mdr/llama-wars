@@ -36,8 +36,6 @@ export class UnitDisplayObject {
     uiCamera.ignore(this.healthBarGraphics)
   }
 
-  private getHealthBarPosition = (point: Point): Point => addPoints(point, HEALTH_BAR_OFFSET)
-
   public syncScene = (unit: Unit): void => {
     assert(unit.id === this.unit.id)
     this.unit = unit
@@ -48,8 +46,8 @@ export class UnitDisplayObject {
     this.syncHealthBar(unitPoint)
   }
 
-  private syncHealthBar = (unitPoint: Point) => {
-    const healthBarPosition = this.getHealthBarPosition(unitPoint)
+  private syncHealthBar = (location: Point) => {
+    const healthBarPosition = this.getHealthBarPosition(location)
     this.healthBarGraphics.setPosition(healthBarPosition.x, healthBarPosition.y)
     this.healthBarGraphics.clear()
 
@@ -73,6 +71,8 @@ export class UnitDisplayObject {
       innerHeight,
     )
   }
+
+  private getHealthBarPosition = (point: Point): Point => addPoints(point, HEALTH_BAR_OFFSET)
 
   public runMoveAnimation = async (from: Hex, to: Hex, speed: AnimationSpeed): Promise<void> => {
     const duration = this.scaleSpeed(500, speed)

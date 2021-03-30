@@ -222,7 +222,7 @@ export class DisplayObjects {
       case 'move':
         return [animation.unitId]
       case 'combat':
-        return [animation.attacker.unitId, animation.defender.unitId]
+        return [animation.attacker.unitOrBuildingId, animation.defender.unitOrBuildingId]
       case 'mature':
         return [animation.unitId]
     }
@@ -294,10 +294,10 @@ export class DisplayObjects {
   private runCombatAnimation = async (animation: CombatAnimationSpec, speed: AnimationSpeed): Promise<void> => {
     const { attacker, defender } = animation
     this.playCombatSound(animation)
-    const attackerDisplayObject = this.animatedUnitDisplayObjects.get(attacker.unitId)
-    if (!attackerDisplayObject) throw `Unexpected missing display object for unit ${attacker.unitId}`
-    const defenderDisplayObject = this.animatedUnitDisplayObjects.get(defender.unitId)
-    if (!defenderDisplayObject) throw `Unexpected missing display object for unit ${defender.unitId}`
+    const attackerDisplayObject = this.animatedUnitDisplayObjects.get(attacker.unitOrBuildingId)
+    if (!attackerDisplayObject) throw `Unexpected missing display object for unit ${attacker.unitOrBuildingId}`
+    const defenderDisplayObject = this.animatedUnitDisplayObjects.get(defender.unitOrBuildingId)
+    if (!defenderDisplayObject) throw `Unexpected missing display object for unit ${defender.unitOrBuildingId}`
     const simultaneousAnimations: Promise<void>[] = []
     simultaneousAnimations.push(this.runAttackAnimation(attackerDisplayObject, animation, speed))
     if (attacker.killed) {

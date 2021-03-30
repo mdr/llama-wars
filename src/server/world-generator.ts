@@ -1,23 +1,22 @@
 import { PlayerId } from '../world/player'
-import { Unit, UnitId, UnitType } from '../world/unit'
+import { Unit, UnitType } from '../world/unit'
 import { Hex } from '../world/hex'
 import { randomElement } from '../util/random-util'
 import * as R from 'ramda'
 import { ActionPoints } from '../world/action-points'
 import { CASTLE_HIT_POINTS, CRIA_HIT_POINTS, HitPoints } from '../world/hit-points'
-import { WorldState } from '../world/world-state'
-import { Building, BuildingId, BuildingType } from '../world/building'
+import { UnitOrBuildingId, WorldState } from '../world/world-state'
+import { Building, BuildingType } from '../world/building'
 import { Option } from '../util/types'
 import { countWhere, maxOpt } from '../util/collection-util'
 import { assertNotUndefined } from '../util/assertion-util'
 import { LLAMA_NAMES } from './llama-names'
-import { GeneratedWorld } from '../world/world-events'
+import { GeneratedWorld } from '../world/events/world-events'
 
 export class WorldGenerator {
   private readonly worldState: WorldState
   private remainingHexes: Hex[]
-  private nextUnitId: UnitId = 1
-  private nextBuildingId: BuildingId = 1
+  private nextUnitOrBuildingId: UnitOrBuildingId = 1
   private readonly spawnPoints: Map<PlayerId, Hex> = new Map()
 
   constructor(worldState: WorldState) {
@@ -43,7 +42,7 @@ export class WorldGenerator {
 
   private generateUnit = (playerId: PlayerId): Unit => {
     const location = this.pickStartLocationForUnit(playerId)
-    const id = this.nextUnitId++
+    const id = this.nextUnitOrBuildingId++
     this.remainingHexes = R.without([location], this.remainingHexes)
     const name = randomElement(LLAMA_NAMES)
     return new Unit({
@@ -109,7 +108,7 @@ export class WorldGenerator {
   private generateBuildingsForPlayer = (playerId: PlayerId): Building[] => [this.generateCastle(playerId)]
 
   private generateCastle = (playerId: PlayerId): Building => {
-    const id = this.nextBuildingId++
+    const id = this.nextUnitOrBuildingId++
     const location = this.spawnPoints.get(playerId)
     assertNotUndefined(location, 'Castles only generated after spawn points')
     return new Building({

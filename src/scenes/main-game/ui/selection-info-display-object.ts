@@ -198,7 +198,7 @@ export class SelectionInfoDisplayObject extends GameObjects.Container {
       actions.push(UnitAction.ATTACK)
       actions.push(UnitAction.SPIT)
     }
-    if (unit.type === UnitType.CRIA) {
+    if (this.combinedState.unitCanMature(unit)) {
       actions.push(UnitAction.MATURE)
     }
     return actions

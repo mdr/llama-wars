@@ -6,8 +6,8 @@ import { Unit, UnitId } from './unit'
 import { just, Maybe, Option, toMaybe, toOption } from '../util/types'
 import { Player, PlayerId } from './player'
 import assert = require('assert')
-import { applyEvent } from './world-event-evaluator'
-import { WorldEvent } from './world-events'
+import { applyEvent } from './events/world-event-evaluator'
+import { WorldEvent } from './events/world-events'
 import { Building, BuildingId } from './building'
 
 interface GameOverInfo {
@@ -112,24 +112,54 @@ export class WorldState {
 
   public findUnitInLocation = (hex: Hex): Option<Unit> => R.find((unit) => unit.location.equals(hex), this.units)
 
-  public replaceUnit = (unitId: UnitId, unit: Unit): WorldState =>
-    this.copy({
-      units: R.append(
-        unit,
-        R.filter((unit) => unit.id !== unitId, this.units),
-      ),
-    })
+  public addUnit = (unit: Unit): WorldState => {
+    if (this.findUnitOrBuildingById(unit.id)) {
+      throw new Error(`Unit already present with id ${unit.id}`)
+    } else {
+      return this.copy({ units: R.append(unit, this.units) })
+    }
+  }
 
   public removeUnit = (unitId: UnitId): WorldState =>
     this.copy({ units: R.filter((unit) => unit.id !== unitId, this.units) })
+
+  public replaceUnit = (unitId: UnitId, unit: Unit): WorldState => this.removeUnit(unitId).addUnit(unit)
 
   public updateUnit = (unitId: UnitId, modify: (player: Unit) => Unit): WorldState => {
     const unit = this.getUnitById(unitId)
     return this.replaceUnit(unitId, modify(unit))
   }
 
+  public addBuilding = (building: Building): WorldState => {
+    if (this.findUnitOrBuildingById(building.id)) {
+      throw new Error(`Building already present with id ${building.id}`)
+    } else {
+      return this.copy({ buildings: R.append(building, this.buildings) })
+    }
+  }
+
+  public removeBuilding = (buildingId: BuildingId): WorldState =>
+    this.copy({ buildings: R.filter((building) => building.id !== buildingId, this.buildings) })
+
+  public replaceBuilding = (buildingId: BuildingId, building: Building): WorldState =>
+    this.removeUnit(buildingId).addBuilding(building)
+
+  public addUnitOrBuilding = (unitOrBuilding: UnitOrBuilding): WorldState =>
+    unitOrBuilding instanceof Unit ? this.addUnit(unitOrBuilding) : this.addBuilding(unitOrBuilding)
+
+  public replaceUnitOrBuilding = (id: UnitOrBuildingId, replacement: UnitOrBuilding): WorldState =>
+    this.removeUnitOrBuilding(id).addUnitOrBuilding(replacement)
+
+  public removeUnitOrBuilding = (id: UnitOrBuildingId): WorldState => this.removeUnit(id).removeBuilding(id)
+
+  public findBuildingById = (buildingId: BuildingId): Option<Building> =>
+    R.find((building) => building.id === buildingId, this.buildings)
+
   public findBuildingInLocation = (hex: Hex): Option<Building> =>
     R.find((building) => building.location.equals(hex), this.buildings)
+
+  public findUnitOrBuildingById = (id: UnitOrBuildingId): Option<UnitOrBuilding> =>
+    this.findUnitById(id) ?? this.findBuildingById(id)
 
   public updatePlayer = (playerId: PlayerId, modify: (player: Player) => Player): WorldState => {
     const player = this.findPlayer(playerId)

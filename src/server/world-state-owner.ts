@@ -1,6 +1,6 @@
 import { WorldState } from '../world/world-state'
 import { WorldAction } from '../world/world-actions'
-import { WorldEvent, WorldEventId } from '../world/world-events'
+import { WorldEvent, WorldEventId } from '../world/events/world-events'
 import { WorldActionHandler } from './handlers/world-action-handler'
 import { PlayerId } from '../world/player'
 

@@ -1,7 +1,7 @@
 import * as R from 'ramda'
-import { WorldState } from '../../world/world-state'
+import { UnitOrBuilding, WorldState } from '../../world/world-state'
 import { AttackType } from '../../world/world-actions'
-import { CombatWorldEvent, PlayerDefeatedWorldEvent, WorldEvent, WorldEventId } from '../../world/world-events'
+import { CombatWorldEvent, PlayerDefeatedWorldEvent, WorldEvent, WorldEventId } from '../../world/events/world-events'
 import { Unit } from '../../world/unit'
 import { PlayerId } from '../../world/player'
 import { Option } from '../../util/types'
@@ -10,7 +10,7 @@ export interface CombatInfo {
   attackType: AttackType
   attacker: Unit
   attackerDamageTaken: number
-  defender: Unit
+  defender: UnitOrBuilding
   defenderDamageTaken: number
 }
 
@@ -57,14 +57,14 @@ export class AttackWorldEventCalculator {
       attackType,
       attacker: {
         playerId: attacker.playerId,
-        unitId: attacker.id,
+        unitOrBuildingId: attacker.id,
         location: attacker.location,
         damageTaken: attackerDamageTaken,
         killed: attacker.hitPoints.current === attackerDamageTaken,
       },
       defender: {
         playerId: defender.playerId,
-        unitId: defender.id,
+        unitOrBuildingId: defender.id,
         location: defender.location,
         damageTaken: defenderDamageTaken,
         killed: defender.hitPoints.current === defenderDamageTaken,

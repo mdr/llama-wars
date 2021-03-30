@@ -48,6 +48,9 @@ export class CombinedState {
     unit.hasUnspentActionPoints &&
     !this.getCurrentPlayer().endedTurn
 
+  public unitCanMature = (unit: Unit): boolean =>
+    unit.playerId === this.playerId && unit.type === UnitType.CRIA && !this.getCurrentPlayer().endedTurn
+
   public unitCanMoveToHex = (unit: Unit, hex: Hex): boolean =>
     this.unitCouldPotentiallyMove(unit) &&
     hex.isAdjacentTo(unit.location) &&

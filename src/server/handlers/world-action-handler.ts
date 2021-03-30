@@ -25,11 +25,11 @@ import {
   UnitMovedWorldEvent,
   WorldEvent,
   WorldEventId,
-} from '../../world/world-events'
+} from '../../world/events/world-events'
 import { HOST_PLAYER_ID, Player, PlayerId } from '../../world/player'
 import { WorldGenerator } from '../world-generator'
 import { AttackWorldActionHandler } from './attack-world-action-handler'
-import { UnitType } from '../../world/unit'
+import { Unit, UnitType } from '../../world/unit'
 import { HitPoints, WARRIOR_HIT_POINTS } from '../../world/hit-points'
 import { MoveUnitActionHandler } from './move-unit-action-handler'
 
@@ -171,6 +171,15 @@ export class WorldActionHandler {
 
   private handleMatureUnit = (action: MatureUnitWorldAction): [UnitMaturedWorldEvent] => {
     const { unitId, unitType } = action
+    const unit = this.validateMatureUnit(action)
+    const max = WARRIOR_HIT_POINTS
+    const current = Math.round(max * unit.hitPoints.percentage())
+    const hitPoints = new HitPoints({ current, max })
+    return [{ id: this.nextWorldEventId, type: 'unitMatured', unitId, unitType, hitPoints }]
+  }
+
+  private validateMatureUnit = (action: MatureUnitWorldAction): Unit => {
+    const { unitId, unitType } = action
     const unit = this.worldState.findUnitById(unitId)
     if (!unit) {
       throw new Error(`No unit found with ID ${unitId}`)
@@ -184,7 +193,6 @@ export class WorldActionHandler {
     if (unitType === UnitType.CRIA) {
       throw new Error(`Cannot mature into a cria`)
     }
-    const hitPoints = new HitPoints({ current: WARRIOR_HIT_POINTS, max: WARRIOR_HIT_POINTS })
-    return [{ id: this.nextWorldEventId, type: 'unitMatured', unitId, unitType, hitPoints }]
+    return unit
   }
 }

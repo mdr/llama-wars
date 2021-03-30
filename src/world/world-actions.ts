@@ -1,6 +1,6 @@
 import { Hex } from './hex'
 import { UnitId, UnitType } from './unit'
-import { WorldState } from './world-state'
+import { UnitOrBuildingId, WorldState } from './world-state'
 import { PlayerId } from './player'
 import { Option } from '../util/types'
 
@@ -32,7 +32,7 @@ export interface MoveUnitWorldAction {
 export type AttackType = 'melee' | 'spit'
 
 export interface CombatParticipantInfo {
-  id: UnitId
+  id: UnitOrBuildingId
   location: Hex
 }
 
