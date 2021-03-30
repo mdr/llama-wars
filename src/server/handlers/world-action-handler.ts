@@ -173,7 +173,7 @@ export class WorldActionHandler {
     const { unitId, unitType } = action
     const unit = this.validateMatureUnit(action)
     const max = WARRIOR_HIT_POINTS
-    const current = Math.round(max * unit.hitPoints.percentage())
+    const current = Math.round(max * unit.hitPoints.fraction())
     const hitPoints = new HitPoints({ current, max })
     return [{ id: this.nextWorldEventId, type: 'unitMatured', unitId, unitType, hitPoints }]
   }

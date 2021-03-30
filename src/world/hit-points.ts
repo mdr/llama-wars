@@ -25,5 +25,5 @@ export class HitPoints {
 
   public static fromJson = (json: any): HitPoints => new HitPoints({ current: json.current, max: json.max })
 
-  public percentage = (): number => this.current / this.max
+  public fraction = (): number => this.current / this.max
 }

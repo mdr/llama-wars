@@ -1,19 +1,19 @@
 import { Hex } from '../../world/hex'
 import { Unit, UnitType } from '../../world/unit'
 import { hexCenter } from './game-scene'
-import { getPlayerTint, HEALTH_BORDER_COLOUR, HEALTH_EMPTY_COLOUR, HEALTH_FULL_COLOUR } from '../colours'
-import { addPoints, distanceBetweenPoints, Point } from '../point'
+import { getPlayerTint } from '../colours'
+import { distanceBetweenPoints, Point } from '../point'
 import { playTween } from '../../util/phaser/tween-utils'
 import { AnimationSpeed } from './display-objects'
 import { randomIntInclusive } from '../../util/random-util'
 import { AnimationKeys } from '../animations'
 import { getUiCamera } from './cameras'
-import assert = require('assert')
 import { ImageKeys } from '../asset-keys'
+import { syncHealthBar } from './health-bar'
+import assert = require('assert')
+import { calculateTweenXY, scaleSpeed } from './animations'
+import { runDamageAnimation } from './damage-animation'
 
-const HEALTH_BAR_WIDTH = 50
-const HEALTH_BAR_HEIGHT = 12
-const HEALTH_BAR_BORDER_THICKNESS = 2
 const IMAGE_OFFSET = { x: 0, y: 4 }
 const HEALTH_BAR_OFFSET = { x: -25, y: -40 }
 
@@ -43,39 +43,11 @@ export class UnitDisplayObject {
     this.image
       .setPosition(unitPoint.x + IMAGE_OFFSET.x, unitPoint.y + IMAGE_OFFSET.y)
       .setScale(unit.type === UnitType.CRIA ? CRIA_SCALE : ORDINARY_SCALE)
-    this.syncHealthBar(unitPoint)
+    syncHealthBar(this.healthBarGraphics, unitPoint, this.unit.hitPoints)
   }
-
-  private syncHealthBar = (location: Point) => {
-    const healthBarPosition = this.getHealthBarPosition(location)
-    this.healthBarGraphics.setPosition(healthBarPosition.x, healthBarPosition.y)
-    this.healthBarGraphics.clear()
-
-    // Draw border
-    const innerWidth = HEALTH_BAR_WIDTH - 2 * HEALTH_BAR_BORDER_THICKNESS
-    const innerHeight = HEALTH_BAR_HEIGHT - 2 * HEALTH_BAR_BORDER_THICKNESS
-    this.healthBarGraphics.fillStyle(HEALTH_BORDER_COLOUR)
-    this.healthBarGraphics.fillRect(0, 0, HEALTH_BAR_WIDTH, HEALTH_BAR_HEIGHT)
-
-    // Draw empty background
-    this.healthBarGraphics.fillStyle(HEALTH_EMPTY_COLOUR)
-    this.healthBarGraphics.fillRect(HEALTH_BAR_BORDER_THICKNESS, HEALTH_BAR_BORDER_THICKNESS, innerWidth, innerHeight)
-
-    // Fill in bar
-    const { current, max } = this.unit.hitPoints
-    this.healthBarGraphics.fillStyle(HEALTH_FULL_COLOUR)
-    this.healthBarGraphics.fillRect(
-      HEALTH_BAR_BORDER_THICKNESS,
-      HEALTH_BAR_BORDER_THICKNESS,
-      (innerWidth * current) / max,
-      innerHeight,
-    )
-  }
-
-  private getHealthBarPosition = (point: Point): Point => addPoints(point, HEALTH_BAR_OFFSET)
 
   public runMoveAnimation = async (from: Hex, to: Hex, speed: AnimationSpeed): Promise<void> => {
-    const duration = this.scaleSpeed(500, speed)
+    const duration = scaleSpeed(500, speed)
     const beforeCoords = hexCenter(from)
     const afterCoords = hexCenter(to)
     this.image.anims.play(AnimationKeys.LLAMA_WALK)
@@ -97,10 +69,8 @@ export class UnitDisplayObject {
     this.image.anims.stopOnFrame(frame)
   }
 
-  private scaleSpeed = (duration: number, speed: AnimationSpeed) => (speed === 'normal' ? duration : duration / 4)
-
   public runMatureAnimation = async (speed: AnimationSpeed): Promise<void> => {
-    const duration = this.scaleSpeed(1000, speed)
+    const duration = scaleSpeed(1000, speed)
     const tween = this.scene.tweens.create({
       targets: [this.image],
       scale: {
@@ -114,7 +84,7 @@ export class UnitDisplayObject {
   }
 
   public runDeathAnimation = async (speed: AnimationSpeed): Promise<void> => {
-    const duration = this.scaleSpeed(1000, speed)
+    const duration = scaleSpeed(1000, speed)
     const tween = this.scene.tweens.create({
       targets: [this.image, this.healthBarGraphics],
       alpha: { from: 1, to: 0 },
@@ -130,7 +100,7 @@ export class UnitDisplayObject {
     const distance = distanceBetweenPoints(fromPoint, toPoint)
     const image = this.scene.add.image(fromPoint.x, fromPoint.y, 'spit').setScale(0.8)
     getUiCamera(this.scene).ignore(image)
-    const duration = this.scaleSpeed(distance * 4, speed)
+    const duration = scaleSpeed(distance * 4, speed)
     const tween = this.scene.tweens.create({
       targets: image,
       x: {
@@ -148,36 +118,8 @@ export class UnitDisplayObject {
     image.destroy()
   }
 
-  public runDamageAnimation = async (location: Hex, damage: number, speed: AnimationSpeed): Promise<void> => {
-    const locationPoint = hexCenter(location)
-    const text = this.scene.add
-      .text(locationPoint.x, locationPoint.y, damage.toString(), {
-        color: '#ff8888',
-        stroke: '#000000',
-        strokeThickness: 2,
-      })
-      .setFontSize(26)
-      .setOrigin(0.5)
-    getUiCamera(this.scene).ignore(text)
-    const duration = this.scaleSpeed(2000, speed)
-    const tween1 = this.scene.tweens.create({
-      targets: text,
-      y: {
-        from: locationPoint.y - 50,
-        to: locationPoint.y - 75,
-      },
-      duration,
-      ease: 'Linear',
-    })
-    const tween2 = this.scene.tweens.create({
-      targets: text,
-      alpha: { from: 1, to: 0 },
-      duration,
-      ease: 'Cubic.in',
-    })
-    await Promise.all([playTween(tween1), playTween(tween2)])
-    text.destroy()
-  }
+  public runDamageAnimation = async (location: Hex, damage: number, speed: AnimationSpeed): Promise<void> =>
+    runDamageAnimation(this.scene, location, damage, speed)
 
   public runEatAnimation = async (): Promise<void> => {
     if (randomIntInclusive(1, 3) === 1) {
@@ -191,7 +133,7 @@ export class UnitDisplayObject {
     const afterCoords = hexCenter(to)
     this.image.setFlipX(afterCoords.x < beforeCoords.x)
     this.image.anims.play(AnimationKeys.LLAMA_WALK)
-    const duration = this.scaleSpeed(400, speed)
+    const duration = scaleSpeed(400, speed)
     const tween1 = this.scene.tweens.create({
       targets: this.image,
       ...calculateTweenXY(beforeCoords, afterCoords, IMAGE_OFFSET),
@@ -217,16 +159,3 @@ export class UnitDisplayObject {
     this.image.destroy()
   }
 }
-
-type TweenXY = { x: { from: number; to: number }; y: { from: number; to: number } }
-
-const calculateTweenXY = (from: Point, to: Point, offset: Point): TweenXY => ({
-  x: {
-    from: from.x + offset.x,
-    to: to.x + offset.x,
-  },
-  y: {
-    from: from.y + offset.y,
-    to: to.y + offset.y,
-  },
-})

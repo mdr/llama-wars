@@ -141,7 +141,7 @@ export class DisplayObjects {
     if (this.isAnimating) {
       return
     } else {
-      this.processAnimations()
+      fireAndForget(this.processAnimations)
     }
   }
 
