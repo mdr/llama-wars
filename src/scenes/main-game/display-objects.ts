@@ -328,8 +328,16 @@ export class DisplayObjects {
   private playCombatSound = (animation: CombatAnimationSpec) => {
     const { attackType, attacker, defender } = animation
     this.playAttackSound(attackType)
-    if (attacker.killed || defender.killed) {
+    const defenderIsUnit = defender.entityType === 'unit'
+    const defenderIsBuilding = defender.entityType === 'building'
+    const attackerIsUnit = attacker.entityType === 'unit'
+    const unitDied = (defender.killed && defenderIsUnit) || (attacker.killed && attackerIsUnit)
+    const buildingDied = defender.killed && defenderIsBuilding
+    if (unitDied) {
       this.scene.sound.play(AudioKeys.DEATH)
+    }
+    if (buildingDied) {
+      this.scene.sound.play(AudioKeys.BUILDING_DESTROYED)
     }
   }
 

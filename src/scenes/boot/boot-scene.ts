@@ -223,5 +223,8 @@ export class BootScene extends Phaser.Scene {
 
     // https://opengameart.org/content/level-up-power-up-coin-get-13-sounds
     this.load.audio(AudioKeys.MATURE, 'assets/audio/Rise07.mp3')
+
+    // https://opengameart.org/content/3-background-crash-explosion-bang-sounds
+    this.load.audio(AudioKeys.BUILDING_DESTROYED, 'assets/audio/qubodup-BangMid.wav')
   }
 }

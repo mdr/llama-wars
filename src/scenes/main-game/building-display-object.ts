@@ -42,10 +42,10 @@ export class BuildingDisplayObject {
     syncHealthBar(this.healthBarGraphics, buildingPoint, this.building.hitPoints)
   }
 
-  public runDeathAnimation = async (speed: AnimationSpeed): Promise<void> =>
+  public runDeathAnimation = (speed: AnimationSpeed): Promise<void> =>
     runDeathAnimation(this.scene, this.image, this.healthBarGraphics, speed)
 
-  public runDamageAnimation = async (location: Hex, damage: number, speed: AnimationSpeed): Promise<void> =>
+  public runDamageAnimation = (location: Hex, damage: number, speed: AnimationSpeed): Promise<void> =>
     runDamageAnimation(this.scene, location, damage, speed)
 
   public destroy = (): void => {

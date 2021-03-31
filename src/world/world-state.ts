@@ -16,6 +16,8 @@ interface GameOverInfo {
 
 export type UnitOrBuilding = Unit | Building
 
+export type EntityType = 'unit' | 'building'
+
 export type UnitOrBuildingId = UnitId | BuildingId
 
 export class WorldState {
@@ -234,4 +236,10 @@ export class WorldState {
     })
 
   public getSortedPlayers = (): Player[] => R.sortBy((player) => player.id, this.players)
+
+  public isBuilding = (id: UnitOrBuildingId): boolean => this.findBuildingById(id) !== undefined
+
+  public isUnit = (id: UnitOrBuildingId): boolean => this.findUnitById(id) !== undefined
+
+  public getEntityType = (id: UnitOrBuildingId): EntityType => (this.isUnit(id) ? 'unit' : 'building')
 }

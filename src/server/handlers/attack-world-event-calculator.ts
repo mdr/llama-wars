@@ -58,6 +58,7 @@ export class AttackWorldEventCalculator {
       attacker: {
         playerId: attacker.playerId,
         unitOrBuildingId: attacker.id,
+        entityType: this.worldState.getEntityType(attacker.id),
         location: attacker.location,
         damageTaken: attackerDamageTaken,
         killed: attacker.hitPoints.current === attackerDamageTaken,
@@ -65,6 +66,7 @@ export class AttackWorldEventCalculator {
       defender: {
         playerId: defender.playerId,
         unitOrBuildingId: defender.id,
+        entityType: this.worldState.getEntityType(defender.id),
         location: defender.location,
         damageTaken: defenderDamageTaken,
         killed: defender.hitPoints.current === defenderDamageTaken,
