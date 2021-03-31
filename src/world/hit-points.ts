@@ -2,7 +2,7 @@ import assert = require('assert')
 
 export const WARRIOR_HIT_POINTS = 100
 export const CRIA_HIT_POINTS = 50
-export const CASTLE_HIT_POINTS = 250
+export const CASTLE_HIT_POINTS = 25
 
 export class HitPoints {
   readonly current: number

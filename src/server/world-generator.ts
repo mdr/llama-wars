@@ -13,6 +13,8 @@ import { assertNotUndefined } from '../util/assertion-util'
 import { LLAMA_NAMES } from './llama-names'
 import { GeneratedWorld } from '../world/events/world-events'
 
+const MIN_DISTANCE_BETWEEN_SPAWNS = 2
+
 export class WorldGenerator {
   private readonly worldState: WorldState
   private remainingHexes: Hex[]
@@ -94,7 +96,7 @@ export class WorldGenerator {
     const otherSpawns = Array.from(this.spawnPoints.values())
     const distancesToOtherSpawns = otherSpawns.map((location) => candidateLocation.distanceTo(location))
     const closestDistanceToAnotherSpawn = maxOpt(distancesToOtherSpawns)
-    return closestDistanceToAnotherSpawn === undefined || closestDistanceToAnotherSpawn > 8
+    return closestDistanceToAnotherSpawn === undefined || closestDistanceToAnotherSpawn >= MIN_DISTANCE_BETWEEN_SPAWNS
   }
 
   private hasFreeNeighbours = (candidateLocation: Hex): boolean => {

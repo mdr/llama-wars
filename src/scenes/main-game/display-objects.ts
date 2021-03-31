@@ -2,7 +2,7 @@ import { MapDisplayObject } from './map-display-object'
 import { UnitId } from '../../world/unit'
 import { UnitDisplayObject } from './unit-display-object'
 import { UiDisplayObjects } from './ui/ui-display-objects'
-import { WorldState } from '../../world/world-state'
+import { UnitOrBuildingId, WorldState } from '../../world/world-state'
 import { LocalGameState } from '../local-game-state'
 import { Point } from '../point'
 import * as R from 'ramda'
@@ -16,6 +16,7 @@ import { AnimationSpec, CombatAnimationSpec, MatureAnimationSpec, MoveAnimationS
 import { LocalActionDispatcher } from './local-action'
 import { BuildingDisplayObject } from './building-display-object'
 import { AttackType } from '../../world/world-actions'
+import { BuildingId } from '../../world/building'
 
 export type AnimationSpeed = 'normal' | 'quick'
 
@@ -28,6 +29,7 @@ export class DisplayObjects {
   private readonly unitDisplayObjects: Map<UnitId, UnitDisplayObject> = new Map()
   private readonly animatedUnitDisplayObjects: Map<UnitId, UnitDisplayObject> = new Map()
   private readonly buildingDisplayObjects: Map<UnitId, BuildingDisplayObject> = new Map()
+  private readonly animatedBuildingDisplayObjects: Map<UnitId, BuildingDisplayObject> = new Map()
   private readonly textsDisplayObject: UiDisplayObjects
   private readonly localActionDispatcher: LocalActionDispatcher
   private isAnimating: boolean = false
@@ -89,7 +91,7 @@ export class DisplayObjects {
 
     if (animation) {
       this.animations = R.append(animation)(this.animations)
-      this.getUnitIdsInvolvedInAnimation(animation).forEach(this.manageUnitAsBeingAnimated)
+      this.getIdsInvolvedInAnimation(animation).forEach(this.manageUnitOrBuildingAsBeingAnimated)
       this.triggerAnimations()
     }
 
@@ -99,7 +101,10 @@ export class DisplayObjects {
 
   private syncBuildings = (): void => {
     this.removeBuildingDisplayObjectsNoLongerNeeded()
-    for (const building of this.worldState.buildings) {
+    const buildingsToSync = this.worldState.buildings.filter(
+      (building) => !this.animatedBuildingDisplayObjects.has(building.id),
+    )
+    for (const building of buildingsToSync) {
       let buildingDisplayObject = this.buildingDisplayObjects.get(building.id)
       if (!buildingDisplayObject) {
         buildingDisplayObject = new BuildingDisplayObject(this.scene, building)
@@ -157,22 +162,22 @@ export class DisplayObjects {
     animationsToPerformNow: AnimationSpec[]
     animationsToPerformLater: AnimationSpec[]
   } => {
-    const unitIdsInvolvedInEarlierAnimations = new Set<UnitId>()
+    const idsInvolvedInEarlierAnimations = new Set<UnitOrBuildingId>()
     const animationsToPerformNow = []
     const animationsToPerformLater = []
     for (const animation of this.animations) {
-      const unitIdsInvolvedInAnimation = this.getUnitIdsInvolvedInAnimation(animation)
-      const affectedByEarlierAnimations = R.any(
-        (unitId) => unitIdsInvolvedInEarlierAnimations.has(unitId),
-        unitIdsInvolvedInAnimation,
+      const idsInvolvedInAnimation = this.getIdsInvolvedInAnimation(animation)
+      const isAffectedByEarlierAnimations = R.any(
+        (id) => idsInvolvedInEarlierAnimations.has(id),
+        idsInvolvedInAnimation,
       )
-      if (affectedByEarlierAnimations) {
+      if (isAffectedByEarlierAnimations) {
         animationsToPerformLater.push(animation)
       } else {
         animationsToPerformNow.push(animation)
       }
-      for (const unitId of unitIdsInvolvedInAnimation) {
-        unitIdsInvolvedInEarlierAnimations.add(unitId)
+      for (const id of idsInvolvedInAnimation) {
+        idsInvolvedInEarlierAnimations.add(id)
       }
     }
     return { animationsToPerformNow, animationsToPerformLater }
@@ -187,7 +192,7 @@ export class DisplayObjects {
         const speed = animationsToPerformLater.length === 0 ? 'normal' : 'quick'
         await Promise.all(animationsToPerformNow.map((animation) => this.runAnimation(animation, speed)))
         for (const animation of animationsToPerformNow) {
-          this.releaseUnitsFromBeingAnimatedWhereNoLongerNeeded(animation)
+          this.releaseUnitsOrBuildingsFromBeingAnimatedWhereNoLongerNeeded(animation)
         }
       }
     } finally {
@@ -195,37 +200,66 @@ export class DisplayObjects {
     }
   }
 
-  private releaseUnitsFromBeingAnimatedWhereNoLongerNeeded = (animation: AnimationSpec): void => {
-    const unitIdsInAnimation = this.getUnitIdsInvolvedInAnimation(animation)
-    const unitIdsInRemainingAnimations = this.getUnitsInvolvedInAnimations()
-    const unitIdsToRelease = R.difference(unitIdsInAnimation, unitIdsInRemainingAnimations)
-    unitIdsToRelease.forEach(this.releaseUnitFromBeingAnimated)
+  private releaseUnitsOrBuildingsFromBeingAnimatedWhereNoLongerNeeded = (animation: AnimationSpec): void => {
+    const idsInAnimation = this.getIdsInvolvedInAnimation(animation)
+    const idsInRemainingAnimations = this.getIdsInvolvedInAnimations()
+    const idsToRelease = R.difference(idsInAnimation, idsInRemainingAnimations)
+    idsToRelease.forEach(this.releaseUnitOrBuildingFromBeingAnimated)
   }
 
-  private manageUnitAsBeingAnimated = (unitId: UnitId): void => {
-    const displayObject = this.unitDisplayObjects.get(unitId)
-    if (displayObject) {
-      this.unitDisplayObjects.delete(unitId)
-      this.animatedUnitDisplayObjects.set(unitId, displayObject)
+  private manageUnitOrBuildingAsBeingAnimated = (id: UnitOrBuildingId): void => {
+    const unitDisplayObject = this.unitDisplayObjects.get(id)
+    if (unitDisplayObject) {
+      this.unitDisplayObjects.delete(id)
+      this.animatedUnitDisplayObjects.set(id, unitDisplayObject)
+    }
+    const buildingDisplayObject = this.buildingDisplayObjects.get(id)
+    if (buildingDisplayObject) {
+      this.buildingDisplayObjects.delete(id)
+      this.animatedBuildingDisplayObjects.set(id, buildingDisplayObject)
     }
   }
 
-  private releaseUnitFromBeingAnimated = (unitId: UnitId): void => {
-    const displayObject = this.animatedUnitDisplayObjects.get(unitId)
-    if (!displayObject) throw `Unexpected missing display object for unit ${unitId}`
+  private releaseUnitOrBuildingFromBeingAnimated = (id: UnitOrBuildingId): void => {
+    const unitDisplayObject = this.animatedUnitDisplayObjects.get(id)
+    if (unitDisplayObject) {
+      this.releaseUnitFromBeingAnimated(id, unitDisplayObject)
+    }
+    const buildingDisplayObject = this.animatedBuildingDisplayObjects.get(id)
+    if (buildingDisplayObject) {
+      this.releaseBuildingFromBeingAnimated(id, buildingDisplayObject)
+    }
+    if (!unitDisplayObject && !buildingDisplayObject) {
+      throw `Unexpected missing display object for unit/building ${id}`
+    }
+  }
+
+  private releaseUnitFromBeingAnimated(unitId: UnitId, unitDisplayObject: UnitDisplayObject) {
     this.animatedUnitDisplayObjects.delete(unitId)
     const unit = this.worldState.findUnitById(unitId)
     if (unit) {
-      displayObject.syncScene(unit)
-      this.unitDisplayObjects.set(unitId, displayObject)
+      unitDisplayObject.syncScene(unit)
+      this.unitDisplayObjects.set(unitId, unitDisplayObject)
     } else {
-      displayObject.destroy()
+      unitDisplayObject.destroy()
     }
   }
 
-  private getUnitsInvolvedInAnimations = (): UnitId[] => R.chain(this.getUnitIdsInvolvedInAnimation, this.animations)
+  private releaseBuildingFromBeingAnimated(buildingId: BuildingId, buildingDisplayObject: BuildingDisplayObject) {
+    this.animatedBuildingDisplayObjects.delete(buildingId)
+    const building = this.worldState.findBuildingById(buildingId)
+    if (building) {
+      buildingDisplayObject.syncScene(building)
+      this.buildingDisplayObjects.set(buildingId, buildingDisplayObject)
+    } else {
+      buildingDisplayObject.destroy()
+    }
+  }
 
-  private getUnitIdsInvolvedInAnimation = (animation: AnimationSpec): UnitId[] => {
+  private getIdsInvolvedInAnimations = (): UnitOrBuildingId[] =>
+    R.chain(this.getIdsInvolvedInAnimation, this.animations)
+
+  private getIdsInvolvedInAnimation = (animation: AnimationSpec): UnitOrBuildingId[] => {
     switch (animation.type) {
       case 'move':
         return [animation.unitId]
@@ -304,8 +338,7 @@ export class DisplayObjects {
     this.playCombatSound(animation)
     const attackerDisplayObject = this.animatedUnitDisplayObjects.get(attacker.unitOrBuildingId)
     if (!attackerDisplayObject) throw `Unexpected missing display object for unit ${attacker.unitOrBuildingId}`
-    const defenderDisplayObject = this.animatedUnitDisplayObjects.get(defender.unitOrBuildingId)
-    if (!defenderDisplayObject) throw `Unexpected missing display object for unit ${defender.unitOrBuildingId}`
+    const defenderDisplayObject = this.getAnimatedDisplayObject(defender.unitOrBuildingId)
     const simultaneousAnimations: Promise<void>[] = []
     simultaneousAnimations.push(this.runAttackAnimation(attackerDisplayObject, animation, speed))
     if (attacker.killed) {
@@ -321,5 +354,13 @@ export class DisplayObjects {
     if (defender.damageTaken > 0) {
       fireAndForget(() => defenderDisplayObject.runDamageAnimation(defender.location, defender.damageTaken, speed))
     }
+  }
+
+  private getAnimatedDisplayObject = (id: UnitOrBuildingId): UnitDisplayObject | BuildingDisplayObject => {
+    const displayObject = this.animatedUnitDisplayObjects.get(id) ?? this.animatedBuildingDisplayObjects.get(id)
+    if (!displayObject) {
+      throw `Unexpected missing display object for unit or building ${id}`
+    }
+    return displayObject
   }
 }

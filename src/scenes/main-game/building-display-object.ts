@@ -8,6 +8,9 @@ import { syncHealthBar } from './health-bar'
 import { Hex } from '../../world/hex'
 import { AnimationSpeed } from './display-objects'
 import { runDamageAnimation } from './damage-animation'
+import { scaleSpeed } from './animations'
+import { playTween } from '../../util/phaser/tween-utils'
+import { runDeathAnimation } from './death-animation'
 
 const IMAGE_OFFSET = { x: 0, y: 0 }
 const ORDINARY_SCALE = 0.6
@@ -38,6 +41,9 @@ export class BuildingDisplayObject {
     this.image.setPosition(buildingPoint.x + IMAGE_OFFSET.x, buildingPoint.y + IMAGE_OFFSET.y)
     syncHealthBar(this.healthBarGraphics, buildingPoint, this.building.hitPoints)
   }
+
+  public runDeathAnimation = async (speed: AnimationSpeed): Promise<void> =>
+    runDeathAnimation(this.scene, this.image, this.healthBarGraphics, speed)
 
   public runDamageAnimation = async (location: Hex, damage: number, speed: AnimationSpeed): Promise<void> =>
     runDamageAnimation(this.scene, location, damage, speed)

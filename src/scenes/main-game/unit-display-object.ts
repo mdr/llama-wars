@@ -2,7 +2,7 @@ import { Hex } from '../../world/hex'
 import { Unit, UnitType } from '../../world/unit'
 import { hexCenter } from './game-scene'
 import { getPlayerTint } from '../colours'
-import { distanceBetweenPoints, Point } from '../point'
+import { distanceBetweenPoints } from '../point'
 import { playTween } from '../../util/phaser/tween-utils'
 import { AnimationSpeed } from './display-objects'
 import { randomIntInclusive } from '../../util/random-util'
@@ -10,9 +10,10 @@ import { AnimationKeys } from '../animations'
 import { getUiCamera } from './cameras'
 import { ImageKeys } from '../asset-keys'
 import { syncHealthBar } from './health-bar'
-import assert = require('assert')
 import { calculateTweenXY, scaleSpeed } from './animations'
 import { runDamageAnimation } from './damage-animation'
+import { runDeathAnimation } from './death-animation'
+import assert = require('assert')
 
 const IMAGE_OFFSET = { x: 0, y: 4 }
 const HEALTH_BAR_OFFSET = { x: -25, y: -40 }
@@ -83,16 +84,8 @@ export class UnitDisplayObject {
     await playTween(tween)
   }
 
-  public runDeathAnimation = async (speed: AnimationSpeed): Promise<void> => {
-    const duration = scaleSpeed(1000, speed)
-    const tween = this.scene.tweens.create({
-      targets: [this.image, this.healthBarGraphics],
-      alpha: { from: 1, to: 0 },
-      duration,
-      ease: 'Cubic',
-    })
-    await playTween(tween)
-  }
+  public runDeathAnimation = async (speed: AnimationSpeed): Promise<void> =>
+    runDeathAnimation(this.scene, this.image, this.healthBarGraphics, speed)
 
   public runSpitAnimation = async (from: Hex, to: Hex, speed: AnimationSpeed): Promise<void> => {
     const fromPoint = hexCenter(from)
