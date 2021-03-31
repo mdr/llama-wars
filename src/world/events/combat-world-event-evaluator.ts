@@ -23,7 +23,7 @@ export const handleCombat = (state: WorldState, event: CombatWorldEvent): WorldS
     newState = newState.replaceUnitOrBuilding(defenderUnitOrBuilding.id, updatedDefender)
   }
 
-  const log = getCombatLog(event, attackerUnit, defenderUnitOrBuilding)
+  const log = constructCombatLog(state, event, attackerUnit, defenderUnitOrBuilding)
   newState = newState.addWorldLog(log)
 
   return newState
@@ -58,14 +58,26 @@ const validateCombat = (
   return { attackerUnit, defenderUnitOrBuilding }
 }
 
-const getCombatLog = (event: CombatWorldEvent, attackerUnit: Unit, defenderUnitOrBuilding: UnitOrBuilding): string => {
+const constructCombatLog = (
+  state: WorldState,
+  event: CombatWorldEvent,
+  attackerUnit: Unit,
+  defenderUnitOrBuilding: UnitOrBuilding,
+): string => {
   const { attacker, defender } = event
-  const defenderName = defenderUnitOrBuilding instanceof Unit ? defenderUnitOrBuilding.name : 'castle'
+  const defenderPlayerName = state.getPlayer(defenderUnitOrBuilding.playerId).name
+  const defenderName =
+    defenderUnitOrBuilding instanceof Unit ? defenderUnitOrBuilding.name : `${defenderPlayerName}'s castle`
   if (defender.killed) {
     if (attacker.killed) {
       return `${defenderName} was taken out in a suicide attack by ${attackerUnit.name}.`
     } else {
-      return `${defenderName} was brutally murdered by ${attackerUnit.name}.`
+      switch (defender.entityType) {
+        case 'unit':
+          return `${defenderName} was brutally murdered by ${attackerUnit.name}.`
+        case 'building':
+          return `${defenderName} was destroyed by ${attackerUnit.name}.`
+      }
     }
   } else if (attacker.killed) {
     return `${attackerUnit.name} died in a futile attempt to take on ${attackerUnit.name}.`
