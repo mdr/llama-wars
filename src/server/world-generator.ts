@@ -14,6 +14,7 @@ import { LLAMA_NAMES } from './llama-names'
 import { GeneratedWorld } from '../world/events/world-events'
 
 const MIN_DISTANCE_BETWEEN_SPAWNS = 2
+const MOUNTAIN_FRACTION = 0.12
 
 export class WorldGenerator {
   private readonly worldState: WorldState
@@ -128,5 +129,8 @@ export class WorldGenerator {
     return location
   }
 
-  public generateMountains = (): Hex[] => R.range(1, 10).map(this.generateMountain)
+  public generateMountains = (): Hex[] => {
+    const numberOfMountains = Math.round(this.worldState.map.hexCount() * MOUNTAIN_FRACTION)
+    return R.range(1, numberOfMountains).map(this.generateMountain)
+  }
 }

@@ -46,4 +46,6 @@ export class WorldMap {
     new WorldMap({ width: json.width, height: json.height, mountains: json.mountains.map(Hex.fromJson) })
 
   public isMountain = (hex: Hex): boolean => R.contains(hex, this.mountains)
+
+  public hexCount = (): number => this.height * this.width
 }
