@@ -5,7 +5,7 @@ import { WorldMap } from './world-map'
 import { Unit, UnitId } from './unit'
 import { just, Maybe, Option, toMaybe, toOption } from '../util/types'
 import { Player, PlayerId } from './player'
-import assert = require('assert')
+import { assert } from '../util/assertion-util'
 import { applyEvent } from './events/world-event-evaluator'
 import { WorldEvent } from './events/world-events'
 import { Building, BuildingId } from './building'

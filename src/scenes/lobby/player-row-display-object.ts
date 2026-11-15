@@ -54,7 +54,7 @@ export class PlayerRowDisplayObject {
   private createNameText = (player: Player): GameObjects.Text => {
     const nameText = this.scene.add
       .text(140, 0, player.name, {
-        fill: '#FFFFFF',
+        color: '#FFFFFF',
         fixedWidth: 200,
         backgroundColor: this.isNameEditable ? '#333333' : '#000000',
       })

@@ -10,7 +10,7 @@ import {
 } from './peer-server'
 import { UnreachableCaseError } from '../util/unreachable-case-error'
 import { Option } from '../util/types'
-import Peer = require('peerjs')
+import { DataConnection } from 'peerjs'
 import { newPeer } from './peer-utils'
 import { Reject, Resolve } from '../util/async-util'
 
@@ -22,13 +22,13 @@ interface ResolveAndReject<T> {
 export type PeerListener = (message: any) => void
 
 export class PeerClient {
-  private readonly connection: Peer.DataConnection
+  private readonly connection: DataConnection
   private readonly outstandingRequests: Map<RequestId, ResolveAndReject<any>> = new Map()
   private readonly listeners: PeerListener[] = []
 
-  constructor(connection: Peer.DataConnection) {
+  constructor(connection: DataConnection) {
     this.connection = connection
-    connection.on('data', this.handleConnectionData)
+    connection.on('data', (data) => this.handleConnectionData(data as ServerToClientMessage))
   }
 
   private handleConnectionData = (message: ServerToClientMessage): void => {

@@ -17,6 +17,7 @@ import { LocalActionDispatcher } from './local-action'
 import { BuildingDisplayObject } from './building-display-object'
 import { AttackType } from '../../world/world-actions'
 import { BuildingId } from '../../world/building'
+import { ensureAnimation } from '../../util/phaser/phaser-utils'
 
 export type AnimationSpeed = 'normal' | 'quick'
 
@@ -55,8 +56,8 @@ export class DisplayObjects {
       this.localGameState,
       this.localActionDispatcher,
     )
-    this.scene.anims.create(LLAMA_WALK)
-    this.scene.anims.create(LLAMA_EAT)
+    ensureAnimation(this.scene, LLAMA_WALK)
+    ensureAnimation(this.scene, LLAMA_EAT)
     this.scheduleEatingAnimation()
   }
 

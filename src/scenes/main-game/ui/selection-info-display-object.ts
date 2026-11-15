@@ -113,13 +113,14 @@ export class SelectionInfoDisplayObject extends GameObjects.Container {
   private handleActionLink1Click = (): void => {
     const mode = this.localGameState.mode
     switch (mode.type) {
-      case 'selectHex':
+      case 'selectHex': {
         const selectedUnit = this.combinedState.findSelectedUnit()
         if (selectedUnit) {
           const action = this.getUnitActions(selectedUnit)[0]
           this.handleUnitAction(action)
         }
         break
+      }
       case 'moveUnit':
       case 'attack':
         this.localActionDispatcher({ type: 'abort' })

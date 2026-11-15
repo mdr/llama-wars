@@ -8,6 +8,7 @@ import { LLAMA_WALK } from '../animations'
 import { PlayerRowDisplayObject } from './player-row-display-object'
 import GameObjects = Phaser.GameObjects
 import Scene = Phaser.Scene
+import { ensureAnimation } from '../../util/phaser/phaser-utils'
 
 export class LobbyDisplayObjects {
   private readonly scene: Scene
@@ -32,14 +33,14 @@ export class LobbyDisplayObjects {
     this.onStartGame = onStartGame
     this.onChangePlayerName = onChangePlayerName
     this.onKickPlayer = onKickPlayer
-    this.scene.add.text(155, 50, 'Llama Wars', { fill: '#FFFFFF' }).setFontSize(26)
+    this.scene.add.text(155, 50, 'Llama Wars', { color: '#FFFFFF' }).setFontSize(26)
     if (playerId === HOST_PLAYER_ID) {
       this.startGameButton = new PrimaryButton(this.scene, 100, 0, 'Start Game', this.handleStartGameButtonPressed)
       this.scene.add.existing(this.startGameButton)
     } else {
       this.waitingForHostText = this.scene.add.text(100, 0, 'Waiting for host to start the game...')
     }
-    this.scene.anims.create(LLAMA_WALK)
+    ensureAnimation(this.scene, LLAMA_WALK)
   }
 
   private handleStartGameButtonPressed = (): void => {

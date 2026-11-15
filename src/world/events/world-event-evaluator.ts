@@ -1,8 +1,7 @@
 import * as R from 'ramda'
-import { UnitOrBuilding, WorldState } from '../world-state'
+import { WorldState } from '../world-state'
 import {
   ChatWorldEvent,
-  CombatWorldEvent,
   GameOverWorldEvent,
   GameStartedWorldEvent,
   InitialiseWorldEvent,
@@ -18,7 +17,6 @@ import {
 import { UnreachableCaseError } from '../../util/unreachable-case-error'
 import { HOST_PLAYER_ID, Player, PlayerId } from '../player'
 import { Unit } from '../unit'
-import { canAttackOccur } from '../../server/handlers/attack-world-action-validator'
 import { handleCombat } from './combat-world-event-evaluator'
 
 export const applyEvent = (state: WorldState, event: WorldEvent): WorldState => {

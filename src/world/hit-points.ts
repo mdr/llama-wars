@@ -1,4 +1,4 @@
-import assert = require('assert')
+import { assert } from '../util/assertion-util'
 
 export const WARRIOR_HIT_POINTS = 100
 export const CRIA_HIT_POINTS = 50

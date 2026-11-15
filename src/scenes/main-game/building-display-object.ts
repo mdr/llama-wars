@@ -3,13 +3,11 @@ import { getPlayerTint } from '../colours'
 import { getUiCamera } from './cameras'
 import { ImageKeys } from '../asset-keys'
 import { Building } from '../../world/building'
-import assert = require('assert')
+import { assert } from '../../util/assertion-util'
 import { syncHealthBar } from './health-bar'
 import { Hex } from '../../world/hex'
 import { AnimationSpeed } from './display-objects'
 import { runDamageAnimation } from './damage-animation'
-import { scaleSpeed } from './animations'
-import { playTween } from '../../util/phaser/tween-utils'
 import { runDeathAnimation } from './death-animation'
 
 const IMAGE_OFFSET = { x: 0, y: 0 }

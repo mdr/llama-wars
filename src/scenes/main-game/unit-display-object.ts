@@ -4,6 +4,7 @@ import { hexCenter } from './game-scene'
 import { getPlayerTint } from '../colours'
 import { distanceBetweenPoints } from '../point'
 import { playTween } from '../../util/phaser/tween-utils'
+import TweenBuilderConfig = Phaser.Types.Tweens.TweenBuilderConfig
 import { AnimationSpeed } from './display-objects'
 import { randomIntInclusive } from '../../util/random-util'
 import { AnimationKeys } from '../animations'
@@ -13,7 +14,7 @@ import { syncHealthBar } from './health-bar'
 import { calculateTweenXY, scaleSpeed } from './animations'
 import { runDamageAnimation } from './damage-animation'
 import { runDeathAnimation } from './death-animation'
-import assert = require('assert')
+import { assert } from '../../util/assertion-util'
 
 const IMAGE_OFFSET = { x: 0, y: 4 }
 const HEALTH_BAR_OFFSET = { x: -25, y: -40 }
@@ -53,26 +54,26 @@ export class UnitDisplayObject {
     const afterCoords = hexCenter(to)
     this.image.anims.play(AnimationKeys.LLAMA_WALK)
     this.image.setFlipX(afterCoords.x < beforeCoords.x)
-    const tween1 = this.scene.tweens.create({
+    const tween1: TweenBuilderConfig = {
       targets: this.image,
       ...calculateTweenXY(beforeCoords, afterCoords, IMAGE_OFFSET),
       duration: duration,
       ease: 'Cubic',
-    })
-    const tween2 = this.scene.tweens.create({
+    }
+    const tween2: TweenBuilderConfig = {
       targets: this.healthBarGraphics,
       ...calculateTweenXY(beforeCoords, afterCoords, HEALTH_BAR_OFFSET),
       duration: duration,
       ease: 'Cubic',
-    })
-    await Promise.all([playTween(tween1), playTween(tween2)])
-    const frame = this.image.anims.currentAnim.frames[1]
+    }
+    await Promise.all([playTween(this.scene, tween1), playTween(this.scene, tween2)])
+    const frame = this.image.anims.currentAnim!.frames[1]
     this.image.anims.stopOnFrame(frame)
   }
 
   public runMatureAnimation = async (speed: AnimationSpeed): Promise<void> => {
     const duration = scaleSpeed(1000, speed)
-    const tween = this.scene.tweens.create({
+    const tween: TweenBuilderConfig = {
       targets: [this.image],
       scale: {
         from: CRIA_SCALE,
@@ -80,8 +81,8 @@ export class UnitDisplayObject {
       },
       duration,
       ease: 'Cubic',
-    })
-    await playTween(tween)
+    }
+    await playTween(this.scene, tween)
   }
 
   public runDeathAnimation = async (speed: AnimationSpeed): Promise<void> =>
@@ -94,7 +95,7 @@ export class UnitDisplayObject {
     const image = this.scene.add.image(fromPoint.x, fromPoint.y, 'spit').setScale(0.8)
     getUiCamera(this.scene).ignore(image)
     const duration = scaleSpeed(distance * 4, speed)
-    const tween = this.scene.tweens.create({
+    const tween: TweenBuilderConfig = {
       targets: image,
       x: {
         from: fromPoint.x,
@@ -106,8 +107,8 @@ export class UnitDisplayObject {
       },
       duration: duration,
       ease: 'Quad',
-    })
-    await playTween(tween)
+    }
+    await playTween(this.scene, tween)
     image.destroy()
   }
 
@@ -127,22 +128,22 @@ export class UnitDisplayObject {
     this.image.setFlipX(afterCoords.x < beforeCoords.x)
     this.image.anims.play(AnimationKeys.LLAMA_WALK)
     const duration = scaleSpeed(400, speed)
-    const tween1 = this.scene.tweens.create({
+    const tween1: TweenBuilderConfig = {
       targets: this.image,
       ...calculateTweenXY(beforeCoords, afterCoords, IMAGE_OFFSET),
       duration,
       ease: 'Cubic',
       yoyo: true,
-    })
-    const tween2 = this.scene.tweens.create({
+    }
+    const tween2: TweenBuilderConfig = {
       targets: this.healthBarGraphics,
       ...calculateTweenXY(beforeCoords, afterCoords, HEALTH_BAR_OFFSET),
       duration,
       ease: 'Cubic',
       yoyo: true,
-    })
-    await Promise.all([playTween(tween1), playTween(tween2)])
-    const frame = this.image.anims.currentAnim.frames[1]
+    }
+    await Promise.all([playTween(this.scene, tween1), playTween(this.scene, tween2)])
+    const frame = this.image.anims.currentAnim!.frames[1]
     this.image.anims.stopOnFrame(frame)
   }
 

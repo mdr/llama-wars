@@ -1,9 +1,7 @@
-import Peer = require('peerjs')
+import { Peer, PeerOptions } from 'peerjs'
 
-export const newPeer = (
-  id?: string,
-  options: Peer.PeerJSOption = { host: 'localhost', port: 9000, path: '/myapp' },
-): Peer => {
-  const _Peer = (window as any).Peer as typeof Peer
-  return new _Peer(id, options)
-}
+// In development, use a local PeerJS server (`npm run peer`); in production, the public PeerJS cloud server.
+const defaultPeerOptions: PeerOptions = import.meta.env.DEV ? { host: 'localhost', port: 9000, path: '/myapp' } : {}
+
+export const newPeer = (id?: string, options: PeerOptions = defaultPeerOptions): Peer =>
+  id === undefined ? new Peer(options) : new Peer(id, options)

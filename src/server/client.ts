@@ -75,11 +75,12 @@ export class Client {
     const request: RejoinRequest = { type: 'rejoin', playerId }
     const response: RejoinResponse = await this.sendRequest(request)
     switch (response.type) {
-      case 'rejoined':
+      case 'rejoined': {
         const worldState = WorldState.fromJson(response.worldState)
         this._playerId = playerId
         this._worldState = worldState
         return worldState
+      }
       case 'unableToRejoin':
         return undefined
       default:
@@ -92,12 +93,13 @@ export class Client {
     const request: JoinRequest = { type: 'join', name }
     const response: JoinResponse = await this.sendRequest(request)
     switch (response.type) {
-      case 'joined':
+      case 'joined': {
         const playerId = response.playerId
         const worldState = WorldState.fromJson(response.worldState)
         this._playerId = playerId
         this._worldState = worldState
         return { playerId, worldState }
+      }
       case 'unableToJoin':
         return undefined
       default:

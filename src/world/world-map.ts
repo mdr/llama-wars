@@ -1,5 +1,5 @@
 import * as R from 'ramda'
-import assert = require('assert')
+import { assert } from '../util/assertion-util'
 
 import { Hex } from './hex'
 
@@ -45,7 +45,7 @@ export class WorldMap {
   public static fromJson = (json: any): WorldMap =>
     new WorldMap({ width: json.width, height: json.height, mountains: json.mountains.map(Hex.fromJson) })
 
-  public isMountain = (hex: Hex): boolean => R.contains(hex, this.mountains)
+  public isMountain = (hex: Hex): boolean => R.includes(hex, this.mountains)
 
   public hexCount = (): number => this.height * this.width
 }

@@ -1,4 +1,4 @@
-import assert = require('assert')
+import { assert } from '../util/assertion-util'
 
 export class ActionPoints {
   readonly current: number

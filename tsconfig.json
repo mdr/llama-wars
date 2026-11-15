@@ -1,11 +1,14 @@
 {
   "compilerOptions": {
-    "target": "es5",
-    "sourceMap": true,
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "types": ["vite/client"],
     "strict": true,
-    "downlevelIteration": true
+    "isolatedModules": true,
+    "skipLibCheck": true,
+    "noEmit": true
   },
-  "include": [
-    "**/*.ts"
-  ]
+  "include": ["src"]
 }

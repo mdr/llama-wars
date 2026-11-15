@@ -1,6 +1,7 @@
 import { AnimationSpeed } from './display-objects'
 import { scaleSpeed } from './animations'
 import { playTween } from '../../util/phaser/tween-utils'
+import TweenBuilderConfig = Phaser.Types.Tweens.TweenBuilderConfig
 
 export const runDeathAnimation = async (
   scene: Phaser.Scene,
@@ -9,11 +10,11 @@ export const runDeathAnimation = async (
   speed: AnimationSpeed,
 ): Promise<void> => {
   const duration = scaleSpeed(1000, speed)
-  const tween = scene.tweens.create({
+  const tween: TweenBuilderConfig = {
     targets: [image, healthBarGraphics],
     alpha: { from: 1, to: 0 },
     duration,
     ease: 'Cubic',
-  })
-  await playTween(tween)
+  }
+  await playTween(scene, tween)
 }

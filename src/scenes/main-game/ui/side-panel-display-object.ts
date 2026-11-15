@@ -62,7 +62,7 @@ export class SidePanelDisplayObject extends Phaser.GameObjects.Container {
     this.worldLogText = this.scene.add.text(10, 35, '').setWordWrapWidth(470).setFontSize(14)
     this.chatText = this.scene.add
       .text(10, SidePanelDisplayObject.HEIGHT - 10, 'Chat...', {
-        fill: '#FFFFFF',
+        color: '#FFFFFF',
         fixedWidth: SidePanelDisplayObject.WIDTH - 2 * 10,
         backgroundColor: '#333333',
       })
@@ -83,7 +83,7 @@ export class SidePanelDisplayObject extends Phaser.GameObjects.Container {
   private createPlayerRow = (player: Player): void => {
     const nameText = this.scene.add
       .text(65, 0, player.name, {
-        fill: '#FFFFFF',
+        color: '#FFFFFF',
         fixedWidth: 200,
         fontStyle: player.id === this.localGameState.playerId ? 'bold' : 'normal',
       })

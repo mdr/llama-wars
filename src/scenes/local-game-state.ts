@@ -2,7 +2,7 @@ import { Hex } from '../world/hex'
 import { Mode } from './main-game/mode'
 import { Maybe, Option, toMaybe, toOption } from '../util/types'
 import { PlayerId } from '../world/player'
-import assert = require('assert')
+import { assert } from '../util/assertion-util'
 
 export enum SidebarMode {
   LOG = 'LOG',

@@ -3,6 +3,7 @@ import { AnimationSpeed } from './display-objects'
 import { hexCenter } from './game-scene'
 import { getUiCamera } from './cameras'
 import { playTween } from '../../util/phaser/tween-utils'
+import TweenBuilderConfig = Phaser.Types.Tweens.TweenBuilderConfig
 import { scaleSpeed } from './animations'
 
 export const runDamageAnimation = async (
@@ -22,7 +23,7 @@ export const runDamageAnimation = async (
     .setOrigin(0.5)
   getUiCamera(scene).ignore(text)
   const duration = scaleSpeed(2000, speed)
-  const tween1 = scene.tweens.create({
+  const tween1: TweenBuilderConfig = {
     targets: text,
     y: {
       from: locationPoint.y - 50,
@@ -30,13 +31,13 @@ export const runDamageAnimation = async (
     },
     duration,
     ease: 'Linear',
-  })
-  const tween2 = scene.tweens.create({
+  }
+  const tween2: TweenBuilderConfig = {
     targets: text,
     alpha: { from: 1, to: 0 },
     duration,
     ease: 'Cubic.in',
-  })
-  await Promise.all([playTween(tween1), playTween(tween2)])
+  }
+  await Promise.all([playTween(scene, tween1), playTween(scene, tween2)])
   text.destroy()
 }

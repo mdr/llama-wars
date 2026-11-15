@@ -1,4 +1,4 @@
-import Peer = require('peerjs')
+import { DataConnection, Peer } from 'peerjs'
 import { newPeer } from './peer-utils'
 
 export type PeerId = string
@@ -33,7 +33,7 @@ export type ServerToClientMessage = ResponseMessage | ErrorResponseMessage | Bro
 
 export class PeerServer {
   private readonly peer: Peer
-  private readonly connections: Peer.DataConnection[] = []
+  private readonly connections: DataConnection[] = []
   private readonly handleMessage: (message: any) => any
 
   constructor(id: PeerId, handleMessage: (message: any) => any) {
@@ -43,10 +43,11 @@ export class PeerServer {
     this.peer.on('connection', this.handleNewConnection)
   }
 
-  private handleNewConnection = (connection: Peer.DataConnection) => {
+  private handleNewConnection = (connection: DataConnection) => {
     // console.log('SERVER: received new connection from ' + connection.peer)
     this.connections.push(connection)
-    connection.on('data', this.handleConnectionData(connection))
+    const handleData = this.handleConnectionData(connection)
+    connection.on('data', (data) => handleData(data as ClientToServerMessage))
   }
 
   public broadcast = (message: any): void => {
@@ -56,25 +57,27 @@ export class PeerServer {
     }
   }
 
-  private handleConnectionData = (connection: Peer.DataConnection) => (message: ClientToServerMessage): void => {
-    // console.log('SERVER: received new message from ' + connection.peer)
-    // console.log(message)
-    let response
-    try {
-      response = this.handleMessage(message.request)
-    } catch (e) {
-      const errorResponseMessage: ErrorResponseMessage = {
-        type: 'errorResponse',
-        responseTo: message.id,
+  private handleConnectionData =
+    (connection: DataConnection) =>
+    (message: ClientToServerMessage): void => {
+      // console.log('SERVER: received new message from ' + connection.peer)
+      // console.log(message)
+      let response
+      try {
+        response = this.handleMessage(message.request)
+      } catch (e) {
+        const errorResponseMessage: ErrorResponseMessage = {
+          type: 'errorResponse',
+          responseTo: message.id,
+        }
+        connection.send(errorResponseMessage)
+        throw e
       }
-      connection.send(errorResponseMessage)
-      throw e
+      const responseMessage: ResponseMessage = {
+        type: 'response',
+        responseTo: message.id,
+        response,
+      }
+      connection.send(responseMessage)
     }
-    const responseMessage: ResponseMessage = {
-      type: 'response',
-      responseTo: message.id,
-      response,
-    }
-    connection.send(responseMessage)
-  }
 }

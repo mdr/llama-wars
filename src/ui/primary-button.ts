@@ -25,7 +25,7 @@ export class PrimaryButton extends GameObjects.Container {
       .setOrigin(0, 0)
     this.text = scene.add
       .text(this.image.width / 2, this.image.height / 2, text, {
-        fill: '#ffffff',
+        color: '#ffffff',
       })
       .setOrigin(0.5)
       .setFontSize(18)

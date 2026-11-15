@@ -72,7 +72,7 @@ export class UiDisplayObjects {
     this.endTurnButton = this.createEndTurnButton()
 
     this.waitingForNextTurnText = this.scene.add
-      .text(0, 0, 'Waiting for next turn...', { fill: '#ffffff' })
+      .text(0, 0, 'Waiting for next turn...', { color: '#ffffff' })
       .setFontSize(18)
       .setShadow(2, 2, '#000000')
       .setDepth(200)

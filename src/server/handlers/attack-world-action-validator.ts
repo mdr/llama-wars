@@ -10,9 +10,10 @@ export const canAttackOccur = (attackType: AttackType, map: WorldMap, from: Hex,
   switch (attackType) {
     case 'melee':
       return from.isAdjacentTo(to)
-    case 'spit':
+    case 'spit': {
       const blockedByMountains = R.all(map.isMountain, R.intersection(from.neighbours(), to.neighbours()))
       return !blockedByMountains && from.distanceTo(to) <= 2
+    }
   }
 }
 

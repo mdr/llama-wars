@@ -11,7 +11,7 @@ export const syncHealthBar = (
   healthBarGraphics: Phaser.GameObjects.Graphics,
   location: Point,
   hitPoints: HitPoints,
-) => {
+): void => {
   const { x, y } = addPoints(location, HEALTH_BAR_OFFSET)
   healthBarGraphics.setPosition(x, y)
   healthBarGraphics.clear()
